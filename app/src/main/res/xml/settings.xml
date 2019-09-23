@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/psMainScreen"
+    android:title="Settings">
+
+    <PreferenceCategory
+        android:id="@+id/pcGeneral"
+        android:title="@string/general_settings">
+
+        <com.bushbungalo.weatherlion.CityFinderPreference
+            android:id="@+id/cpLocation"
+            android:dialogIcon="@drawable/icon"
+            android:title="@string/location"
+            android:summary="Current Location"
+            android:key="@string/pref_location"/>
+
+        <ListPreference
+            android:id="@+id/lstProvider"
+            android:title="@string/wx_source"
+            android:summary="Weather Provider"
+            android:entries="@array/weather_providers"
+            android:entryValues="@array/weather_providers"
+            android:defaultValue="Yahoo! Weather"
+            android:key="@string/pref_wx_source"/>
+
+        <ListPreference
+            android:id="@+id/lstInterval"
+            android:title="@string/update_interval"
+            android:summary="Refresh period"
+            android:entries="@array/update_times"
+            android:entryValues="@array/update_milliseconds"
+            android:defaultValue="1800000"
+            android:key="@string/pref_update_interval"/>
+
+        <SwitchPreference
+            android:id="@+id/swtGPS"
+            android:defaultValue="false"
+            android:title="@string/geolocation"
+            android:summary="Use the device's GPS"
+            android:key="@string/pref_use_gps"/>
+
+        <SwitchPreference
+            android:id="@+id/swtMetric"
+            android:defaultValue="false"
+            android:title="@string/metric"
+            android:summary="Use Metric (°C)"
+            android:key="@string/pref_use_metric"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/display_settings">
+
+        <com.bushbungalo.weatherlion.IconSetPreference
+            android:id="@+id/cpIconSet"
+            android:dialogIcon="@drawable/icon"
+            android:title="@string/iconSet"
+            android:summary="@string/current_icon_set"
+            android:key="@string/pref_icon_set" />
+
+        <com.bushbungalo.weatherlion.WidgetBackgroundPreference
+            android:id="@+id/cpWidgetBackground"
+            android:dialogIcon="@drawable/icon"
+            android:title="@string/background"
+            android:summary="@string/current_background_style"
+            android:key="@string/pref_widget_background" />
+
+        <ListPreference
+            android:id="@+id/lstFonts"
+            android:title="@string/optional_fonts"
+            android:summary="@string/optional_font_faces"
+            android:entries="@array/font_faces"
+            android:entryValues="@array/font_faces"
+            android:defaultValue="System"
+            android:key="@string/pref_ui_fonts"/>
+    </PreferenceCategory>
+</PreferenceScreen>

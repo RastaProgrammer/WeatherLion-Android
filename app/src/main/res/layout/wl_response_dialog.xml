@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/llResponseDialog"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F0F0F0" >
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/rlDialogTitleBar"
+        android:background="#3796D2">
+
+        <ImageView
+            android:id="@+id/diaIcon"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentStart="true"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="10dip"
+            android:src="@drawable/icon"
+            android:contentDescription="@string/dialog_icon" />
+
+        <TextView
+            android:id="@+id/txvDialogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="center_vertical"
+            android:layout_toEndOf="@+id/diaIcon"
+            android:gravity="center"
+            android:layout_marginStart="10dp"
+            android:text="@string/message_dialog_title"
+            android:textColor="@color/white_opacity_85"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/txvDialogBody"
+        android:padding="6dp">
+
+        <TextView
+            android:id="@+id/txvMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dip"
+            android:text="@string/message_dialog_message"
+            android:textColor="@color/black_opacity_80"
+            android:textStyle="normal"
+            android:textSize="16sp"/>
+
+        <Button
+            android:id="@+id/btnNegative"
+            android:layout_width="80dip"
+            android:layout_height="30dip"
+            android:layout_below="@+id/txvMessage"
+            android:layout_marginTop="10dp"
+            android:layout_toStartOf="@+id/btnPositive"
+            android:background="@drawable/wl_aqua_rounded_btn_bg"
+            android:gravity="center"
+            android:text="@string/cancel"
+            android:textAllCaps="true"
+            android:textColor="@color/color_white_opacity_90" />
+
+        <Button
+            android:id="@+id/btnPositive"
+            android:layout_width="80dip"
+            android:layout_height="30dip"
+            android:layout_below="@+id/txvMessage"
+            android:layout_marginTop="10dip"
+            android:layout_marginStart="12dip"
+            android:layout_alignParentEnd="true"
+            android:background="@drawable/wl_aqua_rounded_btn_bg"
+            android:gravity="center"
+            android:text="@string/Ok"
+            android:textAllCaps="true"
+            android:textColor="#FFFFFF" />
+    </RelativeLayout>
+</LinearLayout>
