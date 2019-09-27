@@ -51,7 +51,7 @@ import android.widget.Toast;
 import com.bushbungalo.weatherlion.database.DBHelper;
 import com.bushbungalo.weatherlion.database.WeatherAccess;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
-import com.bushbungalo.weatherlion.services.WidgetUpdateService;
+import com.bushbungalo.weatherlion.services.WeatherDataXMLService;
 import com.bushbungalo.weatherlion.utils.DividerItemDecoration;
 import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
@@ -124,7 +124,10 @@ public class WeatherLionMain extends AppCompatActivity
 
     private static ArrayAdapter requiredKeysAdapter;
 
-    private BroadcastReceiver weatherUpdateBroadcastReceiver = new BroadcastReceiver()
+    /**
+     * Refresh the main activity once new data has been stored
+     */
+    private BroadcastReceiver xmlStorageBroadcastReceiver = new BroadcastReceiver()
     {
         @Override
         public void onReceive(Context context, Intent intent)
@@ -472,7 +475,7 @@ public class WeatherLionMain extends AppCompatActivity
         catch ( ParseException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadPreviousWeather [line: " + e.getStackTrace()[1].getLineNumber()+ "]" );
+                    TAG + "::loadMainActivityWeather [line: " + e.getStackTrace()[1].getLineNumber()+ "]" );
         }// end of catch block
 
         UtilityMethod.lastUpdated = timeUpdated;
@@ -507,45 +510,64 @@ public class WeatherLionMain extends AppCompatActivity
         // Load current condition weather image
         Calendar rightNow = Calendar.getInstance();
         Calendar nightFall = Calendar.getInstance();
-        String twenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( sunsetTime.toString() );
-
+        Calendar sunUp = Calendar.getInstance();
+        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                Locale.ENGLISH ).format( rightNow.getTime() )
+                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
+        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                Locale.ENGLISH ).format( rightNow.getTime() )
+                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
         SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null;
-        Date nf = null;
+        Date rn = null; // date time right now (rn)
+        Date nf = null; // date time night fall (nf)
+        Date su = null; // date time sun up (su)
 
         try
         {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( twenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE, Integer.parseInt( twenty4HourTime.split( ":" )[ 1 ].trim() ) );
+            rn = sdf.parse(sdf.format( rightNow.getTime() ) );
+            nightFall.setTime(sdf.parse( sunsetTwenty4HourTime ) );
+            nightFall.set(Calendar.MINUTE,
+                    Integer.parseInt(sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
+            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
+
             nf = sdf.parse( sdf.format( nightFall.getTime() ) );
+            su = sdf.parse( sdf.format( sunUp.getTime() ) );
         } // end of try block
         catch ( ParseException e )
         {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadPreviousWeather [line: " + e.getStackTrace()[1].getLineNumber()+ "]" );
+            UtilityMethod.logMessage(UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                    TAG + "::loadMainActivityWeather [line: " +
+                            e.getStackTrace()[1].getLineNumber() + "]");
         }// end of catch block
 
         String currentConditionIcon;
 
         if( rn != null )
         {
-            if ( rn.equals( nf ) || rn.after( nf ) )
+            if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
             {
                 if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
                 {
-                    currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
+                    currentConditionIcon = UtilityMethod.weatherImages.get(
+                            currentCondition.toString().toLowerCase() );
                 }// end of if block
                 else
                 {
-                    if( UtilityMethod.weatherImages.containsKey( currentCondition.toString().toLowerCase() + " (night)" ) )
+                    // Yahoo has a habit of having sunny nights
+                    if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
                     {
-                        currentConditionIcon = UtilityMethod.weatherImages.get(
-                                currentCondition.toString().toLowerCase() + " (night)" );
+                        currentCondition.setLength( 0 );
+                        currentCondition.append( "Clear" );
                     }// end of if block
-                    else
+
+                    if ( UtilityMethod.weatherImages.containsKey(
+                            currentCondition.toString().toLowerCase() + " (night)" ) )
                     {
+                        currentConditionIcon =
+                                UtilityMethod.weatherImages.get(
+                                        currentCondition.toString().toLowerCase() + " (night)" );
+                    }// end of if block
+                    else {
                         currentConditionIcon = UtilityMethod.weatherImages.get(
                                 currentCondition.toString().toLowerCase() );
                     }// end of else block
@@ -631,8 +653,8 @@ public class WeatherLionMain extends AppCompatActivity
         Snackbar quickSnack;
 
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .registerReceiver( weatherUpdateBroadcastReceiver, new IntentFilter(
-                        WidgetUpdateService.WEATHER_UPDATE_SERVICE_MESSAGE ) );
+                .registerReceiver(xmlStorageBroadcastReceiver, new IntentFilter(
+                        WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE ) );
 
         // Check if any previous weather data is stored locally
         if( WeatherLionApplication.firstRun &&
@@ -793,7 +815,7 @@ public class WeatherLionMain extends AppCompatActivity
         super.onDestroy();
 
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-            .unregisterReceiver( weatherUpdateBroadcastReceiver );
+            .unregisterReceiver(xmlStorageBroadcastReceiver);
     }// end of method onDestroy
 
     /**

@@ -2,6 +2,7 @@ package com.bushbungalo.weatherlion.services;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.bushbungalo.weatherlion.FiveDayForecast;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
@@ -34,7 +35,9 @@ public class WeatherDataXMLService extends IntentService
 	private static final String TAG = "WeatherDataXMLService";
 	private WeatherDataXML xmlData = new WeatherDataXML();
 
-	public WeatherDataXMLService() 
+	public static final String WEATHER_XML_STORAGE_MESSAGE = "WeatherXmlServiceMessage";
+
+	public WeatherDataXMLService()
 	{
 		super( TAG );
 	}// end of default constructor
@@ -43,14 +46,27 @@ public class WeatherDataXMLService extends IntentService
 	@Override
 	protected void onHandleIntent( Intent intent )
 	{
-		String weatherDataJSON = intent.getStringExtra( WidgetUpdateService.WEATHER_XML_DATA );
+		String weatherDataJSON = intent.getStringExtra( WidgetUpdateService.WEATHER_XML_SERVICE_PAYLOAD );
 		Gson gson = new Gson();
 		xmlData = gson.fromJson( weatherDataJSON, new TypeToken<WeatherDataXML>() {}.getType() );
 		saveCurrentWeatherXML();
 	}// end of method handleWeatherData
 
-	private boolean saveCurrentWeatherXML()
+	/**
+	 * Inform all listeners that xml data has been stored locally
+	 */
+	private static void broadcastDataStored()
 	{
+		Intent messageIntent = new Intent( WEATHER_XML_STORAGE_MESSAGE );
+		LocalBroadcastManager manager =
+				LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );
+		manager.sendBroadcast( messageIntent );
+	}// end of method broadcastDataStored
+
+	private void saveCurrentWeatherXML()
+	{
+		if( xmlData == null ) return; // exit if there is no data loaded
+
 		String wxData = WeatherLionApplication.getAppContext().getFileStreamPath(
 				WeatherLionApplication.WEATHER_DATA_XML ).toString();
 
@@ -130,6 +146,8 @@ public class WeatherDataXMLService extends IntentService
 
 			WeatherLionApplication.previousWeatherProvider.setLength( 0 );
 			WeatherLionApplication.previousWeatherProvider.append( xmlData.getProviderName() );
+
+			broadcastDataStored();
 		}// end of try block
 		catch ( IOException e )
 		{
@@ -137,8 +155,6 @@ public class WeatherDataXMLService extends IntentService
 					TAG + "::saveCurrentWeatherXML [line: " +
 							UtilityMethod.getExceptionLineNumber( e )  + "]" );
 		}// end of catch block
-
-		return true;
 	}// end of method saveCurrentWeatherXML
 
 	 public static boolean saveCurrentWeatherXML( String providerName, Date datePublished, String cityName,
@@ -146,7 +162,7 @@ public class WeatherDataXMLService extends IntentService
 	    		String currentHigh, String currentLow, String currentWindSpeed, String currentWindDirection, String currentHumidity, 
 	    		String sunriseTime, String sunsetTime, List<FiveDayForecast> fiveDayForecast )
     {
-    	 String wxData = WeatherLionApplication.getAppContext().getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString();
+		 String wxData = WeatherLionApplication.getAppContext().getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString();
 
 		 try
 		 {
@@ -221,6 +237,8 @@ public class WeatherDataXMLService extends IntentService
 			 
 			 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, providerName + "'s weather data was stored locally!",
 					 TAG + "::saveCurrentWeatherXML" );
+
+			 broadcastDataStored();
 	    				
 		 }// end of try block
 		 catch ( IOException e )

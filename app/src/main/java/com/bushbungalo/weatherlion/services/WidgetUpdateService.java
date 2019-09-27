@@ -79,12 +79,13 @@ import static android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID;
 @SuppressWarnings({"unused", "SameParameterValue"})
 public class WidgetUpdateService extends JobIntentService
 {
-    public static final int JOB_ID = 79;
+    private static final int JOB_ID = 79;
 
     public static final String TAG = "WidgetUpdateService";
     public static final String WEATHER_UPDATE_SERVICE_MESSAGE = "WidgetUpdateServiceMessage";
     public static final String  WEATHER_UPDATE_SERVICE_PAYLOAD = "WidgetUpdateServicePayload";
-    public static final String  WEATHER_XML_DATA = "WeatherXmlData";
+    public static final String WEATHER_XML_SERVICE_MESSAGE = "WeatherXmlServiceMessage";
+    public static final String  WEATHER_XML_SERVICE_PAYLOAD = "WeatherXmlServicePayload";
 
     private static DarkSkyWeatherDataItem darkSky;
     private static HereMapsWeatherDataItem.WeatherData hereWeatherWx;
@@ -528,6 +529,15 @@ public class WidgetUpdateService extends JobIntentService
         manager.sendBroadcast( updateIntent );
     }// end of method broadcastWeatherUpdate
 
+    private void broadcastXmlData( String xmlJson )
+    {
+        Intent messageIntent = new Intent( WEATHER_XML_SERVICE_MESSAGE );
+        messageIntent.putExtra( WEATHER_XML_SERVICE_PAYLOAD, xmlJson );
+        LocalBroadcastManager manager =
+                LocalBroadcastManager.getInstance( getApplicationContext() );
+        manager.sendBroadcast( messageIntent );
+    }// end of method broadcastXmlData
+
     /**
      * This method uses refection to call a method using a {@code String} value representing the
      * method name.
@@ -660,6 +670,8 @@ public class WidgetUpdateService extends JobIntentService
                 }// end of try block
                 catch( Exception e )
                 {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                    TAG + "::updateOneAppWidget" );
                     WeatherWidgetProvider.dataLoadedSuccessfully = false;
 
                     // Undo changes made
@@ -786,6 +798,10 @@ public class WidgetUpdateService extends JobIntentService
         // schedule the weather update only if weather was just updated
         if( weatherUpdate && strJSON != null && !strJSON.isEmpty() )
         {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                    "Updating widget: " + incomingAppWidgetId + "...",
+                    TAG + "::updateOneAppWidget" );
+
             // update the widget
             appWidgetManager.updateAppWidget( appWidgetId, remoteViews );
 
@@ -900,13 +916,19 @@ public class WidgetUpdateService extends JobIntentService
 
         alarmManager.setExact( AlarmManager.RTC, updateTime, alarmIntent );
 
-//        int seconds = 60;
+        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Next update scheduled for " +
+                        new SimpleDateFormat( "h:mm:ss a", Locale.ENGLISH ).format( c.getTime() ) + ".",
+                TAG + "::scheduleNextUpdate" );
+
+        // Test Area
+//        int seconds = 120;
 //        alarmManager.setExact( AlarmManager.RTC,
 //                System.currentTimeMillis() + (seconds * 1000), alarmIntent );
-
-        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Next update scheduled for " +
-                new SimpleDateFormat( "h:mm:ss a", Locale.ENGLISH ).format( c.getTime() ) + ".",
-                TAG + "::scheduleNextUpdate" );
+//
+//        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Next update scheduled for " +
+//                new SimpleDateFormat( "h:mm:ss a", Locale.ENGLISH ).format(
+//                        System.currentTimeMillis() + (seconds * 1000) ) + ".",
+//                TAG + "::scheduleNextUpdate" );
     }// end of method scheduleNextUpdate
 
     private void loadDarkSkyWeather()
@@ -1188,9 +1210,7 @@ public class WidgetUpdateService extends JobIntentService
 
         String xmlJSON = new Gson().toJson( xmlMapData );
 
-        Intent weatherXMLIntent = new Intent( this, WeatherDataXMLService.class );
-        weatherXMLIntent.putExtra( WEATHER_XML_DATA, xmlJSON.trim() );
-        this.startService( weatherXMLIntent );
+        broadcastXmlData( xmlJSON );
     }// end of method loadDarkSkyWeather
 
     private void loadHereMapsWeather()
@@ -1514,9 +1534,7 @@ public class WidgetUpdateService extends JobIntentService
 
         String xmlJSON = new Gson().toJson( xmlMapData );
 
-        Intent weatherXMLIntent = new Intent( this, WeatherDataXMLService.class );
-        weatherXMLIntent.putExtra( WEATHER_XML_DATA, xmlJSON.trim() );
-        this.startService( weatherXMLIntent );
+        broadcastXmlData( xmlJSON );
     }// end of method loadHereMapsWeather
 
     private void loadOpenWeather()
@@ -1810,9 +1828,7 @@ public class WidgetUpdateService extends JobIntentService
 
         String xmlJSON = new Gson().toJson( xmlMapData );
 
-        Intent weatherXMLIntent = new Intent( this, WeatherDataXMLService.class );
-        weatherXMLIntent.putExtra( WEATHER_XML_DATA, xmlJSON.trim() );
-        this.startService( weatherXMLIntent );
+        broadcastXmlData( xmlJSON );
     }// end of method loadOpenWeather
 
     /**
@@ -1911,7 +1927,7 @@ public class WidgetUpdateService extends JobIntentService
         }// end of catch block
 
         // Update the current location and update time stamp
-        String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( timeUpdated );                
+        String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( timeUpdated );
 
         remoteViews.setTextViewText( R.id.txvLastUpdated, ts );
         remoteViews.setTextViewText( R.id.txvSunrise, sunriseTime.toString() );
@@ -2384,9 +2400,7 @@ public class WidgetUpdateService extends JobIntentService
 
         String xmlJSON = new Gson().toJson( xmlMapData );
 
-        Intent weatherXMLIntent = new Intent( this, WeatherDataXMLService.class );
-        weatherXMLIntent.putExtra( WEATHER_XML_DATA, xmlJSON.trim() );
-        this.startService( weatherXMLIntent );
+        broadcastXmlData( xmlJSON );
     }// end of method loadWeatherBitWeather
 
     /**
@@ -2650,10 +2664,7 @@ public class WidgetUpdateService extends JobIntentService
 
         String xmlJSON = new Gson().toJson( xmlMapData );
 
-        Intent weatherXMLIntent = new Intent( this, WeatherDataXMLService.class );
-        weatherXMLIntent.putExtra( WEATHER_XML_DATA, xmlJSON.trim() );
-        this.startService( weatherXMLIntent );
-
+        broadcastXmlData( xmlJSON );
     }// end of method loadYahooYdnWeather
 
     /**
@@ -2936,9 +2947,7 @@ public class WidgetUpdateService extends JobIntentService
 
         String xmlJSON = new Gson().toJson( xmlMapData );
 
-        Intent weatherXMLIntent = new Intent( this, WeatherDataXMLService.class );
-        weatherXMLIntent.putExtra( WEATHER_XML_DATA, xmlJSON.trim() );
-        this.startService( weatherXMLIntent );
+        broadcastXmlData( xmlJSON );
     }// end of method loadYrWeather
 
     /***
@@ -3750,7 +3759,7 @@ public class WidgetUpdateService extends JobIntentService
                         currentFeelsLikeTemp.append( Math.round( fl ) );
 
                         currentWindSpeed.setLength( 0 ); // reset
-                        currentWindSpeed.append( yahoo19.getCurrentObservation().getWind().getSpeed() );
+                        currentWindSpeed.append( Math.round( yahoo19.getCurrentObservation().getWind().getSpeed() ) );
                     }// end of else block
 
                     // Display weather data on widget
@@ -4157,9 +4166,6 @@ public class WidgetUpdateService extends JobIntentService
                     // determine how many widgets require updating
                     if ( incomingAppWidgetId != INVALID_APPWIDGET_ID )
                     {
-                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                            "Updating widget: " + incomingAppWidgetId + "...",
-                                TAG + "::handleIntent" );
                         updateOneAppWidget( appWidgetManager, incomingAppWidgetId );
                     }// end of if block
                     else

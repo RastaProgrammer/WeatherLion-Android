@@ -36,6 +36,7 @@ import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
 import com.bushbungalo.weatherlion.services.GeoLocationService;
 import com.bushbungalo.weatherlion.services.IconUpdateService;
+import com.bushbungalo.weatherlion.services.WeatherDataXMLService;
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.JSONHelper;
 import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
@@ -90,6 +91,8 @@ public class WeatherLionApplication extends Application
 
     public static final String LION_MAIN_NETWORK_PAYLOAD = "WeatherLionMainNetworkPayload";
     public static final String LION_MAIN_NETWORK_MESSAGE = "WeatherLionMainNetworkMessage";
+
+    public static final String LION_REFRESH_MAIN_MESSAGE = "WeatherLionMainRefreshMainMessage";
 
     public static final String PROGRAM_NAME = "Weather Lion";
     public static final String MAIN_DATABASE_NAME = "WeatherLion.db";
@@ -314,30 +317,7 @@ public class WeatherLionApplication extends Application
         }// end of catch block
     }// end of method isConnected
 
-    private BroadcastReceiver keyUpdateReceiver = new BroadcastReceiver()
-    {
-        @Override
-        public void onReceive( Context context, Intent intent )
-        {
-            String methodToCall = intent.getStringExtra( WeatherLionMain.KEY_UPDATE_PAYLOAD );
 
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Reloading access keys...", TAG + "::keyUpdateReceiver" );
-
-            callMethodByName( WeatherLionApplication.this, methodToCall,
-                    null, null );
-
-            // Load only the providers who have access keys assigned to them
-            ArrayList<String> wxOnly = WeatherLionApplication.webAccessGranted;
-
-            Collections.sort( wxOnly );    // sort the list
-
-            // GeoNames is not a weather provider so it cannot be select here
-            wxOnly.remove( "GeoNames" );
-
-            authorizedProviders = wxOnly.toArray( new String[0] );
-        }// end of anonymous method onReceive
-    };// end of keyUpdateReceiver
 
     /**
      * Call the weather service that attempts to load the widget with
@@ -1179,11 +1159,10 @@ public class WeatherLionApplication extends Application
         // setup a broadcast receiver that will listen for gps data
         IntentFilter appFilter = new IntentFilter();
         appFilter.addAction( GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE );
-        LocalBroadcastManager.getInstance(this).registerReceiver( appBroadcastReceiver, appFilter );
-
-        LocalBroadcastManager.getInstance( this )
-                .registerReceiver( keyUpdateReceiver,
-                        new IntentFilter( WeatherLionMain.KEY_UPDATE_MESSAGE ) );
+        appFilter.addAction( WeatherLionMain.KEY_UPDATE_MESSAGE );
+        appFilter.addAction( WidgetUpdateService.WEATHER_XML_SERVICE_MESSAGE );
+        LocalBroadcastManager.getInstance( this ).registerReceiver( appBroadcastReceiver,
+                appFilter );
 
         // setup a broadcast receiver that will listen for system broadcasts specifically
         // network connectivity and system clock changes
@@ -1517,15 +1496,46 @@ public class WeatherLionApplication extends Application
         {
             final String action = Objects.requireNonNull( intent.getAction() );
 
-            if( GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE.equals( action ) )
+            switch( action )
             {
-                String cityMessage = intent.getStringExtra( GeoLocationService.GEO_LOCATION_SERVICE_PAYLOAD );
-                setCityName( cityMessage );
-                locationSet = storedPreferences.getLocation() != null;
-            }// end of if block
+                case GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE:
+                    String cityMessage = intent.getStringExtra( GeoLocationService.GEO_LOCATION_SERVICE_PAYLOAD );
+                    setCityName( cityMessage );
+                    locationSet = storedPreferences.getLocation() != null;
+
+                    break;
+                case WeatherLionMain.KEY_UPDATE_MESSAGE:
+                    String methodToCall = intent.getStringExtra( WeatherLionMain.KEY_UPDATE_PAYLOAD );
+
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            "Reloading access keys...", TAG + "::keyUpdateReceiver" );
+
+                    callMethodByName( WeatherLionApplication.this, methodToCall,
+                            null, null );
+
+                    // Load only the providers who have access keys assigned to them
+                    ArrayList<String> wxOnly = WeatherLionApplication.webAccessGranted;
+
+                    Collections.sort( wxOnly );    // sort the list
+
+                    // GeoNames is not a weather provider so it cannot be select here
+                    wxOnly.remove( "GeoNames" );
+
+                    authorizedProviders = wxOnly.toArray( new String[0] );
+
+                    break;
+                case WidgetUpdateService.WEATHER_XML_SERVICE_MESSAGE:
+                    // start xml storage service
+                    String xmlJSON = intent.getStringExtra( WidgetUpdateService.WEATHER_XML_SERVICE_PAYLOAD );
+                    Intent weatherXMLIntent = new Intent( WeatherLionApplication.this,
+                            WeatherDataXMLService.class );
+                    weatherXMLIntent.putExtra( WidgetUpdateService.WEATHER_XML_SERVICE_PAYLOAD, xmlJSON );
+                    WeatherLionApplication.this.startService( weatherXMLIntent );
+
+                    break;
+            }// end of switch block
         }// end of method onReceive
     }// end of class AppBroadcastReceiver
-
 
     /**
      * Set the details for the user's location using the json data returned from the web service
@@ -1710,7 +1720,9 @@ public class WeatherLionApplication extends Application
                     // an the system will always imply that the connection state has changed.
                     if( UtilityMethod.lastUpdated != null )
                     {
-                        if( UtilityMethod.updateRequired( WeatherLionApplication.getAppContext() ) )
+//                        if( UtilityMethod.updateRequired( getAppContext() ) )
+                        if( UtilityMethod.updateRequired( getAppContext() ) &&
+                                UtilityMethod.hasInternetConnection( getAppContext() ) )
                         {
                             UtilityMethod.refreshRequested = true;
 

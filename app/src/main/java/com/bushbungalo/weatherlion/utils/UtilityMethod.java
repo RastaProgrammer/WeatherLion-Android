@@ -3329,7 +3329,7 @@ public abstract class UtilityMethod
             if( elapsedMinutes < 1 )
             {
                 // time in seconds
-                timeElapsed = seconds > 1 ? seconds + " seconds ago" : seconds + " second ago";
+                timeElapsed = seconds > 1 ? seconds + " seconds ago" : " just now";
             }// end of if block
             else
             {

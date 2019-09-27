@@ -210,12 +210,13 @@ public class WeatherWidgetProvider extends AppWidgetProvider
             // Update the weather provider
             remoteViews.setTextViewText( R.id.txvLastUpdated, "Refreshing..." );
 
-            // update the widget
-            appWidgetManager.updateAppWidget( appWidgetIds, remoteViews );
-
             Intent refreshIntent = new Intent( context, WidgetUpdateService.class );
             refreshIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
             WidgetUpdateService.enqueueWork( context, refreshIntent );
+
+            // update the widget
+            appWidgetManager.updateAppWidget( appWidgetIds, remoteViews );
+
         }// end of if block
         else if ( LAUNCH_MAIN.equals( intent.getAction() ) )
         {
@@ -292,7 +293,8 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                     currentConditionIcon = UtilityMethod.weatherImages.get(
                             WidgetUpdateService.currentCondition.toString().toLowerCase() );
                 }// end of if block
-                else {
+                else
+                {
                     // Yahoo has a habit of having sunny nights
                     if ( WidgetUpdateService.currentCondition.toString().equalsIgnoreCase( "sunny" ) )
                     {
@@ -326,7 +328,7 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                     WeatherLionApplication.iconSetSwitch = false;
                 }// end of else if block
             }// end of if block
-            else if ( WeatherLionApplication.iconSetSwitch)
+            else if ( WeatherLionApplication.iconSetSwitch )
             {
                 currentConditionIcon = UtilityMethod.weatherImages.get(
                         WidgetUpdateService.currentCondition.toString().toLowerCase() );
