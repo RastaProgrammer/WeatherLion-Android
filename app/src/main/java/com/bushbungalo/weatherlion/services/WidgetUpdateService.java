@@ -7,9 +7,11 @@ package com.bushbungalo.weatherlion.services;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -22,6 +24,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.JobIntentService;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
@@ -41,7 +44,7 @@ import com.bushbungalo.weatherlion.model.WeatherBitWeatherDataItem;
 import com.bushbungalo.weatherlion.model.YahooWeatherYdnDataItem;
 import com.bushbungalo.weatherlion.model.YrWeatherDataItem;
 import com.bushbungalo.weatherlion.model.YrWeatherDataItem.Forecast;
-import com.bushbungalo.weatherlion.utils.HttpRequest;
+import com.bushbungalo.weatherlion.utils.HttpHelper;
 import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 import com.bushbungalo.weatherlion.utils.WidgetHelper;
@@ -56,15 +59,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URI;
-import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -73,10 +72,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 import static android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID;
 import static android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID;
@@ -127,6 +122,7 @@ public class WidgetUpdateService extends JobIntentService
     private static int[][] hl;
 
     private boolean unitChange;
+    private boolean weatherUpdate;
     private WeatherDataXMLService wXML;
     private Dictionary< String, float[][] > dailyReading;
 
@@ -166,9 +162,14 @@ public class WidgetUpdateService extends JobIntentService
     private boolean loadingPreviousWeather;
     private boolean methodCalledByReflection;
 
+    private int incomingAppWidgetId;
+    private AppWidgetManager appWidgetManager;
+
     // method name constants
     public static final String LOAD_PREVIOUS_WEATHER = "loadPreviousWeatherData";
     public static final String LOAD_WIDGET_BACKGROUND = "loadWidgetBackground";
+
+    private int expectedJSONSize;
 
     /**
      * {@inheritDoc}
@@ -178,6 +179,11 @@ public class WidgetUpdateService extends JobIntentService
     {
         super.onCreate();
         spf = PreferenceManager.getDefaultSharedPreferences( this );
+
+        LocalBroadcastManager.getInstance( this )
+                .registerReceiver( webServiceData,
+                        new IntentFilter( HttpHelper.WEB_SERVICE_DATA_MESSAGE ) );
+
     }// end of method onCreate
 
     /**
@@ -187,12 +193,13 @@ public class WidgetUpdateService extends JobIntentService
     public void onDestroy()
     {
         super.onDestroy();
+        LocalBroadcastManager.getInstance( this ).unregisterReceiver( webServiceData );
     }// end of method onDestroy
 
     public static void enqueueWork( Context context, Intent work )
     {
         enqueueWork( context, WidgetUpdateService.class, JOB_ID, work );
-    }
+    }// end of method enqueueWork
 
     /**
      * {@inheritDoc}
@@ -208,8 +215,7 @@ public class WidgetUpdateService extends JobIntentService
         remoteViews = new RemoteViews( this.getPackageName(), R.layout.wl_weather_widget_activity );
         unitChange = Boolean.parseBoolean( intent.getDataString() );
 
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance( this );
-        int incomingAppWidgetId = 0;
+        appWidgetManager = AppWidgetManager.getInstance( this );
 
         String currLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
                 Preference.DEFAULT_WEATHER_LOCATION );
@@ -238,12 +244,28 @@ public class WidgetUpdateService extends JobIntentService
 
             // If a location has not been set then the weather cannot be processed
             if( !locationSet && !callMethod.equals( LOAD_WIDGET_BACKGROUND ) ) return;
+
+            // update the widget after the method call has completed
+            // determine how many widgets require updating
+            if ( incomingAppWidgetId != INVALID_APPWIDGET_ID )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                        "Updating widget: " + incomingAppWidgetId + "...",
+                        TAG + "::handleIntent" );
+                updateOneAppWidget( appWidgetManager, incomingAppWidgetId );
+            }// end of if block
+            else
+            {
+                updateAllAppWidgets( appWidgetManager );
+            }// end of else block
         }// end of if block
         else
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                     "Service called for weather update...",
                     TAG + "::handleIntent" );
+
+            weatherUpdate = true;
 
             // If a location has not been set then the weather cannot be processed
             if( !locationSet ) return;
@@ -395,6 +417,45 @@ public class WidgetUpdateService extends JobIntentService
                                         String.format( "https://api.weatherbit.io/v2.0/forecast/daily?city=%s&units=I&key=%s",
                                                 UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
                                 break;
+                            case WeatherLionApplication.YAHOO_WEATHER:
+                                expectedJSONSize = 1;
+
+                                try
+                                {
+                                    HttpHelper.getYahooWeatherData(
+                                        WeatherLionApplication.storedPreferences.getLocation().toLowerCase(),
+                                        yahooAppId, yahooConsumerKey, yahooConsumerSecret
+                                    );
+                                }// end of try block
+                                catch ( Exception e )
+                                {
+                                    strJSON = null;
+
+                                    // reverse the attempt to use Yahoo! Weather
+                                    loadPreviousWeatherData();
+                                    SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(
+                                            WeatherLionApplication.getAppContext() );
+                                    settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
+                                            WeatherLionApplication.previousWeatherProvider.toString() ).apply();
+
+                                    // Calling from a Non-UI Thread
+                                    Handler handler = new Handler( Looper.getMainLooper() );
+
+                                    handler.post( new Runnable()
+                                    {
+                                        @Override
+                                        public void run()
+                                        {
+                                            UtilityMethod.butteredToast( getApplicationContext(),
+                                                    WeatherLionApplication.YAHOO_WEATHER + " did not return data!",
+                                                    2, Toast.LENGTH_LONG );
+                                        }
+                                    });
+
+                                    return;
+                                }// end of catch block
+
+                                break;
                             case WeatherLionApplication.YR_WEATHER:
 
                                 // if this location has already been used there is no need to query the
@@ -425,72 +486,47 @@ public class WidgetUpdateService extends JobIntentService
                                 wxUrl.append( String.format( "https://www.yr.no/place/%s/%s/%s/forecast.xml",
                                         countryName, regionName, cityName ) );
                                 break;
-                            default:
-                                strJSON.add( "Invalid Provider" );
-
-                                break;
                         }// end of switch block
 
-                        if( wxDataProvider.equals( WeatherLionApplication.YAHOO_WEATHER ) )
-                        {
-                            try
-                            {
-                                strJSON.add( getYahooWeatherData( WeatherLionApplication.storedPreferences.getLocation().toLowerCase() ) );
-                            }// end of try block
-                            catch ( Exception e )
-                            {
-                                strJSON = null;
-                            }// end of catch block
-                        }// end of if block
-                        else
+                        // Yahoo! Weather uses an OAuth method to access data from the web service
+                        if( !wxDataProvider.equals( WeatherLionApplication.YAHOO_WEATHER ) )
                         {
                             if( wxUrl.length() != 0 && fxUrl.length() != 0 && axUrl.length() != 0 )
                             {
-                                strJSON.add( UtilityMethod.retrieveWeatherData( wxUrl.toString() ) );
-                                strJSON.add( UtilityMethod.retrieveWeatherData( fxUrl.toString() ) );
-                                strJSON.add( UtilityMethod.retrieveWeatherData( axUrl.toString() ) );
+                                expectedJSONSize = 3;
+                                retrieveWeatherData( wxUrl.toString() );
+                                retrieveWeatherData( fxUrl.toString() );
+                                retrieveWeatherData( axUrl.toString() );
                             }// end of if block
                             else if( wxUrl.length() != 0 && fxUrl.length() != 0 && axUrl.length() == 0 )
                             {
-                                strJSON.add( UtilityMethod.retrieveWeatherData( wxUrl.toString() ) );
-                                strJSON.add( UtilityMethod.retrieveWeatherData( fxUrl.toString() ) );
+                                expectedJSONSize = 2;
+                                retrieveWeatherData( wxUrl.toString() );
+                                retrieveWeatherData( fxUrl.toString() );
                             }// end of if block
-                            else if( wxUrl.length() != 0 && fxUrl.length() == 0  && axUrl.length() == 0 )
+                            else if( ( wxUrl.length() != 0 && fxUrl.length() == 0  && axUrl.length() == 0 ) ||
+                                    ( wxUrl.length() == 0 && fxUrl.length() != 0  && axUrl.length() == 0 ) ||
+                                    ( wxUrl.length() == 0 && fxUrl.length() == 0  && axUrl.length() != 0 ) )
                             {
-                                strJSON.add( UtilityMethod.retrieveWeatherData( wxUrl.toString() ) );
+                                expectedJSONSize = 1;
+                                retrieveWeatherData( wxUrl.toString() );
                             }// end of else if block
-                            else if( wxUrl.length() == 0 && fxUrl.length() != 0  && axUrl.length() == 0 )
-                            {
-                                strJSON.add( UtilityMethod.retrieveWeatherData( fxUrl.toString() ) );
-                            }// end of else if block
-                            else if( wxUrl.length() == 0 && fxUrl.length() == 0  && axUrl.length() != 0 )
-                            {
-                                strJSON.add( UtilityMethod.retrieveWeatherData( axUrl.toString() ) );
-                            }// end of else if block
-                        }// end of else block
+                        }// end of if block
 
                         incomingAppWidgetId = intent.getIntExtra( EXTRA_APPWIDGET_ID, INVALID_APPWIDGET_ID );
-
-                        // schedule the next widget update
-                        scheduleNextUpdate();
                     }// end of if block
                 }// end of if block
             }// end of if block
         }// end of else block
-
-        // determine how many widgets require updating
-        if ( incomingAppWidgetId != INVALID_APPWIDGET_ID )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Updating widget: " + incomingAppWidgetId + "...",
-                    TAG + "::handleIntent" );
-            updateOneAppWidget( appWidgetManager, incomingAppWidgetId );
-        }// end of if block
-        else
-        {
-            updateAllAppWidgets( appWidgetManager );
-        }// end of else block
     }// end of method handleWeatherData
+
+    private void broadcastWeatherUpdate()
+    {
+        Intent updateIntent = new Intent( WEATHER_UPDATE_SERVICE_MESSAGE );
+        LocalBroadcastManager manager =
+                LocalBroadcastManager.getInstance( getApplicationContext() );
+        manager.sendBroadcast( updateIntent );
+    }// end of method broadcastWeatherUpdate
 
     /**
      * This method uses refection to call a method using a {@code String} value representing the
@@ -538,7 +574,7 @@ public class WidgetUpdateService extends JobIntentService
         if( !unitChange && UtilityMethod.updateRequired( this ) )
         {
             // check that the ArrayList is not empty and the the first element is not null
-            if( strJSON != null && !strJSON.isEmpty() && strJSON.get( 0 ) != null )
+            if( strJSON != null && !strJSON.isEmpty() )
             {
                 // we are connected to the Internet if JSON data is returned
                 remoteViews.setViewVisibility( R.id.imvOffline, View.INVISIBLE );
@@ -642,7 +678,6 @@ public class WidgetUpdateService extends JobIntentService
 
                 }// end of catch block
 
-                //UtilityMethod.lastUpdated = new Date();
                 SimpleDateFormat dt = new SimpleDateFormat( "E h:mm a", Locale.ENGLISH );
                 String timeUpdated = dt.format( UtilityMethod.lastUpdated );
                 currentLocation.setLength( 0 );
@@ -680,7 +715,7 @@ public class WidgetUpdateService extends JobIntentService
             else // no json data was returned so check for Internet connectivity
             {
                 // Check the Internet connection availability
-                if( !UtilityMethod.hasInternetConnection(this) )
+                if( !UtilityMethod.hasInternetConnection(this ) )
                 {
                     File previousWeatherData = new File( WeatherLionApplication.WEATHER_DATA_XML );
 
@@ -695,7 +730,7 @@ public class WidgetUpdateService extends JobIntentService
                         2, Toast.LENGTH_LONG );
 
                         // display the offline icon on the widget
-                        remoteViews.setViewVisibility(R.id.imvOffline, View.VISIBLE);
+                        remoteViews.setViewVisibility( R.id.imvOffline, View.VISIBLE );
 
                     }// end of if block
                 }// end of if block
@@ -718,15 +753,11 @@ public class WidgetUpdateService extends JobIntentService
                             @Override
                             public void run()
                             {
-                                UtilityMethod.butteredToast( getApplicationContext(),
-                                WeatherLionApplication.storedPreferences.getProvider() + " did not return data!",
-                                2, Toast.LENGTH_LONG );
+                            UtilityMethod.butteredToast( getApplicationContext(),
+                            WeatherLionApplication.storedPreferences.getProvider() +
+                                    " did not return data!",2, Toast.LENGTH_LONG );
                             }
                         });
-
-                        // display the preference activity screen
-//                        Intent settingsIntent = new Intent( this, PrefsActivity.class );
-//                        startActivity( settingsIntent );
                     }// end of if block
                 }// end of else block
             }// end of inner else block
@@ -752,8 +783,32 @@ public class WidgetUpdateService extends JobIntentService
             WeatherLionApplication.currentSunsetTime = sunsetTime;
         }// end of else if block
 
-        // update the widget
-        appWidgetManager.updateAppWidget( appWidgetId, remoteViews );
+        // schedule the weather update only if weather was just updated
+        if( weatherUpdate && strJSON != null && !strJSON.isEmpty() )
+        {
+            // update the widget
+            appWidgetManager.updateAppWidget( appWidgetId, remoteViews );
+
+            // schedule the next widget update
+            scheduleNextUpdate();
+
+            // send out a broadcast that the weather has been updated
+            broadcastWeatherUpdate();
+        }// end of if block
+        else if( weatherUpdate && strJSON == null )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Undoing preference change...",
+                TAG + "::updateOneAppWidget" );
+            // reverse the preference change
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences( WeatherLionApplication.getAppContext() );
+            settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
+                    WeatherLionApplication.previousWeatherProvider.toString() ).apply();
+        }// end of else if block
+        else
+        {
+            // update the widget
+            appWidgetManager.updateAppWidget( appWidgetId, remoteViews );
+        }// end of else block
     }// end of method UpdateOneWidget
 
     /**
@@ -793,6 +848,25 @@ public class WidgetUpdateService extends JobIntentService
     }// end of method loadWeatherIcon
 
     /**
+     * Retrieves weather information from a specific weather provider's web service Url.
+     *
+     * @param wxUrl The providers webservice Url
+     */
+    private static void retrieveWeatherData( String wxUrl )
+    {
+        try
+        {
+            HttpHelper.downloadUrl( wxUrl, true );
+        }// end of try block
+        catch ( IOException e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                    e.getMessage(), TAG +
+                    "::retrieveWeatherData" );
+        }// end of catch block
+    }// end of method retrieveWeatherData
+
+    /**
      * Schedules the next App Widget update to occur based on
      * the interval specified by the user of the default interval
      * of 30 minutes of 1800000 milliseconds.
@@ -825,90 +899,15 @@ public class WidgetUpdateService extends JobIntentService
         long updateTime = c.getTimeInMillis();
 
         alarmManager.setExact( AlarmManager.RTC, updateTime, alarmIntent );
+
+//        int seconds = 60;
+//        alarmManager.setExact( AlarmManager.RTC,
+//                System.currentTimeMillis() + (seconds * 1000), alarmIntent );
+
         UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Next update scheduled for " +
                 new SimpleDateFormat( "h:mm:ss a", Locale.ENGLISH ).format( c.getTime() ) + ".",
                 TAG + "::scheduleNextUpdate" );
     }// end of method scheduleNextUpdate
-
-    /***
-     * Yahoo! Developers Network 2019 documentation
-     * url: https://developer.yahoo.com/weather/documentation.html#java
-     *
-     * @return A {@code String} representation of JSON data
-     */
-    public static String getYahooWeatherData( String wxCity ) throws Exception
-    {
-        wxCity = wxCity.replace( " ", "%2B" ).replace( ",", "%2C" ); // add URL Encoding for two characters
-        final String url = "https://weather-ydn-yql.media.yahoo.com/forecastrss";
-
-        long timestamp = new Date().getTime() / 1000;
-        byte[] nonce = new byte[ 32 ];
-        Random rand = new Random();
-        rand.nextBytes( nonce );
-        String oauthNonce = new String( nonce ).replaceAll( "\\W", "" );
-
-        List<String> parameters = new ArrayList<>();
-        parameters.add( "oauth_consumer_key=" + yahooConsumerKey );
-        parameters.add( "oauth_nonce=" + oauthNonce );
-        parameters.add( "oauth_signature_method=HMAC-SHA1" );
-        parameters.add( "oauth_timestamp=" + timestamp );
-        parameters.add( "oauth_version=1.0" );
-        // Make sure value is encoded
-        parameters.add( "location=" + wxCity );
-        parameters.add( "format=json" );
-        Collections.sort( parameters );
-
-        StringBuffer parametersList = new StringBuffer();
-//        StringBuilder parametersList = new StringBuilder();
-
-        for ( int i = 0; i < parameters.size(); i++ )
-        {
-            parametersList.append( String.format( "%s%s", ( ( i > 0 ) ? "&" : "" ), parameters.get( i )  ) );
-        }// end of for loop
-
-        String signatureString = "GET&" +
-                URLEncoder.encode( url, "UTF-8" ) + "&" +
-                URLEncoder.encode( parametersList.toString(), "UTF-8" );
-
-        String signature;
-
-        try
-        {
-            SecretKeySpec signingKey =
-                    new SecretKeySpec( ( yahooConsumerSecret + "&" ).getBytes(), "HmacSHA1" );
-            Mac mac = Mac.getInstance( "HmacSHA1" );
-            mac.init( signingKey );
-            byte[] rawHMAC = mac.doFinal( signatureString.getBytes() );
-            Base64.Encoder encoder = Base64.getEncoder();
-            signature = encoder.encodeToString( rawHMAC );
-        }// end of try block
-        catch ( Exception e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
-                    "Unable to append signature.", TAG + "::getYahooWeatherData" );
-            return null;
-        }// end of catch block
-
-        String authorizationLine = "OAuth " +
-                "oauth_consumer_key=\"" + yahooConsumerKey + "\", " +
-                "oauth_nonce=\"" + oauthNonce + "\", " +
-                "oauth_timestamp=\"" + timestamp + "\", " +
-                "oauth_signature_method=\"HMAC-SHA1\", " +
-                "oauth_signature=\"" + signature + "\", " +
-                "oauth_version=\"1.0\"";
-
-        // The app id header of "Yahoo-App-Id" has been deprecated to "X-Yahoo-App-Id"
-        HttpRequest request = new HttpRequest( URI.create( url + "?location=" + wxCity + "&format=json" ).toString() );
-        request.withHeaders(
-                "Authorization: " + authorizationLine,
-                "X-Yahoo-App-Id: " + yahooAppId,
-                "Content-Type: application/json"
-        );
-
-        request.prepare( HttpRequest.Method.GET );
-
-        return request.sendAndReadString();
-    }// end of method getYahooWeatherData
 
     private void loadDarkSkyWeather()
     {
@@ -941,13 +940,10 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         remoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
-                " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric() ?
+                " " + Math.round( Float.parseFloat( currentWindSpeed.toString() ) ) +
+                ( WeatherLionApplication.storedPreferences.getUseMetric() ?
                 " km/h" : " mph" ) );
 
-        remoteViews.setTextViewText( R.id.txvWindReading,
-                currentWindDirection +
-                        " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                        " km/h" : " mph" ) );
         remoteViews.setTextViewText( R.id.txvHumidity,
                 currentHumidity.toString() + "%" );
 
@@ -1235,13 +1231,10 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         remoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
-                " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                " km/h" : " mph" ) );
-
-        remoteViews.setTextViewText( R.id.txvWindReading,
-                currentWindDirection +
-                        " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric() ?
+                " " + Math.round( Float.parseFloat( currentWindSpeed.toString() ) ) +
+                ( WeatherLionApplication.storedPreferences.getUseMetric() ?
                         " km/h" : " mph" ) );
+
         remoteViews.setTextViewText( R.id.txvHumidity,
                 currentHumidity.toString() + "%" );
 
@@ -1553,8 +1546,9 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         remoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
-                " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                " km/h" : " mph" ) );
+                " " + Math.round( Float.parseFloat( currentWindSpeed.toString() ) ) +
+                ( WeatherLionApplication.storedPreferences.getUseMetric() ?
+                        " km/h" : " mph" ) );
 
         remoteViews.setTextViewText( R.id.txvHumidity,
                 currentHumidity.toString() + "%" );
@@ -2102,8 +2096,10 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         remoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
-                " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                " km/h" : " mph" ) );
+                " " + Math.round( Float.parseFloat( currentWindSpeed.toString() ) ) +
+                ( WeatherLionApplication.storedPreferences.getUseMetric() ?
+                        " km/h" : " mph" ) );
+
         // Update the current location and update time stamp
         String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
@@ -2422,8 +2418,10 @@ public class WidgetUpdateService extends JobIntentService
         remoteViews.setTextViewText( R.id.txvWeatherCondition, UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         remoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
-                " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                " km/h" : " mph" ) );
+                " " + Math.round( Float.parseFloat( currentWindSpeed.toString() ) ) +
+                ( WeatherLionApplication.storedPreferences.getUseMetric() ?
+                        " km/h" : " mph" ) );
+
         remoteViews.setTextViewText( R.id.txvHumidity,currentHumidity.toString() + "%" );
 
         // Yahoo loves to omit a zero on the hour mark ex: 7:0 am
@@ -2688,6 +2686,12 @@ public class WidgetUpdateService extends JobIntentService
         formatWeatherCondition();
 
         remoteViews.setTextViewText( R.id.txvWeatherCondition, UtilityMethod.toProperCase( currentCondition.toString() ) );
+
+        remoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
+                " " + Math.round( Float.parseFloat( currentWindSpeed.toString() ) ) +
+                ( WeatherLionApplication.storedPreferences.getUseMetric() ?
+                        " km/h" : " mph" ) );
+
         remoteViews.setTextViewText( R.id.txvHumidity,
                 !currentHumidity.toString().contains( "%" ) ?  currentHumidity.toString() + "%" : currentHumidity.toString() );
 
@@ -4131,4 +4135,39 @@ public class WidgetUpdateService extends JobIntentService
             ( UtilityMethod.temperatureColor( Integer.parseInt(
                 currentTemp.toString().replaceAll( "\\D+","" ) ) ) ) );
     }// end of method updateTemps
+
+    /**
+     * This broadcast receiver waits for a broadcast from HttpHelper before
+     * attempting to load the widget data
+     */
+    private BroadcastReceiver webServiceData = new BroadcastReceiver()
+    {
+        @Override
+        public void onReceive( Context context, Intent intent )
+        {
+            if( strJSON != null )
+            {
+                strJSON.add( intent.getStringExtra( HttpHelper.WEB_SERVICE_DATA_PAYLOAD ) );
+
+                if( expectedJSONSize == strJSON.size() )
+                {
+                    // ensure that the id is valid
+                    if( incomingAppWidgetId == INVALID_APPWIDGET_ID ) incomingAppWidgetId = WidgetHelper.getWidgetId();
+
+                    // determine how many widgets require updating
+                    if ( incomingAppWidgetId != INVALID_APPWIDGET_ID )
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            "Updating widget: " + incomingAppWidgetId + "...",
+                                TAG + "::handleIntent" );
+                        updateOneAppWidget( appWidgetManager, incomingAppWidgetId );
+                    }// end of if block
+                    else
+                    {
+                        updateAllAppWidgets( appWidgetManager );
+                    }// end of else block
+                }// end of if block
+            }// end of if block
+        }// end of anonymous method onReceive
+    };// end of webServiceData
 }// end of class WidgetUpdateService

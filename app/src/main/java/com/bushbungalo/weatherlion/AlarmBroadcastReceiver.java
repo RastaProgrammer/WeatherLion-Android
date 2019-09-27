@@ -22,13 +22,18 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver
     {
         if ( ACTION_ALARM.equals( intent.getAction() ) )
         {
-            Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-            updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
-            WidgetUpdateService.enqueueWork( context, updateIntent );
+            if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
+            {
+                UtilityMethod.refreshRequested = true;
 
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Update requested by the alarm broadcast receiver",
-                    "AlarmBroadcastReceiver::onReceive" );
+                Intent updateIntent = new Intent( context, WidgetUpdateService.class );
+                updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                WidgetUpdateService.enqueueWork( context, updateIntent );
+
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                        "Update requested by the alarm broadcast receiver",
+                        "AlarmBroadcastReceiver::onReceive" );
+            }// end of if block
         }// end of if block
     }// end of method onReceive
 }// end of class AlarmBroadcastReceiver

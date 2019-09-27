@@ -34,19 +34,27 @@ public class GeoLocationService extends IntentService
         String response;
 
         // if it is a website then we know it is a webservice that were are calling
-        if( Objects.requireNonNull( uri ).toString().contains("http") )
+        if( Objects.requireNonNull( uri ).toString().contains( "http" ) )
         {
-            try
+            if( UtilityMethod.hasInternetConnection( this ) )
             {
-                response = HttpHelper.downloadUrl( Objects.requireNonNull( uri ).toString() );
-            }// end of try block
-            catch ( IOException e )
+                try
+                {
+                    response = HttpHelper.downloadUrl( Objects.requireNonNull( uri ).toString(),
+                        false );
+                }// end of try block
+                catch ( IOException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                            "::handleWeatherData [line: " +
+                                    e.getStackTrace()[1].getLineNumber()+ "]" );
+                    return;
+                }// end of catch block
+            }// end of if block
+            else
             {
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                "::handleWeatherData [line: " +
-                        e.getStackTrace()[1].getLineNumber()+ "]" );
-                return;
-            }// end of catch block
+                response = uri.toString();
+            }// end of else block
         }// end of if block
         else
         {
@@ -58,7 +66,7 @@ public class GeoLocationService extends IntentService
         LocalBroadcastManager manager =
                 LocalBroadcastManager.getInstance( getApplicationContext() );
         manager.sendBroadcast( messageIntent );
-    }
+    }// end of method onHandleIntent
 
     @Override
     public void onCreate()

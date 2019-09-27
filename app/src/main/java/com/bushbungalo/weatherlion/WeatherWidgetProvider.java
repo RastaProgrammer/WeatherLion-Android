@@ -7,14 +7,12 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.provider.AlarmClock;
-import android.support.v4.content.LocalBroadcastManager;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -62,30 +60,6 @@ public class WeatherWidgetProvider extends AppWidgetProvider
     public static boolean sunsetIconsInUse;
     public static boolean sunsetUpdatedPerformed;
 
-    private BroadcastReceiver networkStateBroadcastReceiver = new BroadcastReceiver()
-    {
-        @Override
-        public void onReceive( Context context, Intent intent )
-        {
-            boolean connectedToInternet = intent.getBooleanExtra(
-                    WeatherLionApplication.LION_MAIN_NETWORK_PAYLOAD,false );
-
-            // This should be triggered after a reconnection to the internet
-            if( connectedToInternet && UtilityMethod.updateRequired( context ) )
-            {
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                        "Network connection restored...",
-                        TAG + "networkStateBroadcastReceiver" );
-                // set the applicable flags that main will use to start the service
-                WeatherLionApplication.changeWidgetUnit =  false;
-
-                Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-                updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
-                WidgetUpdateService.enqueueWork( context, updateIntent );
-            }// end of if block
-        }// end of method onReceive
-    };
-
     /**
      * {@inheritDoc}
      */
@@ -118,13 +92,8 @@ public class WeatherWidgetProvider extends AppWidgetProvider
     public void onUpdate( Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds )
     {
         mAppWidgetManager = appWidgetManager;
-        UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO, "Update request received!",
-                TAG + "::onUpdate");
-
-        // Register for system broadcasts
-        LocalBroadcastManager.getInstance( context )
-                .registerReceiver( networkStateBroadcastReceiver,
-                        new IntentFilter( WeatherLionApplication.LION_MAIN_NETWORK_MESSAGE ) );
+        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Update request received!",
+                TAG + "::onUpdate" );
 
         ComponentName watchWidget = new ComponentName( context, WeatherWidgetProvider.class );
         remoteViews = new RemoteViews( context.getPackageName(), R.layout.wl_weather_widget_activity );
@@ -197,9 +166,7 @@ public class WeatherWidgetProvider extends AppWidgetProvider
     @Override
     public void onDeleted( Context context, int[] appWidgetIds )
     {
-        //unregister my broadcast receivers
-        LocalBroadcastManager.getInstance( context ).unregisterReceiver( networkStateBroadcastReceiver );
-        super.onDeleted( context, appWidgetIds );
+      super.onDeleted( context, appWidgetIds );
     }
 
     // Catch the click on widget views

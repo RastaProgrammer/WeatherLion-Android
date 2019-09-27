@@ -42,6 +42,8 @@ import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 import com.bushbungalo.weatherlion.utils.WidgetHelper;
 import com.bushbungalo.weatherlion.utils.XMLHelper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,9 +62,11 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 import javax.crypto.Cipher;
@@ -94,6 +98,7 @@ public class WeatherLionApplication extends Application
 
     // local weather data file
     public static final String WEATHER_DATA_XML = "WeatherData.xml";
+    public static final String SERVICE_CALL_LOG = "ServiceCallsToday.json";
 
     // preferences constants
     public static final String WEATHER_SOURCE_PREFERENCE = "pref_wx_source";
@@ -127,6 +132,8 @@ public class WeatherLionApplication extends Application
     public static final String YR_WEATHER = "Norwegian Meteorological Institute";
     public static String[] providerNames = new String[] {
             DARK_SKY, GEO_NAMES, HERE_MAPS, OPEN_WEATHER, WEATHER_BIT, YAHOO_WEATHER, YR_WEATHER };
+
+    public static final int DAILY_CALL_LIMIT = 1000;
 
     public static String[] authorizedProviders;
 
@@ -223,6 +230,7 @@ public class WeatherLionApplication extends Application
     public static final String UNIT_CHANGED = "true";
 
     public static File previousCitySearchFile = null;
+    public static WeatherLionApplication thisClass;
 
     /**
      * Checks to see if the program is being run for the first time.
@@ -329,7 +337,7 @@ public class WeatherLionApplication extends Application
 
             authorizedProviders = wxOnly.toArray( new String[0] );
         }// end of anonymous method onReceive
-    };// end of BroadcastReceiver
+    };// end of keyUpdateReceiver
 
     /**
      * Call the weather service that attempts to load the widget with
@@ -419,6 +427,9 @@ public class WeatherLionApplication extends Application
     public static void callMethodByName( Object obj, String methodName, Class[] parameterTypes, Object[] paramValues )
     {
         Method method;
+
+        // If the object is null that means that the method is private to this class
+        if( obj == null ) obj = thisClass;
 
         try
         {
@@ -607,6 +618,43 @@ public class WeatherLionApplication extends Application
         // Obtain Data Access
         loadAccessProviders();
     }// end of method constructDataAccess
+
+
+    private void createServiceCallLog()
+    {
+        File callTracker = new File( this.getFileStreamPath( SERVICE_CALL_LOG ).toString() );
+        Map<String, Integer> exportedServiceMap = new HashMap<>();
+        exportedServiceMap.put( DARK_SKY, 0 );
+        exportedServiceMap.put( HERE_MAPS, 0 );
+        exportedServiceMap.put( OPEN_WEATHER, 0 );
+        exportedServiceMap.put( WEATHER_BIT, 0 );
+        exportedServiceMap.put( YAHOO_WEATHER, 0 );
+        exportedServiceMap.put( YR_WEATHER, 0 );
+
+        Map<String, Object> exportedServiceLog = new HashMap<>();
+        exportedServiceLog.put( "Date", new Date() );
+        exportedServiceLog.put( "Service", exportedServiceMap );
+
+        Date lastModDate = new Date( callTracker.lastModified() );
+        String lm = new SimpleDateFormat(
+                "MMM dd, yyyy", Locale.ENGLISH ).format( lastModDate );
+        String today = new SimpleDateFormat(
+                "MMM dd, yyyy", Locale.ENGLISH ).format( new Date() );
+
+        // create a new file if it does not exists or the file is from another date
+        if( !callTracker.exists() || !today.equals( lm ) )
+        {
+            Gson gson = new GsonBuilder().create();
+
+            // return the JSON string array as a string
+            String json = gson.toJson( exportedServiceLog );
+
+            JSONHelper.saveToJSONFile( json, callTracker.toString(), true );
+
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Service log created!",
+                    TAG + "::createServiceCallLog" );
+        }// end of if block
+    }// end of method createServiceCallLog
 
     /***
      * Decrypt a {@code String} the was encrypted using DES Encryption
@@ -1126,6 +1174,7 @@ public class WeatherLionApplication extends Application
     {
         super.onCreate();
         context = getApplicationContext();
+        thisClass = WeatherLionApplication.this;
 
         // setup a broadcast receiver that will listen for gps data
         IntentFilter appFilter = new IntentFilter();
@@ -1155,6 +1204,7 @@ public class WeatherLionApplication extends Application
         previousWeatherProvider.append( storedPreferences.getProvider() );
 
         checkFirstRun(); // check if this if the first time the app is being ran or data was cleared
+        createServiceCallLog();
 
         iconSet = spf.getString( ICON_SET_PREFERENCE, Preference.DEFAULT_ICON_SET );
 
@@ -1438,6 +1488,7 @@ public class WeatherLionApplication extends Application
      */
     private void showPreferenceActivity( boolean locationSet )
     {
+        // Launch the settings activity
         Intent settingsIntent = new Intent( this, PrefsActivity.class );
         settingsIntent.putExtra( WeatherLionMain.LION_MAIN_PAYLOAD, locationSet );
         startActivity( settingsIntent );
@@ -1661,11 +1712,11 @@ public class WeatherLionApplication extends Application
                     {
                         if( UtilityMethod.updateRequired( WeatherLionApplication.getAppContext() ) )
                         {
-                            Intent networkStateIntent = new Intent( LION_MAIN_NETWORK_MESSAGE );
-                            networkStateIntent.putExtra( LION_MAIN_NETWORK_PAYLOAD, isConnectedToInternet( context ) );
-                            LocalBroadcastManager manager =
-                                    LocalBroadcastManager.getInstance( getApplicationContext() );
-                            manager.sendBroadcast( networkStateIntent );
+                            UtilityMethod.refreshRequested = true;
+
+                            Intent updateIntent = new Intent( context, WidgetUpdateService.class );
+                            updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                            WidgetUpdateService.enqueueWork( context, updateIntent );
                         }// end of if block
                         else
                         {

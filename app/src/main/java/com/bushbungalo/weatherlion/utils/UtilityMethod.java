@@ -2396,12 +2396,13 @@ public abstract class UtilityMethod
 
     /**
      * Determine if the device is connected to the Internet
+     *
      * @param context The calling context.
      * @return True/False depending on the connection state.
      */
-    public static boolean hasInternetConnection(Context context)
+    public static boolean hasInternetConnection( Context context )
     {
-        return NetworkHelper.hasNetworkAccess(context);
+        return NetworkHelper.hasNetworkAccess( context );
     }// end of method hasInternetConnection
 
     /**
@@ -2642,7 +2643,7 @@ public abstract class UtilityMethod
                 {
                     try
                     {
-                        strJSON = HttpHelper.downloadUrl( geoUrl );
+                        strJSON = HttpHelper.downloadUrl( geoUrl, false );
                     }// end of try block
                     catch ( IOException e )
                     {
@@ -2691,11 +2692,11 @@ public abstract class UtilityMethod
                         + "&app_code=" + WidgetUpdateService.hereAppCode
                         + "&searchtext=" + escapeUriString( wxLocation.toLowerCase() );
 
-        if ( hasInternetConnection(getAppContext()) )
+        if ( hasInternetConnection( getAppContext()) )
         {
             try
             {
-                strJSON = HttpHelper.downloadUrl( geoUrl );
+                strJSON = HttpHelper.downloadUrl( geoUrl, false );
             }// end of try block
             catch ( IOException e )
             {
@@ -2768,11 +2769,11 @@ public abstract class UtilityMethod
                 "http://maps.googleapis.com/maps/api/geocode/json?address="+
                         escapeUriString(wxLocation.toLowerCase()) + "&sensor=false";
 
-        if (UtilityMethod.hasInternetConnection(getAppContext()))
+        if ( hasInternetConnection( getAppContext() ) )
         {
             try
             {
-                strJSON = HttpHelper.downloadUrl(geoUrl);
+                strJSON = HttpHelper.downloadUrl( geoUrl, false );
             }// end of try block
             catch (IOException e)
             {
@@ -2782,8 +2783,8 @@ public abstract class UtilityMethod
         }// end of if block
         else
         {
-            butteredToast(getAppContext(),
-                    "Network not available!", 2, Toast.LENGTH_SHORT);
+            butteredToast( getAppContext(),
+                    "Network not available!", 2, Toast.LENGTH_SHORT );
 
         }// end of else block
 
@@ -2807,22 +2808,23 @@ public abstract class UtilityMethod
                         escapeUriString(wxLocation.toLowerCase()) +
                         "%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
 
-        if (UtilityMethod.hasInternetConnection(getAppContext()))
+        if ( hasInternetConnection( getAppContext() ) )
         {
             try
             {
-                strJSON = HttpHelper.downloadUrl(geoUrl);
+                strJSON = HttpHelper.downloadUrl( geoUrl, false );
             }// end of try block
-            catch (IOException e)
+            catch ( IOException e )
             {
-                e.printStackTrace();
+               logMessage( LogLevel.SEVERE, e.getMessage(), TAG +
+                       "::retrieveYahooGeoLocationUsingAddress" );
             }// end of catch block
 
         }// end of if block
         else
         {
-            butteredToast(getAppContext(),
-                    "Network not available!", 2, Toast.LENGTH_SHORT);
+            butteredToast( getAppContext(),
+                    "Network not available!", 2, Toast.LENGTH_SHORT );
 
         }// end of else block
 
@@ -2845,22 +2847,23 @@ public abstract class UtilityMethod
         String geoUrl =
                 "http://maps.googleapis.com/maps/api/geocode/json?latlng="+lat+","+lng+"&sensor=false";
 
-        if (UtilityMethod.hasInternetConnection(getAppContext()))
+        if ( hasInternetConnection( getAppContext() ) )
         {
             try
             {
-                strJSON = HttpHelper.downloadUrl(geoUrl);
+                strJSON = HttpHelper.downloadUrl( geoUrl, false );
             }// end of try block
-            catch (IOException e)
+            catch ( IOException e )
             {
-                e.printStackTrace();
+                logMessage( LogLevel.SEVERE, e.getMessage(), TAG +
+                        "::retrieveGoogleGeoLocationUsingCoordinates" );
             }// end of catch block
 
         }// end of if block
         else
         {
-            butteredToast(getAppContext(),
-                    "Network not available!", 2, Toast.LENGTH_SHORT);
+            butteredToast( getAppContext(),
+                    "Network not available!", 2, Toast.LENGTH_SHORT );
 
         }// end of else block
 
@@ -2868,30 +2871,6 @@ public abstract class UtilityMethod
         return strJSON;
 
     }// end of method retrieveGoogleGeoLocationUsingCoordinates
-
-    /**
-     * Retrieves weather information from a specific weather provider's web service Url.
-     *
-     * @param wxUrl The providers webservice Url
-     * @return  A {@code String} representation of a JSON {@code Object} returned from the web service.
-     */
-    public static String retrieveWeatherData(String wxUrl)
-    {
-        String strJSON = null;
-
-        try
-        {
-            strJSON = HttpHelper.downloadUrl(wxUrl);
-        }// end of try block
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }// end of catch block
-
-        // Return the data from specified url
-        return strJSON;
-
-    }// end of method retrieveWeatherData
 
     /**
      * Determine if the widget needs to be refreshed based on the specified refresh period.
@@ -3198,7 +3177,7 @@ public abstract class UtilityMethod
         if( new File( JSONHelper.PREVIOUSLY_FOUND_CITIES_JSON ).exists() )
         {
             Gson gson = new Gson();
-            JSONHelper.cityDataList = JSONHelper.importFromJSON();
+            JSONHelper.cityDataList = JSONHelper.importServiceCallLog();
             //convert the list to a JSON string
             String jsonString = gson.toJson(JSONHelper.cityDataList);
 

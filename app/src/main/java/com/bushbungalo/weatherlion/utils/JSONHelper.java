@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
@@ -47,7 +48,7 @@ public class JSONHelper
         // attempt to import data from local storage
         if( previousCities.exists() )
         {
-            cityDataList = importFromJSON();
+            cityDataList = importServiceCallLog();
             cityDataList.add( dataItem );
             jsonString = gson.toJson( cityDataList );
         }// end of if block
@@ -89,7 +90,7 @@ public class JSONHelper
         return false;
     }// end of method  exportToJSON
 
-    static List< CityData > importFromJSON()
+    static List< CityData > importServiceCallLog()
     {
         FileReader reader = null;
 
@@ -112,7 +113,7 @@ public class JSONHelper
         catch ( FileNotFoundException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-        TAG + "::exportToJSON [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
+                    TAG + "::exportToJSON [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
         }// end of catch block
         finally
         {
@@ -131,7 +132,52 @@ public class JSONHelper
         }// end of finally block
 
         return cityDataList;
-    }// end of method importFromJSON
+    }// end of method importServiceCallLog
+
+    public static LinkedTreeMap<String, Object> importServiceCallLog(String filePath )
+    {
+        FileReader reader = null;
+        LinkedTreeMap<String, Object> fileData = null;
+
+        try
+        {
+            File file = new File( filePath );
+
+            // if the is a file present then it will contain a list with at least on object
+            if( file.exists() )
+            {
+                reader = new FileReader( file );
+
+                Gson gson = new Gson();
+
+                // convert the file JSON into a list of objects
+                fileData = gson.fromJson(reader, new TypeToken<LinkedTreeMap<String, Object>>() {}.getType());
+            }// end of if block
+
+        }// end of try block
+        catch ( FileNotFoundException e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                    TAG + "::importFormJSON [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
+        }// end of catch block
+        finally
+        {
+            // close the file reader object
+            if( reader != null )
+            {
+                try
+                {
+                    reader.close();
+                } // end of try block
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }// end of catch block
+            }// end of if block
+        }// end of finally block
+
+        return fileData;
+    }// end of method importServiceCallLog
 
     /***
      * Saves JSON data to a local file for quicker access later.
@@ -140,15 +186,15 @@ public class JSONHelper
      * @param path The path where the data will reside locally.
      * @return	True/False depending on the success of the operation.
      */
-    public static boolean saveToJSONFile( String jsonData, String path )
+    public static boolean saveToJSONFile( String jsonData, String path, boolean overwrite )
     {
         boolean fileSaved = false;
         FileOutputStream fileOutputStream = null;
         File storageFile = new File( path );
 
-        if (jsonData != null)
+        if ( jsonData != null )
         {
-            if (!storageFile.exists())
+            if ( !storageFile.exists() || overwrite )
             {
                 try
                 {
@@ -162,6 +208,60 @@ public class JSONHelper
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
                     TAG + "::saveToJSONFile [line: " +
                             UtilityMethod.getExceptionLineNumber( e )  + "]" );
+                }// end of catch block
+                finally
+                {
+                    // close the file writer object
+                    if( fileOutputStream != null )
+                    {
+                        try
+                        {
+                            fileOutputStream.close();
+                        } // end of try block
+                        catch ( IOException e )
+                        {
+                            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                                    TAG + "::saveToJSONFile [line: " +
+                                            UtilityMethod.getExceptionLineNumber( e )  + "]" );
+                        }// end of catch block
+                    }// end of if block
+                }// end of finally block
+            }// end of if block
+        }// end of if block
+
+        return fileSaved;
+
+    }// end of method saveToJSONFile
+
+    /***
+     * Saves JSON data to a local file for quicker access later.
+     *
+     * @param jsonData	JSON data formatted as a {@code String}.
+     * @param path The path where the data will reside locally.
+     * @return	True/False depending on the success of the operation.
+     */
+    public static boolean updateJSONFile( String jsonData, String path )
+    {
+        boolean fileSaved = false;
+        FileOutputStream fileOutputStream = null;
+        File storageFile = new File( path );
+
+        if ( jsonData != null)
+        {
+            if ( storageFile.exists() )
+            {
+                try
+                {
+                    fileOutputStream = new FileOutputStream( path );
+                    fileOutputStream.write( jsonPrettify( jsonData ).getBytes() );
+
+                    fileSaved = true;
+                }// end of try block
+                catch ( IOException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                            TAG + "::updateJSONFile [line: " +
+                                    UtilityMethod.getExceptionLineNumber( e )  + "]" );
                 }// end of catch block
                 finally
                 {

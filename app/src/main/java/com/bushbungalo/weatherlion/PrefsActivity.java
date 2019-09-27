@@ -28,14 +28,25 @@ import android.widget.Toast;
 import com.bushbungalo.weatherlion.services.GeoLocationService;
 import com.bushbungalo.weatherlion.services.LocationTrackerService;
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
+import com.bushbungalo.weatherlion.utils.JSONHelper;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.internal.LinkedTreeMap;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
@@ -61,6 +72,8 @@ public class PrefsActivity extends AppCompatActivity
     public Intent intentStarter;
     public Activity mActivity;
 
+    private static boolean userClickedPreference;
+
     /**
      * {@inheritDoc}
      */
@@ -70,6 +83,12 @@ public class PrefsActivity extends AppCompatActivity
         SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
         String widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
                 com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
+
+        // ensure that we capture the current weather data provider before any changes are made
+        WeatherLionApplication.previousWeatherProvider.setLength( 0 );
+
+        WeatherLionApplication.previousWeatherProvider.append( ( spf.getString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
+                com.bushbungalo.weatherlion.Preference.DEFAULT_WX_PROVIDER ) ) );
 
         boolean locationSet = getIntent().getBooleanExtra( WeatherLionMain.LION_MAIN_PAYLOAD, false );
 
@@ -233,6 +252,7 @@ public class PrefsActivity extends AppCompatActivity
     public static class SettingsFragment extends PreferenceFragment implements
             Preference.OnPreferenceChangeListener
     {
+        private boolean okToUse = false;
         PrefsActivity outer = new PrefsActivity();
         private CityFinderPreference locationPref;
         SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( WeatherLionApplication.getAppContext() );
@@ -393,6 +413,8 @@ public class PrefsActivity extends AppCompatActivity
                 }// end of if block
             }// end of else block
 
+            Preference weatherSource = findPreference( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE );
+
             Preference useMetricSwitch = findPreference( WeatherLionApplication.USE_METRIC_PREFERENCE );
 
             boolean useSystemLocation = spf.getBoolean( WeatherLionApplication.USE_GPS_LOCATION_PREFERENCE,
@@ -415,6 +437,15 @@ public class PrefsActivity extends AppCompatActivity
             LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
                 .registerReceiver( widgetBackgroundPreferenceBR, new IntentFilter(
                     WidgetBackgroundPreference.WIDGET_BACKGROUND_SERVICE_MESSAGE ) );
+
+            weatherSource.setOnPreferenceClickListener( new Preference.OnPreferenceClickListener()
+            {
+                public boolean onPreferenceClick( Preference preference )
+                {
+                    userClickedPreference = true;
+                    return true;
+                }
+            });
 
             useGpsSwitch.setOnPreferenceChangeListener( new Preference.OnPreferenceChangeListener()
             {
@@ -534,17 +565,28 @@ public class PrefsActivity extends AppCompatActivity
                     String entry = (String) listPreference.getEntries()[ prefIndex ];
                     String entryValue = (String) listPreference.getEntryValues()[ prefIndex ];
                     String preferenceTitle = (String) preference.getTitle();
-
                     preference.setSummary( entry );
 
                     // handle preferences using the built in ListPreference
                     if( preferenceTitle.equals( getString( R.string.wx_source ) ) )
                     {
-                        if( !WeatherLionApplication.previousWeatherProvider.toString().equals( entry ) )
+                        if(  userClickedPreference &&
+                                !WeatherLionApplication.previousWeatherProvider.toString().equals( entry ) )
                         {
-                            WeatherLionApplication.storedPreferences.setProvider( entry );
+                            okToUse = okToUseService( entry );
 
-                            UtilityMethod.refreshRequested = true;
+                            if( okToUse )
+                            {
+                                WeatherLionApplication.storedPreferences.setProvider( entry );
+                                UtilityMethod.refreshRequested = true;
+                            }// end of if block
+                            else
+                            {
+                                refreshPreference( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE );
+                                UtilityMethod.butteredToast( getContext(),
+                                        "The daily call limit has been exceeded for " + entry + ".",
+                                        1, Toast.LENGTH_SHORT );
+                            }// end of else
                         }// end of if block
                     }// end of if block
                     else if( preferenceTitle.equals( getString( R.string.update_interval ) ) )
@@ -578,9 +620,10 @@ public class PrefsActivity extends AppCompatActivity
                 updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
                 WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(),
                         updateIntent );
+
             }// end of if block
 
-            return true;
+            return okToUse;
         }// end of method onPreferenceChange
 
         public void retrieveGpsLocation()
@@ -750,6 +793,76 @@ public class PrefsActivity extends AppCompatActivity
         }// end of method saveLocationPreference
 
         /**
+         * Checks to ensure that calls to each service provider does not exceed a limit
+         *
+         * @param provider  The selected weather provider
+         * @return  A value of true/false dependent on the outcome of the check
+         */
+        private boolean okToUseService( String provider )
+        {
+            boolean ok = false;
+
+            Map<String, Object> importedServiceLog = JSONHelper.importServiceCallLog(
+                getContext().getFileStreamPath(
+                                WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
+            String date = (String) importedServiceLog.get( "Date" );
+            Date logDate = null;
+            Map importedServiceMap = (LinkedTreeMap) Objects.requireNonNull( importedServiceLog )
+                    .get( "Service" );
+
+            SimpleDateFormat ldf = new SimpleDateFormat( "MMM dd, yyyy hh:mm:ss a",
+                    Locale.ENGLISH );
+            SimpleDateFormat sdf = new SimpleDateFormat( "MMM dd, yyyy", Locale.ENGLISH );
+
+            int callCount;
+
+            try
+            {
+                logDate = ldf.parse( date );
+            } // end of try block
+            catch ( ParseException e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                        TAG + "::okToUseService [line: " +
+                                e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+            }// end of catch block
+
+            // if we are working with today's log which we should be
+            if( sdf.format( logDate ).equals( sdf.format( new Date() ) ) )
+            {
+                if( importedServiceMap != null )
+                {
+                    Map<String, Object> exportServiceLog = new HashMap<>();
+                    exportServiceLog.put( "Date", new Date() );
+                    exportServiceLog.put( "Service", importedServiceMap );
+
+                    callCount = (int) (double) importedServiceMap.get( provider );
+
+                    if( callCount < WeatherLionApplication.DAILY_CALL_LIMIT )
+                    {
+                        importedServiceMap.put( provider, ++callCount );
+
+                        Gson gson = new GsonBuilder().create();
+
+                        // return the JSON string array as a string
+                        String json = gson.toJson( exportServiceLog );
+
+                        JSONHelper.updateJSONFile( json,
+                            getContext().getFileStreamPath(
+                                WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
+                        ok = true;
+
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            "Service log updated!",
+                                TAG + "::createServiceCallLog" );
+                    }// end of if block
+                }// end of if block
+            }// end of if block
+
+            return ok;
+        }// end of method okToUseService
+
+        /**
          * Refreshes the shared preferences values displayed to the user.
          *
          * @param pref  The preference value to be refreshed.
@@ -758,6 +871,7 @@ public class PrefsActivity extends AppCompatActivity
         {
             Preference preference = findPreference( pref );
             String stringValue = UtilityMethod.getPrefValues( pref );
+
 
             if ( preference instanceof ListPreference )
             {
@@ -771,13 +885,30 @@ public class PrefsActivity extends AppCompatActivity
                     String entry = (String) listPreference.getEntries()[ prefIndex ];
                     String entryValue = (String) listPreference.getEntryValues()[ prefIndex ];
                     String preferenceTitle = (String) preference.getTitle();
-
                     preference.setSummary( entry );
 
                     // handle preferences using the built in ListPreference
                     if( preferenceTitle.equals( getString( R.string.wx_source ) ) )
                     {
-                        WeatherLionApplication.storedPreferences.setProvider( entry );
+                        if(  userClickedPreference &&
+                                WeatherLionApplication.previousWeatherProvider.toString().equals( entry ))
+                        {
+                            okToUse = okToUseService( entry );
+
+                            if( okToUse )
+                            {
+                                WeatherLionApplication.storedPreferences.setProvider( entry );
+                                UtilityMethod.refreshRequested = true;
+                            }// end of if block
+                            else
+                            {
+                                refreshPreference( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE );
+                                UtilityMethod.butteredToast( getContext(),
+                                        "The daily call limit has been exceeded for " + entry + ".",
+                                        1, Toast.LENGTH_SHORT );
+                            }// end of else
+                        }// end of if block
+
                     }// end of if block
                     else if( preferenceTitle.equals( getString( R.string.update_interval ) ) )
                     {

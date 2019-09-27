@@ -1,8 +1,10 @@
 package com.bushbungalo.weatherlion;
 
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -49,6 +51,7 @@ import android.widget.Toast;
 import com.bushbungalo.weatherlion.database.DBHelper;
 import com.bushbungalo.weatherlion.database.WeatherAccess;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
+import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.DividerItemDecoration;
 import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
@@ -120,6 +123,41 @@ public class WeatherLionMain extends AppCompatActivity
     private static StringBuilder currentLow = new StringBuilder();
 
     private static ArrayAdapter requiredKeysAdapter;
+
+    private BroadcastReceiver weatherUpdateBroadcastReceiver = new BroadcastReceiver()
+    {
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            // refresh the xml data stored after the last update
+            WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                UtilityMethod.readAll(
+                    context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
+                        .replaceAll( "\t", "" ).trim() );
+
+            WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
+            DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
+
+            try
+            {
+                UtilityMethod.lastUpdated = df.parse(
+                        WeatherLionApplication.storedData.getProvider().getDate() );
+            }// end of try block
+            catch ( ParseException e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                        TAG + "::onCreate [line: " +
+                                e.getStackTrace()[1].getLineNumber()+ "]" );
+            }// end of catch block
+
+            WeatherLionApplication.currentSunriseTime = new StringBuilder(
+                    WeatherLionApplication.storedData.getAstronomy().getSunrise() );
+            WeatherLionApplication.currentSunsetTime = new StringBuilder(
+                    WeatherLionApplication.storedData.getAstronomy().getSunset() );
+
+            loadMainActivityWeather();
+        }// end of method onReceive
+    };
 
     /**
      * Method to be called after the required data accesses have be obtained.
@@ -592,6 +630,10 @@ public class WeatherLionMain extends AppCompatActivity
         TextView txvMessage;
         Snackbar quickSnack;
 
+        LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
+                .registerReceiver( weatherUpdateBroadcastReceiver, new IntentFilter(
+                        WidgetUpdateService.WEATHER_UPDATE_SERVICE_MESSAGE ) );
+
         // Check if any previous weather data is stored locally
         if( WeatherLionApplication.firstRun &&
                 !WeatherLionApplication.localWeatherDataAvailable )
@@ -629,6 +671,9 @@ public class WeatherLionMain extends AppCompatActivity
         else
         {
             super.onCreate( savedInstanceState );
+
+            WeatherLionApplication.callMethodByName(null, "checkForStoredWeatherData",
+                    null, null );
 
             keysDialogView = View.inflate( this, R.layout.wl_data_keys_layout, null );
             WeatherLionApplication.iconSet = WeatherLionApplication.spf.getString(
@@ -746,6 +791,9 @@ public class WeatherLionMain extends AppCompatActivity
     protected void onDestroy()
     {
         super.onDestroy();
+
+        LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
+            .unregisterReceiver( weatherUpdateBroadcastReceiver );
     }// end of method onDestroy
 
     /**
@@ -1388,7 +1436,8 @@ public class WeatherLionMain extends AppCompatActivity
 
                     // confirm that user really wishes to delete the key
                     String prompt = "Are you sure that you wish to delete the " +
-                            keyToDelete + "\nkey assigned by " +
+                            keyToDelete +
+                            ( keyToDelete.contains( "key" ) ? " assigned by " : " key assigned by " ) +
                             WeatherLionApplication.selectedProvider + "?\nThis cannot be undone!";
 
                     responseDialog( WeatherLionApplication.PROGRAM_NAME + " Delete Key",

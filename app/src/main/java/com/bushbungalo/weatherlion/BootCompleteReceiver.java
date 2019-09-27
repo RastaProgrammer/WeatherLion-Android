@@ -17,13 +17,17 @@ public class BootCompleteReceiver extends BroadcastReceiver
     {
         if ( Objects.requireNonNull( intent.getAction() ).equals( Intent.ACTION_BOOT_COMPLETED ) )
         {
-            Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-            updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
-            WidgetUpdateService.enqueueWork( context, updateIntent );
+            if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
+            {
+                UtilityMethod.refreshRequested = true;
+                Intent updateIntent = new Intent( context, WidgetUpdateService.class );
+                updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                WidgetUpdateService.enqueueWork( context, updateIntent );
 
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Update requested by the boot completed receiver",
-                    "BootCompleteReceiver::onReceive" );
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                        "Update requested by the boot completed receiver",
+                        "BootCompleteReceiver::onReceive" );
+            }// end of if block
         }// end of if block
     }// end of method onReceive
 }// end of class BootCompleteReceiver

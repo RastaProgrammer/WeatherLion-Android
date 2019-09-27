@@ -128,6 +128,8 @@ public class WeatherDataXMLService extends IntentService
 			UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, xmlData.getProviderName() + "'s weather data was stored locally!",
 				TAG + "::saveCurrentWeatherXML" );
 
+			WeatherLionApplication.previousWeatherProvider.setLength( 0 );
+			WeatherLionApplication.previousWeatherProvider.append( xmlData.getProviderName() );
 		}// end of try block
 		catch ( IOException e )
 		{
