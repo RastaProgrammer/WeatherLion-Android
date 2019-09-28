@@ -300,6 +300,8 @@ public class WeatherWidgetProvider extends AppWidgetProvider
                     {
                         WidgetUpdateService.currentCondition.setLength( 0 );
                         WidgetUpdateService.currentCondition.append( "Clear" );
+                        remoteViews.setTextViewText( R.id.txvWeatherCondition,
+                                WidgetUpdateService.currentCondition.toString() );
                     }// end of if block
 
                     if ( UtilityMethod.weatherImages.containsKey(

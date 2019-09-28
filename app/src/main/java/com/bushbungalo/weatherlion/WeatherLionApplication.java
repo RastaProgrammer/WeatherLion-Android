@@ -1530,7 +1530,7 @@ public class WeatherLionApplication extends Application
                     Intent weatherXMLIntent = new Intent( WeatherLionApplication.this,
                             WeatherDataXMLService.class );
                     weatherXMLIntent.putExtra( WidgetUpdateService.WEATHER_XML_SERVICE_PAYLOAD, xmlJSON );
-                    WeatherLionApplication.this.startService( weatherXMLIntent );
+                    WeatherDataXMLService.enqueueWork( context, weatherXMLIntent );
 
                     break;
             }// end of switch block

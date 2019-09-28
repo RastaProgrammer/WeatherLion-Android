@@ -1,7 +1,9 @@
 package com.bushbungalo.weatherlion.services;
 
-import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
+import android.support.v4.app.JobIntentService;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.bushbungalo.weatherlion.FiveDayForecast;
@@ -30,21 +32,44 @@ import java.util.List;
  */
 
 @SuppressWarnings({"unused"})
-public class WeatherDataXMLService extends IntentService
+public class WeatherDataXMLService extends JobIntentService
 {
+	private static final int JOB_ID = 80;
 	private static final String TAG = "WeatherDataXMLService";
 	private WeatherDataXML xmlData = new WeatherDataXML();
 
 	public static final String WEATHER_XML_STORAGE_MESSAGE = "WeatherXmlServiceMessage";
 
-	public WeatherDataXMLService()
-	{
-		super( TAG );
-	}// end of default constructor
-
-
 	@Override
-	protected void onHandleIntent( Intent intent )
+	public void onCreate()
+	{
+		super.onCreate();
+	}// end of method onCreate
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void onDestroy()
+	{
+		super.onDestroy();
+	}// end of method onDestroy
+
+	public static void enqueueWork(Context context, Intent work )
+	{
+		enqueueWork( context, WeatherDataXMLService.class, JOB_ID, work );
+	}// end of method enqueueWork
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void onHandleWork( @NonNull Intent intent )
+	{
+		handleIntent( intent );
+	}
+
+	protected void handleIntent( Intent intent )
 	{
 		String weatherDataJSON = intent.getStringExtra( WidgetUpdateService.WEATHER_XML_SERVICE_PAYLOAD );
 		Gson gson = new Gson();
