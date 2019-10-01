@@ -552,6 +552,7 @@ public class PrefsActivity extends AppCompatActivity
         public boolean onPreferenceChange( Preference preference, Object value )
         {
             String stringValue = value.toString();
+            String preferenceTitle = null;
 
             if ( preference instanceof ListPreference )
             {
@@ -564,7 +565,7 @@ public class PrefsActivity extends AppCompatActivity
                 {
                     String entry = (String) listPreference.getEntries()[ prefIndex ];
                     String entryValue = (String) listPreference.getEntryValues()[ prefIndex ];
-                    String preferenceTitle = (String) preference.getTitle();
+                    preferenceTitle = (String) preference.getTitle();
                     preference.setSummary( entry );
 
                     // handle preferences using the built in ListPreference
@@ -623,7 +624,21 @@ public class PrefsActivity extends AppCompatActivity
 
             }// end of if block
 
-            return okToUse;
+            if( preferenceTitle != null )
+            {
+                if( preferenceTitle.equals( getString( R.string.wx_source ) ) )
+                {
+                    return okToUse;
+                }// end of if block
+                else
+                {
+                    return true;
+                }// end of else block
+            }// end of if block
+            else
+            {
+                return true;
+            }// end of else block
         }// end of method onPreferenceChange
 
         public void retrieveGpsLocation()

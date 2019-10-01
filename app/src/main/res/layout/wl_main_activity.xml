@@ -48,7 +48,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/rlWeatherLocation"
-            android:layout_marginBottom="14dip"
+            android:layout_marginBottom="7dip"
             android:orientation="horizontal">
 
             <ImageView
@@ -194,8 +194,8 @@
                     android:layout_height="18dip"
                     android:layout_alignParentStart="true"
                     android:layout_centerInParent="true"
-                    android:layout_marginEnd="10dip"
-                    android:src="@drawable/yahoo_weather_logo"
+                    android:layout_marginEnd="4dip"
+                    android:src="@drawable/wl_yahoo_weather"
                     android:contentDescription="@string/weather_provider_logo" />
 
                 <TextView

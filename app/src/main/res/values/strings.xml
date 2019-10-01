@@ -244,6 +244,12 @@
     <string name="yahoo_weather">Yahoo! Weather</string>
     <string name="yr_weather">Norwegian Meteorological Institute</string>
 
+    <!-- Font Faces -->
+    <string name="system_font">System</string>
+    <string name="helvetica_neue_font">Helvetica Neue</string>
+    <string name="product_sans_font">Product Sans</string>
+    <string name="samsung_sans_font">Samsung Sans</string>
+
     <!-- About Strings -->
     <string name="about_menu_item">About</string>
     <string name="app_title">Weather Lion</string>

@@ -200,7 +200,7 @@ public class WeatherLionMain extends AppCompatActivity
         }// end of else if block
 
         // find the widget view and update it's fonts face
-        View widget = View.inflate( WeatherLionApplication.getAppContext(), R.layout.wl_weather_widget_activity,null );
+        View widget = View.inflate( WeatherLionApplication.getAppContext(), R.layout.wl_large_weather_widget_activity,null );
         UtilityMethod.loadCustomFont( (RelativeLayout) widget.findViewById( R.id.rlWidgetBody ) );
     }// end of method accessLoaded
 
@@ -604,16 +604,24 @@ public class WeatherLionMain extends AppCompatActivity
         txvWeatherProvider.setText( WeatherLionApplication.storedData.getProvider().getName() );
         txvWeatherProvider.setTypeface( WeatherLionApplication.currentTypeface );
 
-        String providerIcon = String.format( "%s%s%s", "icons/",
-                WeatherLionApplication.storedData.getProvider().getName().toLowerCase(), ".png" );
-        loadWeatherIcon( imvWeatherProviderLogo, providerIcon );
+        String providerIcon = String.format( "%s%s", "wl_",
+                WeatherLionApplication.storedData.getProvider().getName().toLowerCase().replaceAll(
+                " ", "_" ) );
+
+        if( providerIcon.equals( WeatherLionApplication.YAHOO_WEATHER ) )
+        {
+            providerIcon = providerIcon.replace( "!", "" ).replace( " ", "_" );
+        }// end of if block
+
+        imvWeatherProviderLogo.setImageResource( UtilityMethod.getImageResourceId( providerIcon ) );
 
         TextView txvLastUpdated = findViewById( R.id.txvLastUpdated );
         txvLastUpdated.setTypeface( WeatherLionApplication.currentTypeface );
 
         if( timeUpdated != null )
         {
-            txvLastUpdated.setText( String.format( "%s%s", "Updated ", UtilityMethod.getTimeSince( timeUpdated ) ) );
+            txvLastUpdated.setText( String.format( "%s%s", "Updated ",
+                    UtilityMethod.getTimeSince( timeUpdated ) ) );
         }// end of if block
 
         if( UtilityMethod.refreshRequested )

@@ -6,9 +6,9 @@ import android.net.Uri;
 import android.view.View;
 import android.widget.RemoteViews;
 
+import com.bushbungalo.weatherlion.LargeWeatherWidgetProvider;
 import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
-import com.bushbungalo.weatherlion.WeatherWidgetProvider;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
 /**
@@ -41,7 +41,7 @@ public class IconUpdateService extends IntentService
 	@Override
 	protected void onHandleIntent( Intent intent )
 	{
-		RemoteViews remoteViews = new RemoteViews( this.getPackageName(), R.layout.wl_weather_widget_activity );
+		RemoteViews remoteViews = new RemoteViews( this.getPackageName(), R.layout.wl_large_weather_widget_activity);
 
 		// keep track of Internet connectivity
 		if( UtilityMethod.timeForConnectivityCheck() )
@@ -71,7 +71,7 @@ public class IconUpdateService extends IntentService
 				remoteViews.setViewVisibility( R.id.imvOffline, View.VISIBLE );
 			}// end of else block
 
-			WeatherWidgetProvider.checkAstronomy();
+			LargeWeatherWidgetProvider.checkAstronomy();
 		}// end of if block
 	}// end of method handleWeatherData
 

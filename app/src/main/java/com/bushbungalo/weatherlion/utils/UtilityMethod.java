@@ -12,8 +12,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.Gravity;
@@ -59,6 +61,7 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -1231,6 +1234,44 @@ public abstract class UtilityMethod
                     + (0.4275 * fTemp * Math.pow( mphWind, 0.16 ) ) );
         }// end of else block
     }// end of method calculateWindChill
+
+    /**
+     * Check to see if an {@code int} array contains a number.
+     *
+     * @param array     The array to be searched.
+     * @param key       The number to find
+     * @return          True/False dependent on the outcome of the search
+     */
+    public static boolean containsInt( final int[] array, final int key )
+    {
+        Arrays.sort( array );
+        return Arrays.binarySearch( array, key ) >= 0;
+    }// end of method containsInt
+
+    /**
+     * Returns a drawable using its name
+     *
+     * @param name The name of the drawable
+     * @return  The drawable resource
+     */
+    public static Drawable getDrawable( String name )
+    {
+        int resourceId = getAppContext().getResources().getIdentifier( name, "drawable",
+                getAppContext().getPackageName() );
+        return ContextCompat.getDrawable( getAppContext(), resourceId );
+    }// end of method getDrawable
+
+    /**
+     * Returns a drawable using its name
+     *
+     * @param name The name of the drawable
+     * @return  The drawable resource
+     */
+    public static int getImageResourceId( String name )
+    {
+        return getAppContext().getResources().getIdentifier( name, "drawable",
+                getAppContext().getPackageName() );
+    }// end of method getDrawable
 
     /***
      * Heat index computed using air temperature F and relative humidity
@@ -3414,9 +3455,4 @@ public abstract class UtilityMethod
 
         return ready;
     }// end of method timeForConnectivityCheck
-
-    public static void switchWidgetBackground( Context c )
-    {
-
-    }// end of method  switchWidgetBackground
 }// end of class UtilityMethod

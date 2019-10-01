@@ -3,18 +3,27 @@ package com.bushbungalo.weatherlion.utils;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 
+import com.bushbungalo.weatherlion.LargeWeatherWidgetProvider;
+import com.bushbungalo.weatherlion.SmallWeatherWidgetProvider;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
-import com.bushbungalo.weatherlion.WeatherWidgetProvider;
 
 @SuppressWarnings({"unused"})
 public class WidgetHelper
 {
-    public static int getWidgetId()
+    /**
+     * Get all the widgets associated with this application
+     */
+    public static void getWidgetIds()
     {
-        int[] ids = AppWidgetManager.getInstance( WeatherLionApplication.getAppContext() )
+        int[] largeIds = AppWidgetManager.getInstance( WeatherLionApplication.getAppContext() )
                 .getAppWidgetIds( new ComponentName( WeatherLionApplication.getAppContext(),
-                        WeatherWidgetProvider.class ) );
+                        LargeWeatherWidgetProvider.class ) );
 
-        return ids.length > 0 ? ids[ 0 ] : 0; // return the first widget id if there are multiple
-    }// end of method getWidgetId
+        int[] smallIds = AppWidgetManager.getInstance( WeatherLionApplication.getAppContext() )
+                .getAppWidgetIds( new ComponentName( WeatherLionApplication.getAppContext(),
+                        SmallWeatherWidgetProvider.class ) );
+
+        WeatherLionApplication.largeWidgetIds = largeIds;
+        WeatherLionApplication.smallWidgetIds = smallIds;
+    }// end of method getWidgetIds
 }// end of class WidgetHelper

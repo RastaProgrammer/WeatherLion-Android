@@ -189,7 +189,6 @@ public class WeatherLionApplication extends Application
     public static boolean firstRun;
     public static boolean localWeatherDataAvailable;
 
-    public static int currentWidgetId;
     public static boolean changeWidgetUnit;
 
     public static boolean running;
@@ -234,6 +233,16 @@ public class WeatherLionApplication extends Application
 
     public static File previousCitySearchFile = null;
     public static WeatherLionApplication thisClass;
+
+    public static int[] largeWidgetIds;
+    public static int[] smallWidgetIds;
+
+    public static boolean dataLoadedSuccessfully = false;
+
+    public static boolean sunriseIconsInUse;
+    public static boolean sunriseUpdatedPerformed;
+    public static boolean sunsetIconsInUse;
+    public static boolean sunsetUpdatedPerformed;
 
     /**
      * Checks to see if the program is being run for the first time.
@@ -1168,7 +1177,7 @@ public class WeatherLionApplication extends Application
         // network connectivity and system clock changes
         IntentFilter systemFilter = new IntentFilter();
         systemFilter.addAction( ConnectivityManager.CONNECTIVITY_ACTION );
-        systemFilter.addAction( WeatherWidgetProvider.CLOCK_UPDATE_MESSAGE );
+        systemFilter.addAction( LargeWeatherWidgetProvider.CLOCK_UPDATE_MESSAGE );
         this.registerReceiver( systemBroadcastReceiver, systemFilter );
 
         spf = PreferenceManager.getDefaultSharedPreferences( this );
@@ -1206,30 +1215,31 @@ public class WeatherLionApplication extends Application
                 case AQUA_THEME:
                     systemColor = Color.valueOf( getColor( R.color.aqua ) );
                     systemButtonDrawable = getDrawable( R.drawable.wl_aqua_rounded_btn_bg );
-                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_aqua_bg );
+                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_aqua_bg_large);
                     setTheme( R.style.AquaTheme );
 
                     break;
                 case RABALAC_THEME:
                     systemColor = Color.valueOf( getColor( R.color.rabalac ) );
                     systemButtonDrawable = getDrawable( R.drawable.wl_rabalac_rounded_btn_bg );
-                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_rabalac_bg );
+                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_rabalac_bg_large);
                     setTheme( R.style.RabalacTheme );
 
                     break;
                 default:
                     systemColor = Color.valueOf( getColor( R.color.lion ) );
                     systemButtonDrawable = getDrawable( R.drawable.wl_lion_rounded_btn_bg );
-                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg );
+                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg_large);
                     setTheme( R.style.LionTheme );
                     break;
             }// end of switch block
 
-            UtilityMethod.switchWidgetBackground( this );
+            // load all widget ids associated with the application
+            WidgetHelper.getWidgetIds();
 
             // set the widget background to the current theme color if the widget if a
             // widget if on screen
-            if( WidgetHelper.getWidgetId() != 0 )
+            if( largeWidgetIds[ 0 ] != 0 )
             {
                 Intent methodIntent = new Intent( this, WidgetUpdateService.class );
                 methodIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
@@ -1705,7 +1715,7 @@ public class WeatherLionApplication extends Application
 
             switch( action )
             {
-                case WeatherWidgetProvider.CLOCK_UPDATE_MESSAGE:
+                case LargeWeatherWidgetProvider.CLOCK_UPDATE_MESSAGE:
                     if( running )
                     {
                         Intent astronomyIntent = new Intent( WeatherLionApplication.this,

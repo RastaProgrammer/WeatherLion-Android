@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="font_faces">
-        <item>System</item>
-        <item>Helvetica Neue</item>
-        <item>Product Sans</item>
-        <item>Samsung Sans</item>
+        <item>@string/system_font</item>
+        <item>@string/helvetica_neue_font</item>
+        <item>@string/product_sans_font</item>
+        <item>@string/samsung_sans_font</item>
     </string-array>
 </resources>
