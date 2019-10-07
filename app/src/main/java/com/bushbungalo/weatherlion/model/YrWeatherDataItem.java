@@ -408,7 +408,7 @@ public class YrWeatherDataItem
 		}
     }// end of inner class Forecast 
 
-	public static boolean deserializeYrXML( String xmlData )
+	public static void deserializeYrXML( String xmlData )
     {
 		SAXBuilder builder = new SAXBuilder();
 		Document weatherXML = null;
@@ -508,8 +508,6 @@ public class YrWeatherDataItem
                                        symbolNumberEx, symbolName, symbolVar, precipValue,
                                        wdDeg, wdCode, wdName, wsMps, wsName,
                                        tempUnit, tempValue, pressureUnit, pressureValue ) );
-        }// end of for loop	
-    			
-        return true;                  
-    }// end of method DeserializeYrXML        
+        }// end of for loop
+    }// end of method deserializeYrXML
 }// end of class yrWeatherDataItem

@@ -224,7 +224,8 @@ public class CityFinderPreference extends DialogPreference
         LocalBroadcastManager.getInstance( getContext() ).unregisterReceiver( mBroadcastReceiver );
         SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences(
                 WeatherLionApplication.getAppContext() );
-        String savedLocation = spf.getString( "pref_location", "" );
+        String savedLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+                Preference.DEFAULT_WEATHER_LOCATION );
 
         super.onDialogClosed( positiveResult );
 
@@ -295,6 +296,8 @@ public class CityFinderPreference extends DialogPreference
                                 currentLocation );
                         editor.commit();
 
+                        WeatherLionApplication.storedPreferences.setLocation( currentLocation );
+
                         // send out a broadcast to the preferences activity that the location preference has been modified
                         Intent messageIntent = new Intent( CITY_LOCATION_SERVICE_MESSAGE );
                         messageIntent.putExtra( CITY_LOCATION_SERVICE_PAYLOAD,
@@ -304,6 +307,7 @@ public class CityFinderPreference extends DialogPreference
                         manager.sendBroadcast( messageIntent );
 
                         // send out a broadcast to the widget service that the location preference has been modified
+                        UtilityMethod.refreshRequested = true;
                         Intent updateIntent = new Intent( WeatherLionApplication.getAppContext(), WidgetUpdateService.class );
                         updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
                         WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(), updateIntent );
@@ -385,10 +389,10 @@ public class CityFinderPreference extends DialogPreference
         popupWindow = new ListPopupWindow( getContext() );
 
         popupWindow.setAnchorView( anchor );
-        popupWindow.setAdapter( new ArrayAdapter<>( getContext(), R.layout.wl_popup_list_item, listItems ) );
+        popupWindow.setAdapter( new ArrayAdapter<>( getContext(), R.layout.wl_popup_list_item_dark_bg, listItems ) );
         popupWindow.setWidth( anchor.getWidth() );
         popupWindow.setVerticalOffset( 6 );
-        popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup ) );
+        popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_blue) );
 
         // if the list has more than 9 elements we will set the height if the window manually
         if( listItems.length > 9 )

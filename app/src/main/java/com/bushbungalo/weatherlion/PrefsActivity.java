@@ -272,7 +272,7 @@ public class PrefsActivity extends AppCompatActivity
         private BroadcastReceiver locationPreferenceBR = new BroadcastReceiver()
         {
             @Override
-            public void onReceive(Context context, Intent intent)
+            public void onReceive( Context context, Intent intent )
             {
                 String prefMessage = intent.getStringExtra( CityFinderPreference.CITY_LOCATION_SERVICE_PAYLOAD );
                 spf = PreferenceManager.getDefaultSharedPreferences( getContext() );
@@ -579,6 +579,7 @@ public class PrefsActivity extends AppCompatActivity
                             if( okToUse )
                             {
                                 WeatherLionApplication.storedPreferences.setProvider( entry );
+                                WeatherLionApplication.storedData.getProvider().setName( entry );
                                 UtilityMethod.refreshRequested = true;
                             }// end of if block
                             else
@@ -813,11 +814,12 @@ public class PrefsActivity extends AppCompatActivity
          * @param provider  The selected weather provider
          * @return  A value of true/false dependent on the outcome of the check
          */
+        @SuppressWarnings("unchecked")
         private boolean okToUseService( String provider )
         {
             boolean ok = false;
 
-            Map<String, Object> importedServiceLog = JSONHelper.importServiceCallLog(
+            Map<String, Object> importedServiceLog = JSONHelper.importPreviousSearches(
                 getContext().getFileStreamPath(
                                 WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
             String date = (String) importedServiceLog.get( "Date" );
@@ -913,6 +915,7 @@ public class PrefsActivity extends AppCompatActivity
                             if( okToUse )
                             {
                                 WeatherLionApplication.storedPreferences.setProvider( entry );
+                                WeatherLionApplication.storedData.getProvider().setName( entry );
                                 UtilityMethod.refreshRequested = true;
                             }// end of if block
                             else

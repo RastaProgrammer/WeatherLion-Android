@@ -82,6 +82,8 @@ public class WeatherDataXMLService extends JobIntentService
 	 */
 	private static void broadcastDataStored()
 	{
+		UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Broadcasting xml success",
+				TAG + "::broadcastDataStored" );
 		Intent messageIntent = new Intent( WEATHER_XML_STORAGE_MESSAGE );
 		LocalBroadcastManager manager =
 				LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );

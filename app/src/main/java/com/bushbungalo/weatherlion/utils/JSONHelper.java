@@ -48,7 +48,7 @@ public class JSONHelper
         // attempt to import data from local storage
         if( previousCities.exists() )
         {
-            cityDataList = importServiceCallLog();
+            cityDataList = importPreviousSearches();
             cityDataList.add( dataItem );
             jsonString = gson.toJson( cityDataList );
         }// end of if block
@@ -88,9 +88,9 @@ public class JSONHelper
         }// end of finally block
 
         return false;
-    }// end of method  exportToJSON
+    }// end of method exportToJSON
 
-    static List< CityData > importServiceCallLog()
+    public static List< CityData > importPreviousSearches()
     {
         FileReader reader = null;
 
@@ -113,7 +113,7 @@ public class JSONHelper
         catch ( FileNotFoundException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::exportToJSON [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
+                    TAG + ":importPreviousSearches [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
         }// end of catch block
         finally
         {
@@ -132,9 +132,9 @@ public class JSONHelper
         }// end of finally block
 
         return cityDataList;
-    }// end of method importServiceCallLog
+    }// end of method importPreviousSearches
 
-    public static LinkedTreeMap<String, Object> importServiceCallLog(String filePath )
+    public static LinkedTreeMap<String, Object> importPreviousSearches(String filePath )
     {
         FileReader reader = null;
         LinkedTreeMap<String, Object> fileData = null;
@@ -177,7 +177,7 @@ public class JSONHelper
         }// end of finally block
 
         return fileData;
-    }// end of method importServiceCallLog
+    }// end of method importPreviousSearches
 
     /***
      * Saves JSON data to a local file for quicker access later.

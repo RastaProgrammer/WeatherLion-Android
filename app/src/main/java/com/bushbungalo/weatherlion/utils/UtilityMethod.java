@@ -31,6 +31,7 @@ import com.bushbungalo.weatherlion.database.DBHelper;
 import com.bushbungalo.weatherlion.database.WorldCities;
 import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.HereGeoLocation;
+import com.bushbungalo.weatherlion.model.TimeZoneInfo;
 import com.bushbungalo.weatherlion.services.CityDataService;
 import com.bushbungalo.weatherlion.services.GeoLocationService;
 import com.bushbungalo.weatherlion.services.LocationTrackerService;
@@ -2024,18 +2025,20 @@ public abstract class UtilityMethod
                 WeatherLionApplication.CITIES_DATABASE_NAME);
         SQLiteDatabase worldCitiesDB = dbHelper.getWritableDatabase();
 
-        ContentValues values = new ContentValues(8);
-        values.put(WorldCities.CITY_NAME, cityName);
-        values.put(WorldCities.COUNTRY_NAME, countryName);
-        values.put(WorldCities.COUNTRY_CODE, countryCode);
-        values.put(WorldCities.REGION_NAME, regionName);
-        values.put(WorldCities.REGION_CODE, regionCode);
-        values.put(WorldCities.LATITUDE, latitude);
-        values.put(WorldCities.LONGITUDE, longitude);
-        values.put(WorldCities.DATE_ADDED, new SimpleDateFormat( "E, MMM, dd, yyyy h:mm a",
-                Locale.ENGLISH ).format( new Date() ));
+        ContentValues values = new ContentValues( 8 );
+        values.put( WorldCities.CITY_NAME, cityName );
+        values.put( WorldCities.COUNTRY_NAME, countryName );
+        values.put( WorldCities.COUNTRY_CODE, countryCode );
+        values.put( WorldCities.REGION_NAME, regionName );
+        values.put( WorldCities.REGION_CODE, regionCode );
+        values.put( WorldCities.LATITUDE, latitude );
+        values.put( WorldCities.LONGITUDE, longitude );
+        values.put( WorldCities.DATE_ADDED,
+            new SimpleDateFormat( "E, MMM, dd, yyyy h:mm a",
+                Locale.ENGLISH ).format( new Date() ) );
 
-        int success = (int) worldCitiesDB.insert(WorldCities.WORLD_CITIES, null, values);
+        int success = (int) worldCitiesDB.insertWithOnConflict( WorldCities.WORLD_CITIES,
+                null, values, SQLiteDatabase.CONFLICT_IGNORE );
         worldCitiesDB.close();
 
         return success;
@@ -2456,7 +2459,7 @@ public abstract class UtilityMethod
     {
         if( cityName.contains( "," ) )
         {
-            return isFoundInDatabase(cityName);
+            return isFoundInXMLStorage( cityName );
         }// end of if block
 
         return false;
@@ -2477,10 +2480,10 @@ public abstract class UtilityMethod
         String selection = city[ 1 ].trim().length() == 2
                 ? "CityName = ? AND RegionCode = ? AND typeof(RegionCode) = 'integer'"
                 : "CityName = ? AND CountryName = ?";
-        String[] selectionArgs = new String[]{city[ 0 ].trim(), city[ 1 ].trim()};
+        String[] selectionArgs = new String[]{ city[ 0 ].trim(), city[ 1 ].trim() };
 
-        SQLiteOpenHelper dbHelper = new DBHelper(getAppContext(),
-                WeatherLionApplication.CITIES_DATABASE_NAME);
+        SQLiteOpenHelper dbHelper = new DBHelper( getAppContext(),
+                WeatherLionApplication.CITIES_DATABASE_NAME );
         SQLiteDatabase worldCitiesDB = dbHelper.getReadableDatabase();
         int found = 0;
 
@@ -2757,6 +2760,48 @@ public abstract class UtilityMethod
         return strJSON;
 
     }// end of method retrieveHereGeoLocationUsingAddress
+
+    /**
+     * Uses the GeoNames web service to return the timezone details of a city using it's coordinates.
+     *
+     * @param lat The latitude coordinates.
+     * @param lng The longitude coordinates.
+     * @return  A {@code TimeZoneInfo} representation of a XML {@code Object} returned from the web service.
+     */
+    public static TimeZoneInfo retrieveGeoNamesTimeZoneInfo( float lat, float lng )
+    {
+        String strXML;
+        TimeZoneInfo timeZoneInfo = null;
+
+        String geoUrl =
+                "http://api.geonames.org/timezone?" +
+                        "lat=" + lat +
+                        "&lng=" + lng +
+                        "&username=" + WidgetUpdateService.geoNameAccount;
+
+        if ( hasInternetConnection( getAppContext() ) )
+        {
+            try
+            {
+                strXML = HttpHelper.downloadUrl( geoUrl, false );
+                timeZoneInfo = TimeZoneInfo.deserializeTimeZoneXML(
+                        Objects.requireNonNull( strXML ) );
+            }// end of try block
+            catch ( IOException e )
+            {
+                logMessage( LogLevel.SEVERE, e.getMessage(),
+                        TAG + "::retrieveGeoNamesTimeZoneInfo [line: " +
+                                getExceptionLineNumber(e) + "]" );
+            }// end of catch block
+
+        }// end of if block
+        else
+        {
+            butteredToast( getAppContext(), "No Internet Connection.", 2, Toast.LENGTH_SHORT );
+        }// end of else block
+
+        return timeZoneInfo;
+    }// end of method retrieveGeoNamesTimeZoneInfo
 
     /**
      * Returns the line number were the exception occurred in the code.
@@ -3218,9 +3263,9 @@ public abstract class UtilityMethod
         if( new File( JSONHelper.PREVIOUSLY_FOUND_CITIES_JSON ).exists() )
         {
             Gson gson = new Gson();
-            JSONHelper.cityDataList = JSONHelper.importServiceCallLog();
+            JSONHelper.cityDataList = JSONHelper.importPreviousSearches();
             //convert the list to a JSON string
-            String jsonString = gson.toJson(JSONHelper.cityDataList);
+            String jsonString = gson.toJson( JSONHelper.cityDataList );
 
             try
             {
@@ -3455,4 +3500,9 @@ public abstract class UtilityMethod
 
         return ready;
     }// end of method timeForConnectivityCheck
+
+//    public static void restorePreviousWeatherData()
+//    {
+//
+//    }// end of method restorePreviousWeatherData
 }// end of class UtilityMethod

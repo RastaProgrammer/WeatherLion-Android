@@ -110,7 +110,7 @@ public class CityStorageService extends IntentService
                 regionName, regionCode,	Latitude, Longitude );
         }// end of if block
 
-        if( UtilityMethod.isFoundInJSONStorage( currentCity ) != null )
+        if( UtilityMethod.isFoundInJSONStorage( currentCity ) == null )
         {
             if( JSONHelper.exportToJSON( cd ) )
             {

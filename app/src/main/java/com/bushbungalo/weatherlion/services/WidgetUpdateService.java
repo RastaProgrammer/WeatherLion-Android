@@ -27,7 +27,9 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
-import com.bushbungalo.weatherlion.AlarmBroadcastReceiver;
+import com.bushbungalo.weatherlion.SunriseAlarmBroadcastReceiver;
+import com.bushbungalo.weatherlion.SunsetAlarmBroadcastReceiver;
+import com.bushbungalo.weatherlion.UpdateAlarmBroadcastReceiver;
 import com.bushbungalo.weatherlion.FiveDayForecast;
 import com.bushbungalo.weatherlion.Preference;
 import com.bushbungalo.weatherlion.R;
@@ -80,14 +82,7 @@ public class WidgetUpdateService extends JobIntentService
     public static final String  WEATHER_UPDATE_SERVICE_PAYLOAD = "WidgetUpdateServicePayload";
     public static final String WEATHER_XML_SERVICE_MESSAGE = "WeatherXmlServiceMessage";
     public static final String  WEATHER_XML_SERVICE_PAYLOAD = "WeatherXmlServicePayload";
-
-    public enum WidgetSize
-    {
-        ALL,
-        SMALL,
-        MEDIUM,
-        LARGE
-    }
+    public static final String WEATHER_LOADING_ERROR_MESSAGE = "WidgetLoadingErrorMessage";
 
     private static DarkSkyWeatherDataItem darkSky;
     private static HereMapsWeatherDataItem.WeatherData hereWeatherWx;
@@ -117,10 +112,11 @@ public class WidgetUpdateService extends JobIntentService
     private static StringBuilder currentWindSpeed = new StringBuilder();
     private static StringBuilder currentWindDirection = new StringBuilder();
     private static StringBuilder currentHumidity = new StringBuilder();
-    private static StringBuilder currentLocation = new StringBuilder();
     public  static StringBuilder currentCondition = new StringBuilder();
     private static StringBuilder currentHigh = new StringBuilder();
     private static StringBuilder currentLow = new StringBuilder();
+
+    private static String currentLocation;
     private static List< FiveDayForecast > currentFiveDayForecast = new ArrayList<>();
     private static int[][] hl;
 
@@ -154,6 +150,9 @@ public class WidgetUpdateService extends JobIntentService
     public static StringBuilder sunriseTime = new StringBuilder();
     public static StringBuilder sunsetTime = new StringBuilder();
 
+    public static final String SUNRISE = "Sunrise";
+    public static final String SUNSET = "Sunset";
+
     public static boolean widgetRefreshRequired;
 
     private static RemoteViews largeWidgetRemoteViews;
@@ -171,6 +170,7 @@ public class WidgetUpdateService extends JobIntentService
     // method name constants
     public static final String LOAD_PREVIOUS_WEATHER = "loadPreviousWeatherData";
     public static final String LOAD_WIDGET_BACKGROUND = "loadWidgetBackground";
+    public static final String ASTRONOMY_CHANGE = "astronomyChange";
 
     private int expectedJSONSize;
 
@@ -232,13 +232,13 @@ public class WidgetUpdateService extends JobIntentService
 
         appWidgetManager = AppWidgetManager.getInstance( this );
 
-        String currLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+        currentLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
                 Preference.DEFAULT_WEATHER_LOCATION );
-        boolean locationSet = !Objects.requireNonNull( currLocation ).equalsIgnoreCase( Preference.DEFAULT_WEATHER_LOCATION );
+        boolean locationSet = !Objects.requireNonNull( currentLocation ).equalsIgnoreCase(
+                Preference.DEFAULT_WEATHER_LOCATION );
 
         // the extra must be a string representation of a method
         String callMethod = intent.getStringExtra( WeatherLionApplication.LAUNCH_METHOD_EXTRA );
-
 
         // if no widgets have been created then there is nothing to do
         if( WeatherLionApplication.largeWidgetIds.length == 0 &&
@@ -252,8 +252,18 @@ public class WidgetUpdateService extends JobIntentService
                 TAG + "::handleIntent" );
 
             methodCalledByReflection = true;
-            callMethodByName( WidgetUpdateService.this, callMethod,null,
-            null );
+
+            if( callMethod.equals( ASTRONOMY_CHANGE ) )
+            {
+                callMethodByName( WidgetUpdateService.this, callMethod,
+                        new Class[]{String.class, AppWidgetManager.class},
+                        new Object[]{WeatherLionApplication.timeOfDayToUse, appWidgetManager} );
+            }// end of if block
+            else
+            {
+                callMethodByName( WidgetUpdateService.this, callMethod,null,
+                        null );
+            }// end of else block
 
             // If a location has not been set then the weather cannot be processed
             if( !locationSet && !callMethod.equals( LOAD_WIDGET_BACKGROUND ) ) return;
@@ -264,7 +274,7 @@ public class WidgetUpdateService extends JobIntentService
         else
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Service called for weather update...",
+                    "Service performing weather update...",
                     TAG + "::handleIntent" );
 
             weatherUpdate = true;
@@ -285,7 +295,7 @@ public class WidgetUpdateService extends JobIntentService
                 }// end of if block
                 else
                 {
-                    currentCity.append( currLocation );
+                    currentCity.append( currentLocation );
                 }// ed of else block
 
                 String json;
@@ -307,49 +317,39 @@ public class WidgetUpdateService extends JobIntentService
                 {
                     // Check the Internet connection availability
                     if( UtilityMethod.hasInternetConnection( this ) &&
-                            UtilityMethod.updateRequired( getApplicationContext() ) )
+                            UtilityMethod.updateRequired( getApplicationContext() ) ||
+                            UtilityMethod.hasInternetConnection( this ) &&
+                            UtilityMethod.refreshRequested )
                     {
                         wxUrl.setLength( 0 );
                         fxUrl.setLength( 0 );
                         axUrl.setLength( 0 );
 
+                        // if this location has already been used there is no need to query the
+                        // web service as the location data has been stored locally
+                        CityData.currentCityData = UtilityMethod.isFoundInJSONStorage( currentCity.toString() );
+
+                        if( CityData.currentCityData == null )
+                        {
+                            json =
+                                    UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress( currentCity.toString() );
+                            CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
+                        }// end of if block
+
+                        lat = CityData.currentCityData.getLatitude();
+                        lng = CityData.currentCityData.getLongitude();
+                        WeatherLionApplication.currentLocationTimeZone =
+                                UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+
                         switch( wxDataProvider )
                         {
                             case WeatherLionApplication.DARK_SKY:
-                                // if this location has already been used there is no need to query the
-                                // web service as the location data has been stored locally
-                                CityData.currentCityData = UtilityMethod.isFoundInJSONStorage( currentCity.toString() );
-
-                                if( CityData.currentCityData == null )
-                                {
-                                    json =
-                                            UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress( currentCity.toString() );
-                                    CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
-                                }// end of if block
-
-                                lat = CityData.currentCityData.getLatitude();
-                                lng = CityData.currentCityData.getLongitude();
-
                                 wxUrl.setLength( 0 );
                                 wxUrl.append( String.format( "https://api.darksky.net/forecast/%s/%s,%s",
                                         darkSkyApiKey, lat, lng ) );
 
                                 break;
                             case WeatherLionApplication.OPEN_WEATHER:
-                                // if this location has already been used there is no need to query the
-                                // web service as the location data has been stored locally
-                                CityData.currentCityData = UtilityMethod.isFoundInJSONStorage( currentCity.toString() );
-
-                                if( CityData.currentCityData == null )
-                                {
-                                    json =
-                                            UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress( currentCity.toString() );
-                                    CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
-                                }// end of if block
-
-                                lat = CityData.currentCityData.getLatitude();
-                                lng = CityData.currentCityData.getLongitude();
-
                                 wxUrl.setLength( 0 );
                                 wxUrl.append(
                                         String.format(
@@ -364,17 +364,6 @@ public class WidgetUpdateService extends JobIntentService
 
                                 break;
                             case WeatherLionApplication.HERE_MAPS:
-                                // if this location has already been used there is no need to query the
-                                // web service as the location data has been stored locally
-                                CityData.currentCityData = UtilityMethod.isFoundInJSONStorage( currentCity.toString() );
-
-                                if( CityData.currentCityData == null )
-                                {
-                                    json =
-                                            UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress( currentCity.toString() );
-                                    CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
-                                }// end of if block
-
                                 wxUrl.setLength( 0 );
                                 wxUrl.append(
                                         String.format(
@@ -397,17 +386,6 @@ public class WidgetUpdateService extends JobIntentService
                                                 UtilityMethod.escapeUriString( currentCity.toString() ) ) );
                                 break;
                             case WeatherLionApplication.WEATHER_BIT:
-                                // if this location has already been used there is no need to query the
-                                // web service as the location data has been stored locally
-                                CityData.currentCityData = UtilityMethod.isFoundInJSONStorage( currentCity.toString() );
-
-                                if( CityData.currentCityData == null )
-                                {
-                                    json =
-                                            UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress( currentCity.toString() );
-                                    CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
-                                }// end of if block
-
                                 wxUrl.setLength( 0 );
                                 wxUrl.append(
                                         String.format( "https://api.weatherbit.io/v2.0/current?city=%s&units=I&key=%s",
@@ -459,18 +437,6 @@ public class WidgetUpdateService extends JobIntentService
 
                                 break;
                             case WeatherLionApplication.YR_WEATHER:
-
-                                // if this location has already been used there is no need to query the
-                                // web service as the location data has been stored locally
-                                CityData.currentCityData = UtilityMethod.isFoundInJSONStorage( currentCity.toString() );
-
-                                if( CityData.currentCityData == null )
-                                {
-                                    json =
-                                            UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress( currentCity.toString() );
-                                    CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
-                                }// end of if block
-
                                 String cityName =
                                         CityData.currentCityData.getCityName().contains( " " ) ?
                                                 CityData.currentCityData.getCityName().replace( " ", "_" ) :
@@ -519,6 +485,100 @@ public class WidgetUpdateService extends JobIntentService
             }// end of if block
         }// end of else block
     }// end of method handleWeatherData
+
+    private void astronomyChange( String timeOfDay, AppWidgetManager appWidgetManager )
+    {
+        String currentConditionIcon = null;
+
+        switch( timeOfDay )
+        {
+            case SUNRISE:
+                currentConditionIcon = UtilityMethod.weatherImages.get(
+                        WidgetUpdateService.currentCondition.toString().toLowerCase() );
+
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                        String.format( "Switching to sunrise icon %s!", currentConditionIcon ),
+                        TAG + "::astronomyChange" );
+                break;
+            case SUNSET:
+                if ( WidgetUpdateService.currentCondition.toString().toLowerCase().contains( "(night)" ) )
+                {
+                    currentConditionIcon = UtilityMethod.weatherImages.get(
+                            WidgetUpdateService.currentCondition.toString().toLowerCase() );
+                }// end of if block
+                else
+                {
+                    // Yahoo has a habit of having sunny nights
+                    if ( WidgetUpdateService.currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                    {
+                        WidgetUpdateService.currentCondition.setLength( 0 );
+                        WidgetUpdateService.currentCondition.append( "Clear" );
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
+                                WidgetUpdateService.currentCondition.toString() );
+                    }// end of if block
+
+                    if ( UtilityMethod.weatherImages.containsKey(
+                            WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" ) )
+                    {
+                        currentConditionIcon =
+                                UtilityMethod.weatherImages.get(
+                                        WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" );
+
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                                "Switching to sunset icon to " + currentConditionIcon,
+                                TAG + "::astronomyChange" );
+                    }// end of if block
+                    else
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                                String.format( "No night icon exists for %s!",
+                                        WidgetUpdateService.currentCondition.toString() ),
+                                TAG + "::astronomyChange" );
+
+                        // there will most likely be a day icon but not a night one so exit here
+                        return;
+                    }// end of else block
+                }// end of else block
+
+                break;
+        }// end of switch block
+
+        // Load applicable icon based on the time of day
+        String imageFile = String.format( "weather_images/%s/weather_%s", WeatherLionApplication.iconSet
+                , currentConditionIcon );
+
+        largeWidgetRemoteViews = new RemoteViews(
+                WeatherLionApplication.getAppContext().getPackageName(),
+                R.layout.wl_large_weather_widget_activity );
+
+        smallWidgetRemoteViews = new RemoteViews(
+                WeatherLionApplication.getAppContext().getPackageName(),
+                R.layout.wl_small_weather_widget_activity );
+
+        try( InputStream is = WeatherLionApplication.getAppContext().getAssets().open( imageFile ) )
+        {
+            Bitmap bmp = BitmapFactory.decodeStream( is );
+            largeWidgetRemoteViews.setImageViewBitmap( R.id.imvCurrentCondition, bmp );
+            smallWidgetRemoteViews.setImageViewBitmap( R.id.imvCurrentCondition, bmp );
+
+            // update all widgets
+            updateAllAppWidgets( appWidgetManager );
+        }// end of try block
+        catch ( IOException e )
+        {
+            UtilityMethod.butteredToast( WeatherLionApplication.getAppContext(), e.toString(), 2, Toast.LENGTH_SHORT );
+        }// end of catch block
+
+
+    }// end of method astronomyChange
+
+    private void broadcastLoadingError()
+    {
+        Intent updateIntent = new Intent( WEATHER_LOADING_ERROR_MESSAGE );
+        LocalBroadcastManager manager =
+                LocalBroadcastManager.getInstance( getApplicationContext() );
+        manager.sendBroadcast( updateIntent );
+    }// end of method broadcastLoadingError
 
     private void broadcastWeatherUpdate()
     {
@@ -677,7 +737,8 @@ public class WidgetUpdateService extends JobIntentService
                 catch( Exception e )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::updateOneAppWidget" );
+                    TAG + "::updateAllAppWidgets [line: " +
+                            e.getStackTrace()[1].getLineNumber()+ "]" );
                     WeatherLionApplication.dataLoadedSuccessfully = false;
 
                     // Undo changes made
@@ -696,25 +757,30 @@ public class WidgetUpdateService extends JobIntentService
 
                 }// end of catch block
 
+                // if the last update is not present then it can be assumed that data is being restored
+                if( WeatherLionApplication.restoringWeatherData ) UtilityMethod.lastUpdated = new Date();
+
                 SimpleDateFormat dt = new SimpleDateFormat( "E h:mm a", Locale.ENGLISH );
                 String timeUpdated = dt.format( UtilityMethod.lastUpdated );
-                currentLocation.setLength( 0 );
-                currentLocation.append( currentCity.length() != 0 ?
-                        currentCity : WeatherLionApplication.storedPreferences.getLocation() );
 
                 // Update the current location and update time stamp
+                largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                        currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
+                smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                        currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
                 String ts = new SimpleDateFormat(
                         "E, MMM dd, h:mm a", Locale.ENGLISH ).format( UtilityMethod.lastUpdated );
 
-                // Update the weather provider image view and text view
-                String providerIcon = String.format( "%s%s", "wl_",
-                        WeatherLionApplication.storedData.getProvider().getName().toLowerCase().replaceAll(
-                                " ", "_" ) );
+                String storedProviderName = WeatherLionApplication.storedPreferences.getProvider()
+                        .equalsIgnoreCase( WeatherLionApplication.YAHOO_WEATHER ) ?
+                        WeatherLionApplication.storedPreferences.getProvider()
+                            .replaceAll( "!", "" ) :
+                        WeatherLionApplication.storedPreferences.getProvider();
 
-                if( providerIcon.equals( WeatherLionApplication.YAHOO_WEATHER ) )
-                {
-                    providerIcon = providerIcon.replace( "!", "" ).replace( " ", "_" );
-                }// end of if block
+                String providerIcon = String.format( "%s%s", "wl_",
+                    storedProviderName.toLowerCase().replaceAll( " ", "_" ) );
 
                 largeWidgetRemoteViews.setImageViewResource( R.id.imvWeatherProviderLogo,
                         UtilityMethod.getImageResourceId( providerIcon ) );
@@ -797,9 +863,19 @@ public class WidgetUpdateService extends JobIntentService
             // The icon updater service will need to look at these values
             WeatherLionApplication.currentSunriseTime = sunriseTime;
             WeatherLionApplication.currentSunsetTime = sunsetTime;
+
+            // schedule the update for astronomy switch
+            scheduleAstronomyUpdate();
         }// end of else if block
 
         WidgetHelper.getWidgetIds();
+
+        // Set the current location
+        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
+        smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
 
         // schedule the weather update only if weather was just updated
         if( weatherUpdate && strJSON != null && !strJSON.isEmpty() )
@@ -826,13 +902,16 @@ public class WidgetUpdateService extends JobIntentService
             // schedule the next widget update
             scheduleNextUpdate();
 
+            // schedule the update for astronomy switch
+            scheduleAstronomyUpdate();
+
             // send out a broadcast that the weather has been updated
             broadcastWeatherUpdate();
         }// end of if block
         else if( weatherUpdate && strJSON == null )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Undoing preference change...",
-                TAG + "::updateOneAppWidget" );
+                TAG + "::updateAllAppWidgets" );
             // reverse the preference change
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences( WeatherLionApplication.getAppContext() );
             settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
@@ -840,6 +919,13 @@ public class WidgetUpdateService extends JobIntentService
         }// end of else if block
         else
         {
+            // Set the current location
+            largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                    currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
+            smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                    currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
             if( WeatherLionApplication.largeWidgetIds.length > 0 )
             {
                 for ( int largeWidgetId : WeatherLionApplication.largeWidgetIds )
@@ -900,6 +986,86 @@ public class WidgetUpdateService extends JobIntentService
         }// end of catch block
     }// end of method retrieveWeatherData
 
+    private void scheduleAstronomyUpdate()
+    {
+        Intent sunsetIntent = new Intent( getApplicationContext(), SunsetAlarmBroadcastReceiver.class );
+        sunsetIntent.setAction( SunsetAlarmBroadcastReceiver.ACTION_ALARM );
+
+        PendingIntent sunsetAlarmIntent = PendingIntent.getBroadcast( getApplicationContext(),
+                0, sunsetIntent, 0 );
+
+        Intent sunriseIntent = new Intent( getApplicationContext(), SunriseAlarmBroadcastReceiver.class );
+        sunriseIntent.setAction( SunriseAlarmBroadcastReceiver.ACTION_ALARM );
+
+        PendingIntent sunriseAlarmIntent = PendingIntent.getBroadcast( getApplicationContext(),
+                0, sunsetIntent, 0 );
+
+        AlarmManager alarmManager = (AlarmManager) getApplicationContext().
+                getSystemService( Context.ALARM_SERVICE );
+
+        String today = new SimpleDateFormat( "MM/dd/yyyy",
+            Locale.ENGLISH ).format( new Date() );
+
+        String sst = String.format( "%s %s", today,
+                WeatherLionApplication.currentSunsetTime.toString() );
+
+        String srt = String.format( "%s %s", today,
+                WeatherLionApplication.currentSunriseTime.toString() );
+
+        SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
+                Locale.ENGLISH );
+
+        // Obtain all default value from the stored preferences
+        int timeAmount = UtilityMethod.millisecondsToMinutes(
+                Integer.parseInt( WeatherLionApplication.storedPreferences.getInterval() ) );
+        Calendar c = Calendar.getInstance();
+        Date rn = new Date();
+        Date schedSunriseTime = null;
+        Date schedSunsetTime = null;
+
+        try
+        {
+            schedSunsetTime = sdf.parse( sst );
+            schedSunriseTime = sdf.parse( srt );
+        } // end of try block
+        catch ( ParseException e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                    TAG + "::checkAstronomy [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+        }// end of catch block
+
+        if ( ( rn.before( schedSunsetTime ) || rn.equals( schedSunsetTime ) ) )
+        {
+            Calendar sunsetCalendar = Calendar.getInstance();
+            sunsetCalendar.setTime( schedSunsetTime );
+
+            long sunsetUpdate = sunsetCalendar.getTimeInMillis();
+
+            alarmManager.setExact( AlarmManager.RTC, sunsetUpdate, sunsetAlarmIntent );
+
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                    "Sunset alarm scheduled for " +
+                            new SimpleDateFormat( "h:mm:ss a",
+                                    Locale.ENGLISH ).format( sunsetCalendar.getTime() ) + ".",
+                    TAG + "::scheduleAstronomyUpdate" );
+        }// end if if block
+        else if ( ( rn.before( schedSunriseTime ) || rn.equals( schedSunriseTime ) ) )
+        {
+            Calendar sunriseCalendar = Calendar.getInstance();
+            sunriseCalendar.setTime( schedSunriseTime );
+
+            long sunriseUpdate = sunriseCalendar.getTimeInMillis();
+
+            alarmManager.setExact( AlarmManager.RTC, sunriseUpdate, sunriseAlarmIntent );
+
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                    "Sunrise alarm scheduled for " +
+                            new SimpleDateFormat( "h:mm:ss a",
+                                    Locale.ENGLISH ).format( sunriseCalendar.getTime() ) + ".",
+                    TAG + "::scheduleAstronomyUpdate" );
+        }// end if if block
+    }// end of method scheduleAstronomyUpdate
+
     /**
      * Schedules the next App Widget update to occur based on
      * the interval specified by the user of the default interval
@@ -912,8 +1078,8 @@ public class WidgetUpdateService extends JobIntentService
      */
     private void scheduleNextUpdate()
     {
-        Intent intentToFire = new Intent( getApplicationContext(), AlarmBroadcastReceiver.class );
-        intentToFire.setAction( AlarmBroadcastReceiver.ACTION_ALARM );
+        Intent intentToFire = new Intent( getApplicationContext(), UpdateAlarmBroadcastReceiver.class );
+        intentToFire.setAction( UpdateAlarmBroadcastReceiver.ACTION_ALARM );
 
         PendingIntent alarmIntent = PendingIntent.getBroadcast( getApplicationContext(),
                 0, intentToFire, 0 );
@@ -1068,9 +1234,6 @@ public class WidgetUpdateService extends JobIntentService
                     currentConditionIcon = "na.png";
                 }// end of if block
             }// end of if block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of if block
         else
         {
@@ -1098,9 +1261,6 @@ public class WidgetUpdateService extends JobIntentService
             {
                 currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
             }// end of else block
-
-            WeatherLionApplication.sunriseIconsInUse = true;
-            WeatherLionApplication.sunsetIconsInUse = false;
         }// end of else block
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
@@ -1215,12 +1375,12 @@ public class WidgetUpdateService extends JobIntentService
         }// end of for each loop
 
         // if the code gets to here then all was loaded successfully
-       WeatherLionApplication.dataLoadedSuccessfully = true;
+        WeatherLionApplication.dataLoadedSuccessfully = true;
 
         Map< String, Object > xmlMapData = new LinkedHashMap<>();
         xmlMapData.put( "providerName", WeatherLionApplication.DARK_SKY );
         xmlMapData.put( "datePublished", new Date() );
-        xmlMapData.put( "cityName", currentCity.toString() );
+        xmlMapData.put( "cityName",currentLocation );
         xmlMapData.put( "countryName",  currentCountry.toString() );
         xmlMapData.put( "currentConditions", currentCondition.toString() );
         xmlMapData.put( "currentTemperature", currentTemp.toString() );
@@ -1370,9 +1530,6 @@ public class WidgetUpdateService extends JobIntentService
                     currentConditionIcon = "na.png";
                 }// end of if block
             }// end of if block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of if block
         else
         {
@@ -1401,9 +1558,6 @@ public class WidgetUpdateService extends JobIntentService
                 currentConditionIcon = UtilityMethod.weatherImages.get(
                         currentCondition.toString().toLowerCase() );
             }// end of else block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of else block
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
@@ -1548,12 +1702,12 @@ public class WidgetUpdateService extends JobIntentService
         }// end of for each loop
 
         // if the code gets to here then all was loaded successfully
-       WeatherLionApplication.dataLoadedSuccessfully = true;
+        WeatherLionApplication.dataLoadedSuccessfully = true;
 
         Map< String, Object > xmlMapData = new LinkedHashMap<>();
         xmlMapData.put( "providerName", WeatherLionApplication.HERE_MAPS );
         xmlMapData.put( "datePublished", new Date() );
-        xmlMapData.put( "cityName", currentCity.toString() );
+        xmlMapData.put( "cityName", currentLocation );
         xmlMapData.put( "countryName",  currentCountry.toString() );
         xmlMapData.put( "currentConditions", currentCondition.toString() );
         xmlMapData.put( "currentTemperature", currentTemp.toString() );
@@ -1574,6 +1728,9 @@ public class WidgetUpdateService extends JobIntentService
 
     private void loadOpenWeather()
     {
+        currentCountry.setLength( 0 );
+        currentCountry.append( CityData.currentCityData.getCountryName() );
+
         currentCondition.setLength( 0 ); // reset
         currentCondition.append( openWeatherWx.getWeather().get( 0 ).getDescription() );
 
@@ -1689,9 +1846,6 @@ public class WidgetUpdateService extends JobIntentService
                     currentConditionIcon = "na.png";
                 }// end of if block
             }// end of if block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of if block
         else
         {
@@ -1720,9 +1874,6 @@ public class WidgetUpdateService extends JobIntentService
                 currentConditionIcon = UtilityMethod.weatherImages.get(
                         currentCondition.toString().toLowerCase() );
             }// end of else block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of else block
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
@@ -1850,12 +2001,12 @@ public class WidgetUpdateService extends JobIntentService
         }// end of for each loop
 
         // if the code gets to here then all was loaded successfully
-       WeatherLionApplication.dataLoadedSuccessfully = true;
+        WeatherLionApplication.dataLoadedSuccessfully = true;
 
         Map< String, Object > xmlMapData = new LinkedHashMap<>();
         xmlMapData.put( "providerName", WeatherLionApplication.OPEN_WEATHER );
         xmlMapData.put( "datePublished", new Date() );
-        xmlMapData.put( "cityName", currentCity.toString() );
+        xmlMapData.put( "cityName", currentLocation );
         xmlMapData.put( "countryName",  currentCountry.toString() );
         xmlMapData.put( "currentConditions", currentCondition.toString() );
         xmlMapData.put( "currentTemperature", currentTemp.toString() );
@@ -1889,9 +2040,6 @@ public class WidgetUpdateService extends JobIntentService
         // check for previous weather data stored locally
         if( previousWeatherData.exists() )
         {
-            currentCity.setLength( 0 );
-            currentCity.append( WeatherLionApplication.storedData.getLocation().getCity() );
-
             currentCountry.setLength( 0 );
             currentCountry.append( WeatherLionApplication.storedData.getLocation().getCountry() );
 
@@ -1906,8 +2054,6 @@ public class WidgetUpdateService extends JobIntentService
 
             currentHumidity.setLength( 0 );
             currentHumidity.append( WeatherLionApplication.storedData.getAtmosphere().getHumidity() );
-
-            currentLocation = currentCity;
 
             sunriseTime.setLength( 0 );
             sunriseTime.append( WeatherLionApplication.storedData.getAstronomy().getSunrise().toUpperCase() );
@@ -1934,19 +2080,12 @@ public class WidgetUpdateService extends JobIntentService
             sunsetTime.append( String.format( "%s:0%s", ft[ 0 ], ft[ 1 ] ) );
         }// end if else if block
 
-        // Update the current location
-        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
-                currentCity.substring( 0, currentCity.indexOf( "," ) ) );
-
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
                 " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric() ?
                 " km/h" : " mph" ) );
-
-        smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
-                currentCity.substring( 0, currentCity.indexOf( "," ) ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2109,15 +2248,14 @@ public class WidgetUpdateService extends JobIntentService
             }// end of if block
         }// end of for loop
 
-        // Update the weather provider image view and text view
-        String providerIcon = String.format( "%s%s", "wl_",
-                WeatherLionApplication.storedData.getProvider().getName().toLowerCase().replaceAll(
-                        " ", "_" ) );
+        String storedProviderName = WeatherLionApplication.storedPreferences.getProvider()
+                .equalsIgnoreCase( WeatherLionApplication.YAHOO_WEATHER ) ?
+                WeatherLionApplication.storedPreferences.getProvider()
+                        .replaceAll( "!", "" ) :
+                WeatherLionApplication.storedPreferences.getProvider();
 
-        if( providerIcon.equals( WeatherLionApplication.YAHOO_WEATHER ) )
-        {
-            providerIcon = providerIcon.replace( "!", "" ).replace( " ", "_" );
-        }// end of if block
+        String providerIcon = String.format( "%s%s", "wl_",
+                storedProviderName.toLowerCase().replaceAll( " ", "_" ) );
 
         largeWidgetRemoteViews.setImageViewResource( R.id.imvWeatherProviderLogo,
                 UtilityMethod.getImageResourceId( providerIcon ) );
@@ -2268,9 +2406,6 @@ public class WidgetUpdateService extends JobIntentService
                     currentConditionIcon = "na.png";
                 }// end of if block
             }// end of if block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of if block
         else
         {
@@ -2298,9 +2433,6 @@ public class WidgetUpdateService extends JobIntentService
             {
                 currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
             }// end of else block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of else block
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
@@ -2455,12 +2587,12 @@ public class WidgetUpdateService extends JobIntentService
         }// end of else block
 
         // if the code gets to here then all was loaded successfully
-       WeatherLionApplication.dataLoadedSuccessfully = true;
+        WeatherLionApplication.dataLoadedSuccessfully = true;
 
         Map< String, Object > xmlMapData = new LinkedHashMap<>();
         xmlMapData.put( "providerName", WeatherLionApplication.WEATHER_BIT );
         xmlMapData.put( "datePublished", new Date() );
-        xmlMapData.put( "cityName", currentCity.toString() );
+        xmlMapData.put( "cityName", currentLocation );
         xmlMapData.put( "countryName",  currentCountry.toString() );
         xmlMapData.put( "currentConditions", currentCondition.toString() );
         xmlMapData.put( "currentTemperature", ct );
@@ -2493,8 +2625,6 @@ public class WidgetUpdateService extends JobIntentService
 
         currentHumidity.setLength( 0 );
         currentHumidity.append( Math.round( yahoo19.getCurrentObservation().getAtmosphere().getHumidity() ) );
-
-        currentLocation = currentCity;
 
         sunriseTime.setLength( 0 ); // reset
         sunriseTime.append( yahoo19.getCurrentObservation().getAstronomy().getSunrise().toUpperCase() );
@@ -2608,9 +2738,6 @@ public class WidgetUpdateService extends JobIntentService
                     currentConditionIcon = "na.png";
                 }// end of if block
             }// end of if block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of if block
         else
         {
@@ -2639,9 +2766,6 @@ public class WidgetUpdateService extends JobIntentService
                 currentConditionIcon = UtilityMethod.weatherImages.get(
                         currentCondition.toString().toLowerCase() );
             }// end of else block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of else block
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
@@ -2726,12 +2850,12 @@ public class WidgetUpdateService extends JobIntentService
         }// end of for loop
 
         // if the code gets to here then all was loaded successfully
-       WeatherLionApplication.dataLoadedSuccessfully = true;
+        WeatherLionApplication.dataLoadedSuccessfully = true;
 
         Map< String, Object > xmlMapData = new LinkedHashMap<>();
         xmlMapData.put( "providerName", WeatherLionApplication.YAHOO_WEATHER );
         xmlMapData.put( "datePublished", new Date() );
-        xmlMapData.put( "cityName", currentCity.toString() );
+        xmlMapData.put( "cityName", currentLocation );
         xmlMapData.put( "countryName",  currentCountry.toString() );
         xmlMapData.put( "currentConditions", currentCondition.toString() );
         xmlMapData.put( "currentTemperature", currentTemp.toString() );
@@ -2766,8 +2890,6 @@ public class WidgetUpdateService extends JobIntentService
 
         // append a zero if there is no humidity
         if( currentHumidity.length() == 0 ) currentHumidity.append( "0" );
-
-        currentLocation = currentCity;
 
         sunriseTime.setLength( 0 );
         sunriseTime.append( new SimpleDateFormat( "h:mm a", Locale.ENGLISH ).format( yr.getSunrise() ) );
@@ -2883,9 +3005,6 @@ public class WidgetUpdateService extends JobIntentService
                     currentConditionIcon = "na.png";
                 }// end of if block
             }// end of if block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of if block
         else
         {
@@ -2914,9 +3033,6 @@ public class WidgetUpdateService extends JobIntentService
                 currentConditionIcon = UtilityMethod.weatherImages.get(
                         currentCondition.toString().toLowerCase() );
             }// end of else block
-
-            WeatherLionApplication.sunsetIconsInUse = true;
-            WeatherLionApplication.sunriseIconsInUse = false;
         }// end of else block
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
@@ -3018,12 +3134,12 @@ public class WidgetUpdateService extends JobIntentService
         }// end of for loop
 
         // if the code gets to here then all was loaded successfully
-       WeatherLionApplication.dataLoadedSuccessfully = true;
+        WeatherLionApplication.dataLoadedSuccessfully = true;
 
         Map< String, Object > xmlMapData = new LinkedHashMap<>();
         xmlMapData.put( "providerName", WeatherLionApplication.YR_WEATHER );
         xmlMapData.put( "datePublished", new Date() );
-        xmlMapData.put( "cityName", currentCity.toString() );
+        xmlMapData.put( "cityName", currentLocation );
         xmlMapData.put( "countryName",  currentCountry.toString() );
         xmlMapData.put( "currentConditions", currentCondition.toString() );
         xmlMapData.put( "currentTemperature", currentTemp.toString() );

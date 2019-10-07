@@ -34,8 +34,8 @@ import com.bushbungalo.weatherlion.database.DBHelper;
 import com.bushbungalo.weatherlion.database.WeatherAccess;
 import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
+import com.bushbungalo.weatherlion.model.TimeZoneInfo;
 import com.bushbungalo.weatherlion.services.GeoLocationService;
-import com.bushbungalo.weatherlion.services.IconUpdateService;
 import com.bushbungalo.weatherlion.services.WeatherDataXMLService;
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.JSONHelper;
@@ -85,14 +85,8 @@ public class WeatherLionApplication extends Application
 {
     private static Context context;
     private static String TAG = "WeatherLionApplication";
-    public static boolean iconSetSwitch;
 
     public static final String LAUNCH_METHOD_EXTRA = "MethodToCall";
-
-    public static final String LION_MAIN_NETWORK_PAYLOAD = "WeatherLionMainNetworkPayload";
-    public static final String LION_MAIN_NETWORK_MESSAGE = "WeatherLionMainNetworkMessage";
-
-    public static final String LION_REFRESH_MAIN_MESSAGE = "WeatherLionMainRefreshMainMessage";
 
     public static final String PROGRAM_NAME = "Weather Lion";
     public static final String MAIN_DATABASE_NAME = "WeatherLion.db";
@@ -191,8 +185,6 @@ public class WeatherLionApplication extends Application
 
     public static boolean changeWidgetUnit;
 
-    public static boolean running;
-
     private static List< String > keysMissing;
     public static LastWeatherData.WeatherData storedData;
 
@@ -238,11 +230,10 @@ public class WeatherLionApplication extends Application
     public static int[] smallWidgetIds;
 
     public static boolean dataLoadedSuccessfully = false;
+    public static boolean restoringWeatherData;
 
-    public static boolean sunriseIconsInUse;
-    public static boolean sunriseUpdatedPerformed;
-    public static boolean sunsetIconsInUse;
-    public static boolean sunsetUpdatedPerformed;
+    public static TimeZoneInfo currentLocationTimeZone;
+    public static String timeOfDayToUse;
 
     /**
      * Checks to see if the program is being run for the first time.
@@ -373,7 +364,8 @@ public class WeatherLionApplication extends Application
         values.put( WeatherAccess.KEY_VALUE, keyValue );
         values.put( WeatherAccess.HEX_VALUE, hex );
 
-        return (int) weatherAccessDB.insert( WeatherAccess.ACCESS_KEYS, null, values );
+        return (int) weatherAccessDB.insertWithOnConflict( WeatherAccess.ACCESS_KEYS, null, values,
+                SQLiteDatabase.CONFLICT_IGNORE );
     }// end of method addSiteKeyToDatabase
 
     /***
@@ -1177,7 +1169,7 @@ public class WeatherLionApplication extends Application
         // network connectivity and system clock changes
         IntentFilter systemFilter = new IntentFilter();
         systemFilter.addAction( ConnectivityManager.CONNECTIVITY_ACTION );
-        systemFilter.addAction( LargeWeatherWidgetProvider.CLOCK_UPDATE_MESSAGE );
+        //systemFilter.addAction( Intent.ACTION_TIME_TICK );
         this.registerReceiver( systemBroadcastReceiver, systemFilter );
 
         spf = PreferenceManager.getDefaultSharedPreferences( this );
@@ -1299,10 +1291,8 @@ public class WeatherLionApplication extends Application
         if( checkForStoredWeatherData() )
         {
             // run the weather service and  call the method that loads the previous weather data
-            actionWeatherService( UNIT_NOT_CHANGED, WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
-
-            // set the flag that indicates that the program is up and running
-            running = true;
+            actionWeatherService( UNIT_NOT_CHANGED,
+                    WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
         }// end of if block
     }// end of method onCreate
 
@@ -1713,43 +1703,30 @@ public class WeatherLionApplication extends Application
         {
             final String action = Objects.requireNonNull( intent.getAction() );
 
-            switch( action )
+            if( action.equals( ConnectivityManager.CONNECTIVITY_ACTION ) )
             {
-                case LargeWeatherWidgetProvider.CLOCK_UPDATE_MESSAGE:
-                    if( running )
-                    {
-                        Intent astronomyIntent = new Intent( WeatherLionApplication.this,
-                                IconUpdateService.class );
-                        WeatherLionApplication.this.startService( astronomyIntent );
-                    }// end of if block
-
-                    break;
-                case ConnectivityManager.CONNECTIVITY_ACTION:
-
-                    // if the last weather update is null then the program has just been launched
-                    // an the system will always imply that the connection state has changed.
-                    if( UtilityMethod.lastUpdated != null )
-                    {
+                // if the last weather update is null then the program has just been launched
+                // an the system will always imply that the connection state has changed.
+                if( UtilityMethod.lastUpdated != null )
+                {
 //                        if( UtilityMethod.updateRequired( getAppContext() ) )
-                        if( UtilityMethod.updateRequired( getAppContext() ) &&
-                                UtilityMethod.hasInternetConnection( getAppContext() ) )
-                        {
-                            UtilityMethod.refreshRequested = true;
+                    if( UtilityMethod.updateRequired( getAppContext() ) &&
+                            UtilityMethod.hasInternetConnection( getAppContext() ) )
+                    {
+                        UtilityMethod.refreshRequested = true;
 
-                            Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-                            updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
-                            WidgetUpdateService.enqueueWork( context, updateIntent );
-                        }// end of if block
-                        else
-                        {
-                            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                    "Connectivity changed but updated not required.",
-                                    TAG + "::SystemBroadcastReceiver::onReceive" );
-                        }// end of else block
+                        Intent updateIntent = new Intent( context, WidgetUpdateService.class );
+                        updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                        WidgetUpdateService.enqueueWork( context, updateIntent );
                     }// end of if block
-
-                    break;
-            }// end of switch block
+                    else
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                                "Connectivity changed but updated not required.",
+                                TAG + "::SystemBroadcastReceiver::onReceive" );
+                    }// end of else block
+                }// end of if block
+            }// end of if block
         }// end of method onReceive
     }// end of class SystemBroadcastReceiver
 }// end of class WeatherLionApplication

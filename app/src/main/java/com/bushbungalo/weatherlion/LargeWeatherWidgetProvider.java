@@ -50,8 +50,6 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     public static final String WIDGET_UPDATE_MESSAGE = "WidgetUpdateMessage";
     public static final String ICON_REFRESH_MESSAGE = "WidgetIconRefreshMessage";
 
-
-
     /**
      * {@inheritDoc}
      */
@@ -76,7 +74,6 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     {
         super.onDisabled( context );
         UtilityMethod.weatherWidgetEnabled = false;
-        WeatherLionApplication.running = false;
     }
 
     /**
@@ -108,15 +105,6 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             updateIntent.putExtra( EXTRA_APPWIDGET_ID, appWidgetId );
             updateIntent.setData( Uri.parse( "false" ) );
             WidgetUpdateService.enqueueWork( context, updateIntent );
-
-            if( !WeatherLionApplication.running )
-            {
-                WeatherLionApplication.running = true;
-
-                // send a broad cast to let main initiate the service
-                Intent clockIntent = new Intent( CLOCK_UPDATE_MESSAGE );
-                context.sendBroadcast( clockIntent );
-            }// end of if block
 
             // set the click listener for the refresh image
             PendingIntent refreshIntent = PendingIntent.getBroadcast( context,
@@ -232,146 +220,4 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             }// end of if block
         }// end of if block
     }// end of method onReceive
-
-    public static void checkAstronomy()
-    {
-        // update icons based on the time of day in relation to sunrise and sunset times
-        if( WeatherLionApplication.currentSunriseTime.length() != 0 &&
-                WeatherLionApplication.currentSunsetTime.length() != 0 )
-        {
-            // Load current condition weather image
-            Calendar rightNow = Calendar.getInstance();
-            Calendar nightFall = Calendar.getInstance();
-            Calendar sunUp = Calendar.getInstance();
-            String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                    Locale.ENGLISH ).format( rightNow.getTime() )
-                    + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
-            String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                    Locale.ENGLISH ).format( rightNow.getTime() )
-                    + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
-            SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-            Date rn = null; // date time right now (rn)
-            Date nf = null; // date time night fall (nf)
-            Date su = null; // date time sun up (su)
-
-            try
-            {
-                rn = sdf.parse(sdf.format( rightNow.getTime() ) );
-                nightFall.setTime(sdf.parse( sunsetTwenty4HourTime ) );
-                nightFall.set(Calendar.MINUTE,
-                        Integer.parseInt(sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-                sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
-
-                nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-                su = sdf.parse( sdf.format( sunUp.getTime() ) );
-            } // end of try block
-            catch ( ParseException e )
-            {
-                UtilityMethod.logMessage(UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                TAG + "::checkAstronomy [line: " +
-                            e.getStackTrace()[1].getLineNumber() + "]");
-            }// end of catch block
-
-            String currentConditionIcon;
-
-            if ( ( Objects.requireNonNull( rn ).equals( nf ) || rn.after( nf ) || rn.before( su ) ) )
-            {
-                if ( WidgetUpdateService.currentCondition.toString().toLowerCase().contains( "(night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            WidgetUpdateService.currentCondition.toString().toLowerCase() );
-                }// end of if block
-                else
-                {
-                    // Yahoo has a habit of having sunny nights
-                    if ( WidgetUpdateService.currentCondition.toString().equalsIgnoreCase( "sunny" ) )
-                    {
-                        WidgetUpdateService.currentCondition.setLength( 0 );
-                        WidgetUpdateService.currentCondition.append( "Clear" );
-                        largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
-                                WidgetUpdateService.currentCondition.toString() );
-                    }// end of if block
-
-                    if ( UtilityMethod.weatherImages.containsKey(
-                            WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" ) )
-                    {
-                        currentConditionIcon =
-                                UtilityMethod.weatherImages.get(
-                                        WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" );
-                    }// end of if block
-                    else {
-                        currentConditionIcon = UtilityMethod.weatherImages.get(
-                                WidgetUpdateService.currentCondition.toString().toLowerCase() );
-                    }// end of else block
-                }// end of else block
-
-                if ( !WeatherLionApplication.sunsetUpdatedPerformed && !WeatherLionApplication.sunsetIconsInUse )
-                {
-                    WeatherLionApplication.sunsetIconsInUse = true;
-                    WeatherLionApplication.sunriseIconsInUse = false;
-                    WeatherLionApplication.sunsetUpdatedPerformed = true;
-                    WeatherLionApplication.sunriseUpdatedPerformed = false;
-                }// end of if block
-                else if ( WeatherLionApplication.iconSetSwitch)
-                {
-                    // reset the flag after switch is made
-                    WeatherLionApplication.iconSetSwitch = false;
-                }// end of else if block
-            }// end of if block
-            else if ( WeatherLionApplication.iconSetSwitch )
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get(
-                        WidgetUpdateService.currentCondition.toString().toLowerCase() );
-
-                // reset the flag after switch is made
-                WeatherLionApplication.iconSetSwitch = false;
-            }// end of else if block
-            else
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get(
-                        WidgetUpdateService.currentCondition.toString().toLowerCase() );
-
-                if ( !WeatherLionApplication.sunriseUpdatedPerformed && !WeatherLionApplication.sunriseIconsInUse )
-                {
-                    WeatherLionApplication.sunriseUpdatedPerformed = true;
-                    WeatherLionApplication.sunsetUpdatedPerformed = false;
-                }// end of if block
-                else if ( WeatherLionApplication.iconSetSwitch)
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            WidgetUpdateService.currentCondition.toString().toLowerCase() );
-
-                    // reset the flag after switch is made
-                    WeatherLionApplication.iconSetSwitch = false;
-                }// end of else if block
-                else
-                {
-                    WeatherLionApplication.sunriseIconsInUse = true;
-                    WeatherLionApplication.sunsetIconsInUse = false;
-                }// end of else block
-            }// end of else block
-
-            // Load applicable icon based on the time of day
-            String imageFile = String.format( "weather_images/%s/weather_%s", WeatherLionApplication.iconSet
-                    , currentConditionIcon );
-
-            largeWidgetRemoteViews = new RemoteViews(
-                    WeatherLionApplication.getAppContext().getPackageName(),
-                    R.layout.wl_large_weather_widget_activity );
-
-            try( InputStream is = WeatherLionApplication.getAppContext().getAssets().open( imageFile ) )
-            {
-                Bitmap bmp = BitmapFactory.decodeStream( is );
-                largeWidgetRemoteViews.setImageViewBitmap( R.id.imvCurrentCondition, bmp );
-
-                // update the widget
-                mAppWidgetManager.updateAppWidget( WeatherLionApplication.largeWidgetIds[ 0 ],
-                        largeWidgetRemoteViews);
-            }// end of try block
-            catch ( IOException e )
-            {
-                UtilityMethod.butteredToast( WeatherLionApplication.getAppContext(), e.toString(), 2, Toast.LENGTH_SHORT );
-            }// end of catch block
-        }// end of if block
-    }// end of method checkAstronomy
 }// end of class WeatherUpdater LargeWeatherWidgetProvider

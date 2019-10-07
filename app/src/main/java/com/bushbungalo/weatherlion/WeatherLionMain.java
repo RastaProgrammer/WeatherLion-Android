@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -19,6 +20,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.text.HtmlCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -42,17 +44,22 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListPopupWindow;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bushbungalo.weatherlion.database.DBHelper;
 import com.bushbungalo.weatherlion.database.WeatherAccess;
+import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
 import com.bushbungalo.weatherlion.services.WeatherDataXMLService;
+import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.DividerItemDecoration;
+import com.bushbungalo.weatherlion.utils.JSONHelper;
 import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
@@ -124,41 +131,108 @@ public class WeatherLionMain extends AppCompatActivity
 
     private static ArrayAdapter requiredKeysAdapter;
 
+    private SwipeRefreshLayout appRefresh;
+
+    private RecyclerView forecastRecyclerView;
+    List< LastWeatherData.WeatherData.DailyForecast.DayForecast > forecastList;
+
+    private TextView txvWeatherLocation;
+    private TextClock txcLocalTime;
+    private ImageView imvShowPreviousSearches;
+    private static ListPopupWindow popupWindow;
+    private static PopupMenu popupMenu;
+    private static String[] listItems;
+    private static String selectedCity;
+    private StringBuilder currentLocation;
+
+    /**
+     * There was an error getting weather data
+     */
+    private BroadcastReceiver loadingErrorBroadcastReceiver = new BroadcastReceiver()
+    {
+        @Override
+        public void onReceive( Context context, Intent intent)
+        {
+            // cancel the Visual indication of a refresh
+            appRefresh.setRefreshing( false );
+        }// end of method onReceive
+    };
+
     /**
      * Refresh the main activity once new data has been stored
      */
     private BroadcastReceiver xmlStorageBroadcastReceiver = new BroadcastReceiver()
     {
         @Override
-        public void onReceive(Context context, Intent intent)
+        public void onReceive( Context context, Intent intent )
         {
-            // refresh the xml data stored after the last update
-            WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
-                UtilityMethod.readAll(
-                    context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
-                        .replaceAll( "\t", "" ).trim() );
-
-            WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
-            DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
-
-            try
+            if( WeatherLionApplication.restoringWeatherData )
             {
-                UtilityMethod.lastUpdated = df.parse(
-                        WeatherLionApplication.storedData.getProvider().getDate() );
-            }// end of try block
-            catch ( ParseException e )
+                setContentView( R.layout.wl_main_activity );
+
+                UtilityMethod.lastUpdated = new Date();
+
+                if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
+                {
+                    noGpsAlert();
+                }// end of if block
+
+                if( !UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
+                {
+                    View mainActivity = findViewById( R.id.main_window );
+
+                    Snackbar.make( mainActivity ,
+                            "Connect to the Internet", Snackbar.LENGTH_INDEFINITE )
+                            .setAction("Wifi Settings", new View.OnClickListener()
+                            {
+                                @Override
+                                public void onClick(View v)
+                                {
+                                    startActivity( new Intent(Settings.ACTION_WIFI_SETTINGS ) );
+                                }// end of method onClick
+                            }).show();
+                }// end of if block
+
+                WeatherLionApplication.restoringWeatherData = false;
+            }  // end of if block
+
+            if( new File( WeatherLionMain.this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
             {
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                // refresh the xml data stored after the last update
+                WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                        UtilityMethod.readAll(
+                                context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
+                                .replaceAll( "\t", "" ).trim() );
+
+                WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
+                DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
+
+                try
+                {
+                    UtilityMethod.lastUpdated = df.parse(
+                            WeatherLionApplication.storedData.getProvider().getDate() );
+                }// end of try block
+                catch ( ParseException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
                         TAG + "::onCreate [line: " +
-                                e.getStackTrace()[1].getLineNumber()+ "]" );
-            }// end of catch block
+                            e.getStackTrace()[1].getLineNumber()+ "]" );
+                }// end of catch block
 
-            WeatherLionApplication.currentSunriseTime = new StringBuilder(
-                    WeatherLionApplication.storedData.getAstronomy().getSunrise() );
-            WeatherLionApplication.currentSunsetTime = new StringBuilder(
-                    WeatherLionApplication.storedData.getAstronomy().getSunset() );
+                WeatherLionApplication.currentSunriseTime = new StringBuilder(
+                        WeatherLionApplication.storedData.getAstronomy().getSunrise() );
+                WeatherLionApplication.currentSunsetTime = new StringBuilder(
+                        WeatherLionApplication.storedData.getAstronomy().getSunset() );
 
-            loadMainActivityWeather();
+                // reload main activity
+                loadMainActivityWeather();
+            }// end of if block
+
+            if( appRefresh != null )
+            {
+                // cancel the visual indication of a refresh
+                appRefresh.setRefreshing( false );
+            }// end of if block
         }// end of method onReceive
     };
 
@@ -388,7 +462,7 @@ public class WeatherLionMain extends AppCompatActivity
             Drawable d = Drawable.createFromStream( is, null );
             imv.setImageDrawable( d );
         }// end of try block
-        catch (IOException e)
+        catch ( IOException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,"Weather icon " +
                     imageFile + " could not be loaded!", TAG + "::loadWeatherIcon" );
@@ -397,30 +471,31 @@ public class WeatherLionMain extends AppCompatActivity
 
     private void loadMainActivityWeather()
     {
-        StringBuilder currentLocation;
         // load the applicable typeface in use
         UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container) );
 
         StringBuilder sunriseTime = new StringBuilder();
         StringBuilder sunsetTime = new StringBuilder();
-        WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
+        WeatherLionApplication.storedData =
+            WeatherLionApplication.lastDataReceived.getWeatherData();
 
-        RecyclerView forecastRecyclerView = findViewById( R.id.lstDayForecast );
-        forecastRecyclerView.setHasFixedSize( true );
+        forecastList = new ArrayList<>( WeatherLionApplication.storedData.getDailyForecast() );
 
-        // use a linear layout manager
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-        forecastRecyclerView.setLayoutManager( layoutManager );
+        WeeklyForecastAdapter weeklyForecastAdapter = new WeeklyForecastAdapter( forecastList );
+        forecastRecyclerView.setAdapter( weeklyForecastAdapter );
 
-        Drawable dividerDrawable = getDrawable( R.drawable.wl_forecast_list_divider );
-        RecyclerView.ItemDecoration dividerItemDecoration = new DividerItemDecoration( dividerDrawable );
-        forecastRecyclerView.addItemDecoration( dividerItemDecoration );
+        appRefresh =  findViewById( R.id.swlRefresh );
 
-        List< LastWeatherData.WeatherData.DailyForecast.DayForecast > forecastList =
-                new ArrayList<>( WeatherLionApplication.storedData.getDailyForecast() );
-
-        RecyclerView.Adapter weeklyForecastAdapter = new WeeklyForecastAdapter(forecastList);
-        forecastRecyclerView.setAdapter(weeklyForecastAdapter);
+        appRefresh.setOnRefreshListener( new SwipeRefreshLayout.OnRefreshListener()
+        {
+            @Override
+            public void onRefresh()
+            {
+                refreshWeather();
+                UtilityMethod.butteredToast(WeatherLionMain.this, "Refreshing widget...",
+                        1, Toast.LENGTH_SHORT );
+            }
+        });
 
         currentCity.setLength( 0 );
         currentCity.append( WeatherLionApplication.storedData.getLocation().getCity() );
@@ -480,8 +555,13 @@ public class WeatherLionMain extends AppCompatActivity
 
         UtilityMethod.lastUpdated = timeUpdated;
 
-        String ts = null;
+        String formalName = null;
         String[] cityBreakdown = null;
+        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
+
+        currentLocation.setLength( 0 );
+        currentLocation.append( spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+                Preference.DEFAULT_WEATHER_LOCATION ) );
 
         if( currentLocation.toString().contains( "," ) )
         {
@@ -495,17 +575,43 @@ public class WeatherLionMain extends AppCompatActivity
                 String cityName = cityBreakdown[ 0 ].trim();
                 String stateName = UtilityMethod.usStatesByCode.get( cityBreakdown[ 1 ].trim() );
 
-                ts = String.format( "%s, %s", cityName, stateName );
+                formalName = String.format( "%s, %s", cityName, stateName );
             }// end of if block
             else
             {
-                ts = currentLocation.toString();
+                formalName = currentLocation.toString();
             }// end of else block
         }// end of if block
 
-        TextView txvWeatherLocation = findViewById( R.id.txvCurrentWeatherLocation );
+        txvWeatherLocation = findViewById( R.id.txvCurrentWeatherLocation );
+        txvWeatherLocation.setText( formalName );
         txvWeatherLocation.setTypeface( WeatherLionApplication.currentTypeface );
-        txvWeatherLocation.setText( ts );
+
+        imvShowPreviousSearches = findViewById( R.id.imvShowList );
+
+        imvShowPreviousSearches.setOnClickListener( new View.OnClickListener()
+        {
+            @Override
+            public void onClick( View v )
+            {
+                showPreviousSearches( txvWeatherLocation );
+            }
+        });
+
+        txvWeatherLocation.setOnClickListener( new View.OnClickListener()
+        {
+            @Override
+            public void onClick( View v )
+            {
+                // Process the onclick event only if there is a list to be shown
+                if( imvShowPreviousSearches.getVisibility() == View.VISIBLE )
+                {
+                    showPreviousSearches( txvWeatherLocation );
+                }// end of if block
+            }
+        });
+
+        loadPreviousSearches();
 
         // Load current condition weather image
         Calendar rightNow = Calendar.getInstance();
@@ -592,7 +698,6 @@ public class WeatherLionMain extends AppCompatActivity
             RelativeLayout rlBackdrop = findViewById( R.id.weather_main_container);
             String backdropFile = "weather_backgrounds/background_" +
                     Objects.requireNonNull( currentConditionIcon ).replace(".png", ".jpg" );
-            //String backdropFile = "weather_backgrounds/background_3.jpg";
 
             loadWeatherBackdrop( rlBackdrop, backdropFile );
         }// end of if block
@@ -604,19 +709,26 @@ public class WeatherLionMain extends AppCompatActivity
         txvWeatherProvider.setText( WeatherLionApplication.storedData.getProvider().getName() );
         txvWeatherProvider.setTypeface( WeatherLionApplication.currentTypeface );
 
-        String providerIcon = String.format( "%s%s", "wl_",
-                WeatherLionApplication.storedData.getProvider().getName().toLowerCase().replaceAll(
-                " ", "_" ) );
+        String storedProviderName = WeatherLionApplication.storedData.getProvider()
+                .getName().equalsIgnoreCase( WeatherLionApplication.YAHOO_WEATHER ) ?
+                WeatherLionApplication.storedData.getProvider().getName()
+                        .replaceAll( "!", "" ) :
+                WeatherLionApplication.storedData.getProvider()
+                        .getName();
 
-        if( providerIcon.equals( WeatherLionApplication.YAHOO_WEATHER ) )
-        {
-            providerIcon = providerIcon.replace( "!", "" ).replace( " ", "_" );
-        }// end of if block
+        String providerIcon = String.format( "%s%s", "wl_",
+                storedProviderName.toLowerCase().replaceAll( " ", "_" ) );
 
         imvWeatherProviderLogo.setImageResource( UtilityMethod.getImageResourceId( providerIcon ) );
 
         TextView txvLastUpdated = findViewById( R.id.txvLastUpdated );
         txvLastUpdated.setTypeface( WeatherLionApplication.currentTypeface );
+
+        if( WeatherLionApplication.currentLocationTimeZone != null )
+        {
+            txcLocalTime.setTimeZone(
+                WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+        }// end of if block
 
         if( timeUpdated != null )
         {
@@ -628,8 +740,79 @@ public class WeatherLionMain extends AppCompatActivity
         {
             UtilityMethod.refreshRequested = false;
         }// end of if block
-
     }// end of method loadMainActivityWeather
+
+    /**
+     * Load a list of previous place that were searched for
+     */
+    private void loadPreviousSearches()
+    {
+        List< CityData > previousSearches = JSONHelper.importPreviousSearches();
+        List< String > searchList = new ArrayList<>();
+
+        // when the program is first runs there will be no previous searches so
+        // this function does nothing on the first run
+        if( previousSearches != null )
+        {
+            for ( CityData city : previousSearches )
+            {
+                String c;
+
+                if( city.getRegionCode() != null && !UtilityMethod.isNumeric( city.getRegionCode() ) )
+                {
+                    c = city.getCityName() + ", " + city.getRegionCode();
+
+                    if( !WeatherLionApplication.storedPreferences.getLocation().equals( c ) )
+                    {
+                        searchList.add( c );
+                    }// end of if block
+                }// end of if block
+                else
+                {
+                    c = city.getCityName() + ", " + city.getCountryName();
+
+                    if( !WeatherLionApplication.storedPreferences.getLocation().equals( c ) )
+                    {
+                        searchList.add( c );
+                    }// end of if block
+                }// end of else block
+            }// end of for each loop
+
+            Collections.sort( searchList );
+
+        }// end of if block
+
+        listItems = searchList.toArray( new String[ 0 ] );
+
+        if( listItems.length > 0 )
+        {
+            String cc = txvWeatherLocation.getText().toString();
+
+            if( listItems.length >= 1 )
+            {
+                /* If the only city in the list is other than the current city
+                * then show the popup list.
+                */
+                if( !listItems[ 0 ].equalsIgnoreCase(
+                    WeatherLionApplication.storedPreferences.getLocation() ) )
+                {
+                    imvShowPreviousSearches.setVisibility( View.VISIBLE );
+                }// end of if block
+                else
+                {
+                    imvShowPreviousSearches.setVisibility( View.INVISIBLE );
+                }// end of else block
+            }// end of if block
+            else
+            {
+                imvShowPreviousSearches.setVisibility( View.INVISIBLE );
+            }// end of else block
+        }// end of if block
+        else
+        {
+            imvShowPreviousSearches.setVisibility( View.INVISIBLE );
+        }// end of else block
+    }// end of method loadPreviousSearches
 
     /**
      * Displays a dialog alerting the user to activate the device's GPS radio.
@@ -661,8 +844,12 @@ public class WeatherLionMain extends AppCompatActivity
         Snackbar quickSnack;
 
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .registerReceiver(xmlStorageBroadcastReceiver, new IntentFilter(
+                .registerReceiver( xmlStorageBroadcastReceiver, new IntentFilter(
                         WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE ) );
+
+        LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
+                .registerReceiver( loadingErrorBroadcastReceiver, new IntentFilter(
+                        WidgetUpdateService.WEATHER_LOADING_ERROR_MESSAGE ) );
 
         // Check if any previous weather data is stored locally
         if( WeatherLionApplication.firstRun &&
@@ -672,7 +859,7 @@ public class WeatherLionMain extends AppCompatActivity
             setContentView( R.layout.wl_welcome_activity );
 
             // load the applicable typeface in use
-            UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container) );
+            UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container ) );
 
             txvMessage = findViewById( R.id.txvMessage );
             txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
@@ -744,6 +931,22 @@ public class WeatherLionMain extends AppCompatActivity
                     else
                     {
                         setContentView( R.layout.wl_main_activity );
+                        forecastRecyclerView = findViewById(R.id.lstDayForecast);
+                        forecastRecyclerView.setHasFixedSize( true );
+
+                        // use a linear layout manager
+                        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager( this );
+                        forecastRecyclerView.setLayoutManager( layoutManager );
+
+                        Drawable dividerDrawable = getDrawable( R.drawable.wl_forecast_list_divider );
+                        RecyclerView.ItemDecoration dividerItemDecoration = new DividerItemDecoration( dividerDrawable );
+                        forecastRecyclerView.addItemDecoration( dividerItemDecoration );
+
+                        TextView txvLocalTime = findViewById(R.id.txvLocalTime);
+                        txvLocalTime.setTypeface( WeatherLionApplication.currentTypeface );
+                        txcLocalTime = findViewById( R.id.tcLocalTime );
+                        txcLocalTime.setTypeface( WeatherLionApplication.currentTypeface );
+
                     }// end of if block
 
                     if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
@@ -767,14 +970,61 @@ public class WeatherLionMain extends AppCompatActivity
                                 }).show();
                     }// end of if block
 
-                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Initiating startup...",
-                            TAG + "::main" );
-
                     doGlimpseRotation( findViewById( R.id.imvBlade ) );
 
                     loadMainActivityWeather();
                 }// end of if block
             }// end of if block
+            else if( WeatherLionApplication.storedPreferences != null )
+            {
+
+                if( !WeatherLionApplication.storedPreferences.getLocation().equals(
+                        Preference.DEFAULT_WEATHER_LOCATION ) )
+                {
+                    /* If the preferences are stored correctly and there is no weather data
+                    stored the service data service must obtain the required data based on
+                    the stored preferences
+                */
+                    if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
+                    {
+                        WeatherLionApplication.restoringWeatherData = true;
+                        UtilityMethod.refreshRequested = true;
+
+                        Intent updateIntent = new Intent( this, WidgetUpdateService.class );
+                        updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                        WidgetUpdateService.enqueueWork( this, updateIntent );
+
+                        // Have a loading screen displayed in the mean time
+                    }// end of if block
+                }// end of if block
+                else
+                {
+                    setContentView( R.layout.wl_welcome_activity );
+                    WeatherLionApplication.restoringWeatherData = true;
+
+                    UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container) );
+
+                    txvMessage = findViewById( R.id.txvMessage );
+                    txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
+                    View welcomeActivity = findViewById( R.id.weather_main_container);
+
+                    quickSnack = Snackbar.make( welcomeActivity ,
+                            "", Snackbar.LENGTH_INDEFINITE ).setAction("OPEN SETTINGS",
+                            new View.OnClickListener()
+                            {
+                                @Override
+                                public void onClick(View v)
+                                {
+                                    showPreferenceActivity( false );
+                                }// end of method onClick
+                            });
+                    View quickSnackView = quickSnack.getView();
+                    quickSnackView.setBackgroundColor( Color.parseColor("#CC3F85E1" ) );
+                    quickSnack.setActionTextColor( Color.WHITE );
+                    quickSnack.show();
+                }//end of else block
+
+            }// end of else if block
             else
             {
                 setContentView( R.layout.wl_welcome_activity );
@@ -823,7 +1073,10 @@ public class WeatherLionMain extends AppCompatActivity
         super.onDestroy();
 
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-            .unregisterReceiver(xmlStorageBroadcastReceiver);
+            .unregisterReceiver( xmlStorageBroadcastReceiver );
+
+        LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
+                .unregisterReceiver( loadingErrorBroadcastReceiver );
     }// end of method onDestroy
 
     /**
@@ -924,6 +1177,22 @@ public class WeatherLionMain extends AppCompatActivity
     {
         startActivity( new Intent( Settings.ACTION_WIFI_IP_SETTINGS ) );
     }// end of method openGPSSettings
+
+    private void refreshWeather()
+    {
+        if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
+        {
+            UtilityMethod.refreshRequested = true;
+
+            Intent updateIntent = new Intent( this, WidgetUpdateService.class );
+            updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+            WidgetUpdateService.enqueueWork( this, updateIntent );
+
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                    "Update requested by main activity",
+                    TAG + "::onReceive" );
+        }// end of if block
+    }// end of method refreshWeather
 
     /**
      * Display a dialog illiciting a response from the user
@@ -1099,6 +1368,87 @@ public class WeatherLionMain extends AppCompatActivity
         settingsIntent.putExtra( LION_MAIN_PAYLOAD, locationSet );
         startActivity( settingsIntent );
     }// end of method showPreferenceActivity
+
+    private void showPreviousSearches( View anchor )
+    {
+        popupWindow = new ListPopupWindow( this );
+
+        popupWindow.setAnchorView( anchor );
+        popupWindow.setAdapter( new ArrayAdapter<>( this, R.layout.wl_popup_list_item_light_bg, listItems ) );
+        popupWindow.setWidth( anchor.getWidth() + imvShowPreviousSearches.getWidth() );
+        popupWindow.setVerticalOffset( 6 );
+        popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_white ) );
+
+        // if the list has more than 9 elements we will set the height if the window manually
+        if( listItems.length > 9 )
+        {
+            popupWindow.setHeight( 776 );
+        }// end of if block
+
+        popupWindow.setOnItemClickListener( new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick( AdapterView<?> parent, View view, int position, long id )
+            {
+                SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences(
+                        WeatherLionApplication.getAppContext() );
+                String savedLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+                        Preference.DEFAULT_WEATHER_LOCATION );
+
+                String selection = listItems[ + position ];
+                currentLocation.setLength( 0 );
+                currentLocation.append( selection );
+                int i = 0;
+                String formalName = null;
+                String[] cityBreakdown = null;
+
+                if( selection.contains( "," ) )
+                {
+                    cityBreakdown = selection.split( "," );
+                }// end of if block
+
+                if( cityBreakdown != null )
+                {
+                    if( UtilityMethod.usStatesByCode.get( cityBreakdown[ 1 ].trim() ) != null )
+                    {
+                        String cityName = cityBreakdown[ 0 ].trim();
+                        String stateName = UtilityMethod.usStatesByCode.get( cityBreakdown[ 1 ].trim() );
+
+                        formalName = String.format( "%s, %s", cityName, stateName );
+                    }// end of if block
+                    else
+                    {
+                        formalName = selection;
+                    }// end of else block
+                }// end of if block
+
+                txvWeatherLocation.setText( formalName );
+
+                if( !currentLocation.toString().equalsIgnoreCase( savedLocation ) )
+                {
+                    WidgetUpdateService.widgetRefreshRequired = true;
+                    spf.edit().putString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+                            currentLocation.toString() ).apply();
+
+                    WeatherLionApplication.storedPreferences.setLocation( currentLocation.toString() );
+
+                    // send out a broadcast to the widget service that the location preference has been modified
+                    UtilityMethod.refreshRequested = true;
+                    Intent updateIntent = new Intent( WeatherLionMain.this, WidgetUpdateService.class );
+                    updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                    WidgetUpdateService.enqueueWork( WeatherLionMain.this, updateIntent );
+
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            "Switching cities",
+                            TAG + "::showPreviousSearches" );
+                }// end of if block
+
+                popupWindow.dismiss();
+            }// end of anonymous method onItemClick
+        });
+
+        popupWindow.show();
+    }// end of method showPreviousSearches
 
     private void showDataKeysDialog( String defaultSelection )
     {
