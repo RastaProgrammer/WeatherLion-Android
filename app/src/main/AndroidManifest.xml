@@ -52,11 +52,27 @@
                 android:value=".WeatherLionMain" />
         </activity>
 
-        <receiver android:name=".AlarmBroadcastReceiver"
+        <receiver android:name=".UpdateAlarmBroadcastReceiver"
             android:exported="false">
 
             <intent-filter>
-                <action android:name=".alarms.ACTION_ALARM" />
+                <action android:name="UpdateAlarm" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".SunriseAlarmBroadcastReceiver"
+            android:exported="false">
+
+            <intent-filter>
+                <action android:name="SunriseAlarm" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".SunsetAlarmBroadcastReceiver"
+            android:exported="false">
+
+            <intent-filter>
+                <action android:name="SunsetAlarm" />
             </intent-filter>
         </receiver>
 
@@ -96,10 +112,6 @@
 
         <service
             android:name=".services.GeoLocationService"
-            android:exported="false" />
-
-        <service
-            android:name=".services.IconUpdateService"
             android:exported="false" />
 
         <service
