@@ -8,25 +8,13 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.provider.AlarmClock;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Objects;
 
 import static android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID;
 
@@ -42,8 +30,6 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     private static final String LAUNCH_MAIN = "Main";
     private static final String OPEN_CLOCK_APP = "Clock";
     private BroadcastReceiver mSystemBroadcastReceiver;
-
-    private static AppWidgetManager mAppWidgetManager;
 
     public static final String REFRESH_BUTTON_CLICKED = "Refresh";
     public static final String CLOCK_UPDATE_MESSAGE = "ClockUpdateMessage";
@@ -82,9 +68,6 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     @Override
     public void onUpdate( Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds )
     {
-        mAppWidgetManager = appWidgetManager;
-        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Update request received!",
-                TAG + "::onUpdate" );
 
         ComponentName largeWidget = new ComponentName( context, LargeWeatherWidgetProvider.class );
         largeWidgetRemoteViews = new RemoteViews( context.getPackageName(),
@@ -161,11 +144,6 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     public void onReceive( Context context, Intent intent )
     {
         super.onReceive( context, intent );
-
-        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                intent.getAction() + " requested with action " +
-                        intent.getStringExtra( WIDGET_UPDATE_MESSAGE ),
-                TAG + "::onReceive" );
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance( context );
         largeWidgetRemoteViews = new RemoteViews( context.getPackageName(),

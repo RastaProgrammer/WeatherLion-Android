@@ -23,6 +23,7 @@ public class CityData
     private String countryCode;
     private String regionName;
 	private String regionCode;
+    private String timeZone;
     private float longitude;
     private float latitude;
     
@@ -110,6 +111,16 @@ public class CityData
         this.regionCode = stateCode;
     }
 
+    public String getTimeZone()
+    {
+        return timeZone;
+    }
+
+    public void setTimeZone( String timeZone )
+    {
+        this.timeZone = timeZone;
+    }
+
     public float getLongitude()
     {
         return longitude;
@@ -178,8 +189,9 @@ public class CityData
     @Override
     public @NonNull String toString()
     {
-        return String.format( Locale.ENGLISH, "City Name: %s, Country Name: %s, Country Code: %s," +
-                        " Region Code: %s, Region Name: %s, Latitude: %f, and Longitude: %f", this.cityName, this.countryName,
-                this.countryCode, this.regionCode, this.regionName, this.latitude, this.longitude );
+        return String.format( Locale.ENGLISH,
+        "City Name: %s, Country Name: %s, Country Code: %s," +
+                " Region Code: %s, Region Name: %s, Time Zone %s, Latitude: %f, and Longitude: %f", this.cityName, this.countryName,
+                this.countryCode, this.regionCode, this.regionName, this.timeZone, this.latitude, this.longitude );
     }// end of overridden method equals toString
 }// end of class CityData

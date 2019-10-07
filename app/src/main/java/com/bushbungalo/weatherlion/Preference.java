@@ -24,7 +24,7 @@ import android.preference.PreferenceManager;
 @SuppressWarnings({"unused", "SameParameterValue", "WeakerAccess"})
 public class Preference 
 {
-	public static final String DEFAULT_WX_PROVIDER = WeatherLionApplication.YR_WEATHER;
+	public static final String DEFAULT_WEATHER_SOURCE = WeatherLionApplication.YR_WEATHER;
 	public static final String DEFAULT_UPDATE_INTERVAL = "1800000";
 	public static final boolean DEFAULT_USE_GPS = false;
 	public static final String DEFAULT_WEATHER_LOCATION = "Unknown";
@@ -191,7 +191,7 @@ public class Preference
 		spf = PreferenceManager.getDefaultSharedPreferences( WeatherLionApplication.getAppContext() );
 
 		// get the property value and use it
-		String wxProvider = spf.getString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE, DEFAULT_WX_PROVIDER );
+		String wxProvider = spf.getString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE, DEFAULT_WEATHER_SOURCE);
 		String updateInterval  = spf.getString( WeatherLionApplication.UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL ); //default to 30 minutes
 		boolean useSystemLocation = spf.getBoolean( WeatherLionApplication.USE_GPS_LOCATION_PREFERENCE, DEFAULT_USE_GPS );
 		String wxLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE, DEFAULT_WEATHER_LOCATION );

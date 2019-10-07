@@ -3,6 +3,7 @@ package com.bushbungalo.weatherlion.services;
 import android.app.IntentService;
 import android.content.Intent;
 
+import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.GeoNamesGeoLocation;
 import com.bushbungalo.weatherlion.utils.JSONHelper;
@@ -13,10 +14,6 @@ import java.util.Objects;
 
 /**
  * @author Paul O. Patterson
- * <br />
- * <b style="margin-left:-40px">Class Description:</b>
- * <br />
- * 		<span>Service that calls method <b><i>checkAstronomy</i></b> in the <b>WeatherLionWidget</b> class which checks the current time of day</span>
  * <br />
  * <b style="margin-left:-40px">Date Created:</b>
  * <br />
@@ -102,26 +99,32 @@ public class CityStorageService extends IntentService
         float Latitude = cd.getLatitude();
         float Longitude = cd.getLongitude();
 
-        String currentCity = regionCode != null ? cityName + ", " + regionCode : cityName + ", " + countryName;
+        // fetch the time zone details for this city
+        WeatherLionApplication.currentLocationTimeZone =
+                UtilityMethod.retrieveGeoNamesTimeZoneInfo( Latitude, Longitude );
 
-        if( !UtilityMethod.isFoundInDatabase( currentCity ) )
+        String timeZone = WeatherLionApplication.currentLocationTimeZone.getTimezoneId();
+        String currentCity = regionCode != null ? cityName + ", " + regionCode : cityName + ", " + countryName;
+        cd.setTimeZone( timeZone );
+
+        if( !UtilityMethod.cityFoundInDatabase( currentCity ) )
         {
             UtilityMethod.addCityToDatabase( cityName, countryName, countryCode,
-                regionName, regionCode,	Latitude, Longitude );
+                regionName, regionCode,	timeZone, Latitude, Longitude );
         }// end of if block
 
-        if( UtilityMethod.isFoundInJSONStorage( currentCity ) == null )
+        if( UtilityMethod.cityFoundInJSONStorage( currentCity ) == null )
         {
-            if( JSONHelper.exportToJSON( cd ) )
+            if( JSONHelper.exportCityToJSON( cd ) )
             {
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, currentCity +
                     " has been added to the list of known cities.", TAG + "::storeNewLocationLocally" );
             }// end of if block
         }// end of if block
 
-        if( !UtilityMethod.isFoundInXMLStorage( currentCity ) )
+        if( !UtilityMethod.cityFoundInXMLStorage( currentCity ) )
         {
-            if(  XMLHelper.exportToXML( cd ) )
+            if(  XMLHelper.exportCityDataToXML( cd ) )
             {
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, currentCity +
                     " has been added to the list of known cities.", TAG + "::storeNewLocationLocally" );

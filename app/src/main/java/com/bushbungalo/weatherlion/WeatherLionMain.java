@@ -98,7 +98,8 @@ import java.util.Objects;
 @SuppressWarnings({ "unused", "unchecked", "SameParameterValue"})
 public class WeatherLionMain extends AppCompatActivity
 {
-    public static final String LION_MAIN_PAYLOAD = "WeatherLionMainPayload";
+    public static final String LION_LOCATION_PAYLOAD = "LocationPayload";
+    public static final String LION_LIMIT_EXCEEDED_PAYLOAD = "LimitExceededPayload";
 
     public static final String KEY_UPDATE_PAYLOAD = "KeyUpdatePayload";
     public static final String KEY_UPDATE_MESSAGE = "loadAccessProviders";
@@ -747,7 +748,7 @@ public class WeatherLionMain extends AppCompatActivity
      */
     private void loadPreviousSearches()
     {
-        List< CityData > previousSearches = JSONHelper.importPreviousSearches();
+        List< CityData > previousSearches = JSONHelper.importPreviousCitySearches();
         List< String > searchList = new ArrayList<>();
 
         // when the program is first runs there will be no previous searches so
@@ -1365,7 +1366,7 @@ public class WeatherLionMain extends AppCompatActivity
     private void showPreferenceActivity( boolean locationSet )
     {
         Intent settingsIntent = new Intent( this, PrefsActivity.class );
-        settingsIntent.putExtra( LION_MAIN_PAYLOAD, locationSet );
+        settingsIntent.putExtra(LION_LOCATION_PAYLOAD, locationSet );
         startActivity( settingsIntent );
     }// end of method showPreferenceActivity
 

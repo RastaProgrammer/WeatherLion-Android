@@ -38,6 +38,7 @@ import com.bushbungalo.weatherlion.services.LocationTrackerService;
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 
 import org.jdom2.Document;
@@ -69,6 +70,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -1047,7 +1049,6 @@ public abstract class UtilityMethod
         weatherImages.put("scattered snow showers", "3.png");
         weatherImages.put("snow", "3.png");
         weatherImages.put("snow showers", "3.png");
-        weatherImages.put("drizzle", "4.png");
         weatherImages.put("light rain", "4.png");
         weatherImages.put("moderate rain", "4.png");
         weatherImages.put("sprinkles", "4.png");
@@ -1104,6 +1105,7 @@ public abstract class UtilityMethod
         weatherImages.put("scattered tstorms", "16.png");
         weatherImages.put("thundershowers", "16.png");
         weatherImages.put("thunderstorm with rain", "16.png");
+        weatherImages.put("drizzle", "17.png");
         weatherImages.put("scattered showers", "17.png");
         weatherImages.put("isolated showers", "17.png");
         weatherImages.put("chance of rain", "17.png");
@@ -1119,9 +1121,11 @@ public abstract class UtilityMethod
         weatherImages.put("thundershowers (night)", "18.png");
         weatherImages.put("t-showers (night)", "18.png");
         weatherImages.put("drizzle (night)", "19.png");
-        weatherImages.put("isolated showers (night)", "19.png");
-        weatherImages.put("light rain (night)", "19.png");
         weatherImages.put("scattered showers (night)", "19.png");
+        weatherImages.put("isolated showers (night)", "19.png");
+        weatherImages.put("chance of rain (night)", "19.png");
+        weatherImages.put("light rain showers (night)", "19.png");
+        weatherImages.put("light shower rain (night)", "19.png");
         weatherImages.put("dust (night)", "20.png");
         weatherImages.put("smoky (night)", "20.png");
         weatherImages.put("blustery (night)", "20.png");
@@ -2019,7 +2023,8 @@ public abstract class UtilityMethod
      * @return				An {@code int} value indicating success or failure.<br /> 1 for success and 0 for failure.
      */
     public static int addCityToDatabase( String cityName, String countryName, String countryCode,
-                                         String regionName, String regionCode, float latitude, float longitude )
+                                         String regionName, String regionCode, String timeZone,
+                                         float latitude, float longitude )
     {
         SQLiteOpenHelper dbHelper = new DBHelper(getAppContext(),
                 WeatherLionApplication.CITIES_DATABASE_NAME);
@@ -2031,6 +2036,7 @@ public abstract class UtilityMethod
         values.put( WorldCities.COUNTRY_CODE, countryCode );
         values.put( WorldCities.REGION_NAME, regionName );
         values.put( WorldCities.REGION_CODE, regionCode );
+        values.put( WorldCities.TIME_ZONE, timeZone );
         values.put( WorldCities.LATITUDE, latitude );
         values.put( WorldCities.LONGITUDE, longitude );
         values.put( WorldCities.DATE_ADDED,
@@ -2459,7 +2465,7 @@ public abstract class UtilityMethod
     {
         if( cityName.contains( "," ) )
         {
-            return isFoundInXMLStorage( cityName );
+            return cityFoundInXMLStorage( cityName );
         }// end of if block
 
         return false;
@@ -2471,7 +2477,7 @@ public abstract class UtilityMethod
      * @param cityName	The name of the city
      * @return	True/False dependent on the outcome of the check.
      */
-    public static boolean isFoundInDatabase( String cityName )
+    public static boolean cityFoundInDatabase(String cityName )
     {
         // Check SQLite Database
         String[] city = cityName.split( "," );
@@ -2504,12 +2510,12 @@ public abstract class UtilityMethod
         catch( Exception e )
         {
             logMessage( LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::isFoundInDatabase [line: " +
+                    TAG + "::cityFoundInDatabase [line: " +
                             getExceptionLineNumber( e )  + "]" );
         }// end of catch block
 
         return found > 0;
-    }// end of method isFoundInDatabase
+    }// end of method cityFoundInDatabase
 
     /***
      * Test if a {@code String} value is a number
@@ -3069,6 +3075,80 @@ public abstract class UtilityMethod
         return cn;
     }// end of method numberOfCharacterOccurrences
 
+    /**
+     * Checks to ensure that calls to each service provider does not exceed a limit
+     *
+     * @param provider  The selected weather provider
+     * @return  A value of true/false dependent on the outcome of the check
+     */
+    @SuppressWarnings("unchecked")
+    public static boolean okToUseService( String provider )
+    {
+        boolean ok = false;
+
+        Map<String, Object> importedServiceLog = JSONHelper.importPreviousLogs(
+                getAppContext().getFileStreamPath(
+                        WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
+        String date = (String) importedServiceLog.get( "Date" );
+        Date logDate = null;
+        Map importedServiceMap = (LinkedTreeMap) Objects.requireNonNull( importedServiceLog )
+                .get( "Service" );
+
+        SimpleDateFormat ldf = new SimpleDateFormat( "MMM dd, yyyy hh:mm:ss a",
+                Locale.ENGLISH );
+        SimpleDateFormat sdf = new SimpleDateFormat( "MMM dd, yyyy", Locale.ENGLISH );
+
+        int callCount;
+
+        try
+        {
+            logDate = ldf.parse( date );
+        } // end of try block
+        catch ( ParseException e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                    TAG + "::okToUseService [line: " +
+                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+        }// end of catch block
+
+        // if we are working with today's log which we should be
+        if( sdf.format( logDate ).equals( sdf.format( new Date() ) ) )
+        {
+            if( importedServiceMap != null )
+            {
+                Map<String, Object> exportServiceLog = new HashMap<>();
+                exportServiceLog.put( "Date", new Date() );
+                exportServiceLog.put( "Service", importedServiceMap );
+
+                callCount = (int) (double) importedServiceMap.get( provider );
+
+                if( callCount < WeatherLionApplication.DAILY_CALL_LIMIT )
+                {
+                    importedServiceMap.put( provider, ++callCount );
+
+                    Gson gson = new GsonBuilder().create();
+
+                    // return the JSON string array as a string
+                    String json = gson.toJson( exportServiceLog );
+
+                    JSONHelper.updateJSONFile( json,
+                            getAppContext().getFileStreamPath(
+                                    WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
+
+                    ok = JSONHelper.updateJSONFile( json,
+                            getAppContext().getFileStreamPath(
+                                    WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
+
+                    logMessage( LogLevel.INFO,
+                            "Service log updated!",
+                            TAG + "::okToUseService" );
+                }// end of if block
+            }// end of if block
+        }// end of if block
+
+        return ok;
+    }// end of method okToUseService
+
     /***
      * Replace the last occurrence of a {@code String} contained in another {@code String}
      *
@@ -3195,7 +3275,7 @@ public abstract class UtilityMethod
      * @param cityName	The name of the city
      * @return	True/False dependent on the outcome of the check.
      */
-    public static boolean isFoundInXMLStorage( String cityName )
+    public static boolean cityFoundInXMLStorage(String cityName )
     {
         boolean found = false;
 
@@ -3234,7 +3314,7 @@ public abstract class UtilityMethod
                     {
                         found = true;
                         logMessage( LogLevel.INFO,  cityName + " was found in the XML storage.",
-                                TAG + "::isFoundInXMLStorage" );
+                                TAG + "::cityFoundInXMLStorage" );
                     }// end of if block
                 }// end of for loop
 
@@ -3242,12 +3322,12 @@ public abstract class UtilityMethod
             catch ( IOException | JDOMException io )
             {
                 logMessage( LogLevel.SEVERE, io.getMessage(),
-                        TAG + "::isFoundInXMLStorage [line: " + getExceptionLineNumber( io ) + "]" );
+                        TAG + "::cityFoundInXMLStorage [line: " + getExceptionLineNumber( io ) + "]" );
             }// end of catch block
         }// end of if block
 
         return found;
-    }// end of method isFoundInXMLStorage
+    }// end of method cityFoundInXMLStorage
 
     /**
      * Determines if a city has been previously stored a a local JSON file.
@@ -3255,7 +3335,7 @@ public abstract class UtilityMethod
      * @param cityName	The name of the city
      * @return	True/False dependent on the outcome of the check.
      */
-    public static CityData isFoundInJSONStorage( String cityName )
+    public static CityData cityFoundInJSONStorage(String cityName )
     {
         String[] city = cityName.split( "," );
 
@@ -3263,7 +3343,7 @@ public abstract class UtilityMethod
         if( new File( JSONHelper.PREVIOUSLY_FOUND_CITIES_JSON ).exists() )
         {
             Gson gson = new Gson();
-            JSONHelper.cityDataList = JSONHelper.importPreviousSearches();
+            JSONHelper.cityDataList = JSONHelper.importPreviousCitySearches();
             //convert the list to a JSON string
             String jsonString = gson.toJson( JSONHelper.cityDataList );
 
@@ -3275,7 +3355,7 @@ public abstract class UtilityMethod
             catch ( IOException e )
             {
                 logMessage( LogLevel.SEVERE, e.getMessage(),
-                        TAG + "::isFoundInJSONStorage [line: " + getExceptionLineNumber( e ) + "]" );
+                        TAG + "::cityFoundInJSONStorage [line: " + getExceptionLineNumber( e ) + "]" );
             }// end of catch block
 
             if ( jsonString != null )
@@ -3295,7 +3375,7 @@ public abstract class UtilityMethod
                         !containsNumber && cityName.equalsIgnoreCase( cCityName + ", " + cRegionCode ) )
                     {
                         logMessage( LogLevel.INFO,  cityName + " was found in the JSON storage.",
-                                TAG + "::isFoundInJSONStorage" );
+                                TAG + "::cityFoundInJSONStorage" );
 
                         return c;
                     }// end of if block
@@ -3304,7 +3384,7 @@ public abstract class UtilityMethod
         }// end of if block
 
         return null;
-    }// end of method isFoundInJSONStorage
+    }// end of method cityFoundInJSONStorage
 
     /**
      * Determines whether a file if stored internally.
@@ -3500,9 +3580,4 @@ public abstract class UtilityMethod
 
         return ready;
     }// end of method timeForConnectivityCheck
-
-//    public static void restorePreviousWeatherData()
-//    {
-//
-//    }// end of method restorePreviousWeatherData
 }// end of class UtilityMethod

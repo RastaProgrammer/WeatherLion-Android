@@ -520,6 +520,7 @@ public class WeatherLionApplication extends Application
                     WeatherLionApplication.currentCityData.getCountryCode(),
                     WeatherLionApplication.currentCityData.getRegionName(),
                     WeatherLionApplication.currentCityData.getRegionCode(),
+                    WeatherLionApplication.currentCityData.getTimeZone(),
                     WeatherLionApplication.currentCityData.getLatitude(),
                     WeatherLionApplication.currentCityData.getLongitude() ) == 1 )
             {
@@ -528,8 +529,8 @@ public class WeatherLionApplication extends Application
                         TAG + ":: checkSystemLocationStatus" );
             }// end of if block
 
-            JSONHelper.exportToJSON( WeatherLionApplication.currentCityData );
-            XMLHelper.exportToXML( WeatherLionApplication.currentCityData );
+            JSONHelper.exportCityToJSON( WeatherLionApplication.currentCityData );
+            XMLHelper.exportCityDataToXML( WeatherLionApplication.currentCityData );
 
             WeatherLionApplication.locationSet = true;
         }// end of if block
@@ -878,8 +879,6 @@ public class WeatherLionApplication extends Application
                         if( WidgetUpdateService.darkSkyApiKey != null )
                         {
                             webAccessGranted.add( DARK_SKY );
-                            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                    "Dark Sky key loaded!", TAG + "::loadAccessProviders" );
                         }// end of if block
 
                         break;
@@ -900,8 +899,6 @@ public class WeatherLionApplication extends Application
                         {
                             webAccessGranted.add( GEO_NAMES );
                             geoNamesAccountLoaded = true;
-                            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                    "GeoNames user account loaded!", TAG + "::loadAccessProviders" );
                         }// end of if block
 
                         break;
@@ -920,8 +917,6 @@ public class WeatherLionApplication extends Application
                         if( WidgetUpdateService.openWeatherMapApiKey != null )
                         {
                             webAccessGranted.add( OPEN_WEATHER );
-                            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                    "Open Weather Map key loaded!", TAG + "::loadAccessProviders" );
                         }// end of if block
 
                         break;
@@ -940,8 +935,6 @@ public class WeatherLionApplication extends Application
                         if( WidgetUpdateService.weatherBitApiKey != null )
                         {
                             webAccessGranted.add( WEATHER_BIT );
-                            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                    "Weather Bit key loaded!", TAG + "::loadAccessProviders" );
                         }// end of if block
 
                         break;
@@ -970,8 +963,6 @@ public class WeatherLionApplication extends Application
                         if( WidgetUpdateService.hereAppId != null && WidgetUpdateService.hereAppCode != null )
                         {
                             webAccessGranted.add( HERE_MAPS );
-                            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                    "Here Maps Weather keys loaded!", TAG + "::loadAccessProviders" );
                         }// end of if block
                         else if( WidgetUpdateService.hereAppId != null )
                         {
@@ -1024,8 +1015,6 @@ public class WeatherLionApplication extends Application
                         if( keysMissing.size() == 0 )
                         {
                             webAccessGranted.add( YAHOO_WEATHER );
-                            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                    "Yahoo! Weather keys loaded!", TAG + "::loadAccessProviders" );
                         }// end of if block
                         else
                         {
@@ -1469,7 +1458,7 @@ public class WeatherLionApplication extends Application
     {
         // Launch the settings activity
         Intent settingsIntent = new Intent( this, PrefsActivity.class );
-        settingsIntent.putExtra( WeatherLionMain.LION_MAIN_PAYLOAD, locationSet );
+        settingsIntent.putExtra( WeatherLionMain.LION_LOCATION_PAYLOAD, locationSet );
         startActivity( settingsIntent );
     }// end of method showPreferenceActivity
 
@@ -1670,11 +1659,12 @@ public class WeatherLionApplication extends Application
                             WeatherLionApplication.currentCityData.getCountryCode(),
                             WeatherLionApplication.currentCityData.getRegionName(),
                             WeatherLionApplication.currentCityData.getRegionCode(),
+                            WeatherLionApplication.currentCityData.getTimeZone(),
                             WeatherLionApplication.currentCityData.getLatitude(),
                             WeatherLionApplication.currentCityData.getLongitude() );
 
-                    JSONHelper.exportToJSON( WeatherLionApplication.currentCityData );
-                    XMLHelper.exportToXML( WeatherLionApplication.currentCityData );
+                    JSONHelper.exportCityToJSON( WeatherLionApplication.currentCityData );
+                    XMLHelper.exportCityDataToXML( WeatherLionApplication.currentCityData );
                 }// end of if block
 
                 init();
@@ -1709,7 +1699,6 @@ public class WeatherLionApplication extends Application
                 // an the system will always imply that the connection state has changed.
                 if( UtilityMethod.lastUpdated != null )
                 {
-//                        if( UtilityMethod.updateRequired( getAppContext() ) )
                     if( UtilityMethod.updateRequired( getAppContext() ) &&
                             UtilityMethod.hasInternetConnection( getAppContext() ) )
                     {
@@ -1719,12 +1708,6 @@ public class WeatherLionApplication extends Application
                         updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
                         WidgetUpdateService.enqueueWork( context, updateIntent );
                     }// end of if block
-                    else
-                    {
-                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                "Connectivity changed but updated not required.",
-                                TAG + "::SystemBroadcastReceiver::onReceive" );
-                    }// end of else block
                 }// end of if block
             }// end of if block
         }// end of method onReceive

@@ -8,24 +8,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Objects;
 
 import static android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID;
 
@@ -43,8 +31,6 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
     private static final String TAG = "SmallWeatherWidgetProvider";
     private static final String LAUNCH_MAIN = "Main";
     private BroadcastReceiver mSystemBroadcastReceiver;
-
-    private static AppWidgetManager mAppWidgetManager;
 
     public static final String REFRESH_BUTTON_CLICKED = "Refresh";
     public static final String WIDGET_UPDATE_MESSAGE = "WidgetUpdateMessage";
@@ -82,10 +68,6 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
     @Override
     public void onUpdate( Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds )
     {
-        mAppWidgetManager = appWidgetManager;
-        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Update request received!",
-                TAG + "::onUpdate" );
-
         ComponentName smallWidget = new ComponentName( context, SmallWeatherWidgetProvider.class );
         smallWidgetRemoteViews = new RemoteViews( context.getPackageName(),
                 R.layout.wl_small_weather_widget_activity );
@@ -156,11 +138,6 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
     public void onReceive( Context context, Intent intent )
     {
         super.onReceive( context, intent );
-
-        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                intent.getAction() + " requested with action " +
-                        intent.getStringExtra( WIDGET_UPDATE_MESSAGE ),
-                TAG + "::onReceive" );
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance( context );
         smallWidgetRemoteViews = new RemoteViews( context.getPackageName(),

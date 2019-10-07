@@ -27,6 +27,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import com.bushbungalo.weatherlion.PrefsActivity;
 import com.bushbungalo.weatherlion.SunriseAlarmBroadcastReceiver;
 import com.bushbungalo.weatherlion.SunsetAlarmBroadcastReceiver;
 import com.bushbungalo.weatherlion.UpdateAlarmBroadcastReceiver;
@@ -71,6 +72,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.bushbungalo.weatherlion.WeatherLionMain.LION_LIMIT_EXCEEDED_PAYLOAD;
 
 @SuppressWarnings({"unused", "SameParameterValue"})
 public class WidgetUpdateService extends JobIntentService
@@ -247,17 +250,14 @@ public class WidgetUpdateService extends JobIntentService
         // the caller requires only a method to be run
         if( callMethod != null )
         {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-            "Reflective call to method: " + callMethod + "...",
-                TAG + "::handleIntent" );
-
             methodCalledByReflection = true;
 
             if( callMethod.equals( ASTRONOMY_CHANGE ) )
             {
                 callMethodByName( WidgetUpdateService.this, callMethod,
                         new Class[]{String.class, AppWidgetManager.class},
-                        new Object[]{WeatherLionApplication.timeOfDayToUse, appWidgetManager} );
+                        new Object[]{WeatherLionApplication.timeOfDayToUse,
+                                appWidgetManager} );
             }// end of if block
             else
             {
@@ -273,10 +273,6 @@ public class WidgetUpdateService extends JobIntentService
         }// end of if block
         else
         {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Service performing weather update...",
-                    TAG + "::handleIntent" );
-
             weatherUpdate = true;
 
             // If a location has not been set then the weather cannot be processed
@@ -313,175 +309,193 @@ public class WidgetUpdateService extends JobIntentService
                     wxDataProvider = WeatherLionApplication.storedPreferences.getProvider();
                 }// end of else block
 
-                if( !unitChange )
+                boolean okToUse = UtilityMethod.okToUseService( wxDataProvider );
+
+                if( okToUse )
                 {
-                    // Check the Internet connection availability
-                    if( UtilityMethod.hasInternetConnection( this ) &&
-                            UtilityMethod.updateRequired( getApplicationContext() ) ||
-                            UtilityMethod.hasInternetConnection( this ) &&
-                            UtilityMethod.refreshRequested )
+                    if( !unitChange )
                     {
-                        wxUrl.setLength( 0 );
-                        fxUrl.setLength( 0 );
-                        axUrl.setLength( 0 );
-
-                        // if this location has already been used there is no need to query the
-                        // web service as the location data has been stored locally
-                        CityData.currentCityData = UtilityMethod.isFoundInJSONStorage( currentCity.toString() );
-
-                        if( CityData.currentCityData == null )
+                        // Check the Internet connection availability
+                        if( UtilityMethod.hasInternetConnection( this ) &&
+                                UtilityMethod.updateRequired( getApplicationContext() ) ||
+                                UtilityMethod.hasInternetConnection( this ) &&
+                                        UtilityMethod.refreshRequested )
                         {
-                            json =
-                                    UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress( currentCity.toString() );
-                            CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
-                        }// end of if block
+                            wxUrl.setLength( 0 );
+                            fxUrl.setLength( 0 );
+                            axUrl.setLength( 0 );
 
-                        lat = CityData.currentCityData.getLatitude();
-                        lng = CityData.currentCityData.getLongitude();
-                        WeatherLionApplication.currentLocationTimeZone =
-                                UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                            // if this location has already been used there is no need to query the
+                            // web service as the location data has been stored locally
+                            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( currentCity.toString() );
 
-                        switch( wxDataProvider )
-                        {
-                            case WeatherLionApplication.DARK_SKY:
-                                wxUrl.setLength( 0 );
-                                wxUrl.append( String.format( "https://api.darksky.net/forecast/%s/%s,%s",
-                                        darkSkyApiKey, lat, lng ) );
+                            if( CityData.currentCityData == null )
+                            {
+                                json =
+                                        UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress( currentCity.toString() );
+                                CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
+                            }// end of if block
 
-                                break;
-                            case WeatherLionApplication.OPEN_WEATHER:
-                                wxUrl.setLength( 0 );
-                                wxUrl.append(
-                                        String.format(
-                                                "https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=imperial"
-                                                , lat, lng, openWeatherMapApiKey ) );
+                            lat = CityData.currentCityData.getLatitude();
+                            lng = CityData.currentCityData.getLongitude();
 
-                                fxUrl.setLength( 0 );
-                                fxUrl.append(
-                                        String.format(
-                                                "https://api.openweathermap.org/data/2.5/forecast/daily?lat=%s&lon=%s&appid=%s&units=imperial"
-                                                , lat, lng, openWeatherMapApiKey ) );
+                            if( WeatherLionApplication.currentLocationTimeZone == null )
+                            {
+                                WeatherLionApplication.currentLocationTimeZone =
+                                        UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                            }// end of if block
 
-                                break;
-                            case WeatherLionApplication.HERE_MAPS:
-                                wxUrl.setLength( 0 );
-                                wxUrl.append(
-                                        String.format(
-                                                "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
-                                                , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "conditions" ),
-                                                UtilityMethod.escapeUriString( currentCity.toString() ) ) );
+                            CityData.currentCityData.setTimeZone(
+                                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
 
-                                fxUrl.setLength( 0 );
-                                fxUrl.append(
-                                        String.format(
-                                                "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
-                                                , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "forecast" ),
-                                                UtilityMethod.escapeUriString( currentCity.toString() ) ) );
+                            switch( wxDataProvider )
+                            {
+                                case WeatherLionApplication.DARK_SKY:
+                                    wxUrl.setLength( 0 );
+                                    wxUrl.append( String.format( "https://api.darksky.net/forecast/%s/%s,%s",
+                                            darkSkyApiKey, lat, lng ) );
 
-                                axUrl.setLength( 0 );
-                                axUrl.append(
-                                        String.format(
-                                                "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
-                                                , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "astronomy" ),
-                                                UtilityMethod.escapeUriString( currentCity.toString() ) ) );
-                                break;
-                            case WeatherLionApplication.WEATHER_BIT:
-                                wxUrl.setLength( 0 );
-                                wxUrl.append(
-                                        String.format( "https://api.weatherbit.io/v2.0/current?city=%s&units=I&key=%s",
-                                                UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
+                                    break;
+                                case WeatherLionApplication.OPEN_WEATHER:
+                                    wxUrl.setLength( 0 );
+                                    wxUrl.append(
+                                            String.format(
+                                                    "https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=imperial"
+                                                    , lat, lng, openWeatherMapApiKey ) );
 
-                                // Sixteen day forecast will be used as it contains more relevant data
-                                fxUrl.setLength( 0 );
-                                fxUrl.append(
-                                        String.format( "https://api.weatherbit.io/v2.0/forecast/daily?city=%s&units=I&key=%s",
-                                                UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
-                                break;
-                            case WeatherLionApplication.YAHOO_WEATHER:
-                                expectedJSONSize = 1;
+                                    fxUrl.setLength( 0 );
+                                    fxUrl.append(
+                                            String.format(
+                                                    "https://api.openweathermap.org/data/2.5/forecast/daily?lat=%s&lon=%s&appid=%s&units=imperial"
+                                                    , lat, lng, openWeatherMapApiKey ) );
 
-                                try
-                                {
-                                    HttpHelper.getYahooWeatherData(
-                                        WeatherLionApplication.storedPreferences.getLocation().toLowerCase(),
-                                        yahooAppId, yahooConsumerKey, yahooConsumerSecret
-                                    );
-                                }// end of try block
-                                catch ( Exception e )
-                                {
-                                    strJSON = null;
+                                    break;
+                                case WeatherLionApplication.HERE_MAPS:
+                                    wxUrl.setLength( 0 );
+                                    wxUrl.append(
+                                            String.format(
+                                                    "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
+                                                    , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "conditions" ),
+                                                    UtilityMethod.escapeUriString( currentCity.toString() ) ) );
 
-                                    // reverse the attempt to use Yahoo! Weather
-                                    loadPreviousWeatherData();
-                                    SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(
-                                            WeatherLionApplication.getAppContext() );
-                                    settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
-                                            WeatherLionApplication.previousWeatherProvider.toString() ).apply();
+                                    fxUrl.setLength( 0 );
+                                    fxUrl.append(
+                                            String.format(
+                                                    "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
+                                                    , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "forecast" ),
+                                                    UtilityMethod.escapeUriString( currentCity.toString() ) ) );
 
-                                    // Calling from a Non-UI Thread
-                                    Handler handler = new Handler( Looper.getMainLooper() );
+                                    axUrl.setLength( 0 );
+                                    axUrl.append(
+                                            String.format(
+                                                    "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
+                                                    , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "astronomy" ),
+                                                    UtilityMethod.escapeUriString( currentCity.toString() ) ) );
+                                    break;
+                                case WeatherLionApplication.WEATHER_BIT:
+                                    wxUrl.setLength( 0 );
+                                    wxUrl.append(
+                                            String.format( "https://api.weatherbit.io/v2.0/current?city=%s&units=I&key=%s",
+                                                    UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
 
-                                    handler.post( new Runnable()
+                                    // Sixteen day forecast will be used as it contains more relevant data
+                                    fxUrl.setLength( 0 );
+                                    fxUrl.append(
+                                            String.format( "https://api.weatherbit.io/v2.0/forecast/daily?city=%s&units=I&key=%s",
+                                                    UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
+                                    break;
+                                case WeatherLionApplication.YAHOO_WEATHER:
+                                    expectedJSONSize = 1;
+
+                                    try
                                     {
-                                        @Override
-                                        public void run()
+                                        HttpHelper.getYahooWeatherData(
+                                                WeatherLionApplication.storedPreferences.getLocation().toLowerCase(),
+                                                yahooAppId, yahooConsumerKey, yahooConsumerSecret
+                                        );
+                                    }// end of try block
+                                    catch ( Exception e )
+                                    {
+                                        strJSON = null;
+
+                                        // reverse the attempt to use Yahoo! Weather
+                                        loadPreviousWeatherData();
+                                        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(
+                                                WeatherLionApplication.getAppContext() );
+                                        settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
+                                                WeatherLionApplication.previousWeatherProvider.toString() ).apply();
+
+                                        // Calling from a Non-UI Thread
+                                        Handler handler = new Handler( Looper.getMainLooper() );
+
+                                        handler.post( new Runnable()
                                         {
-                                            UtilityMethod.butteredToast( getApplicationContext(),
-                                                    WeatherLionApplication.YAHOO_WEATHER + " did not return data!",
-                                                    2, Toast.LENGTH_LONG );
-                                        }
-                                    });
+                                            @Override
+                                            public void run()
+                                            {
+                                                UtilityMethod.butteredToast( getApplicationContext(),
+                                                        WeatherLionApplication.YAHOO_WEATHER + " did not return data!",
+                                                        2, Toast.LENGTH_LONG );
+                                            }
+                                        });
 
-                                    return;
-                                }// end of catch block
+                                        return;
+                                    }// end of catch block
 
-                                break;
-                            case WeatherLionApplication.YR_WEATHER:
-                                String cityName =
-                                        CityData.currentCityData.getCityName().contains( " " ) ?
-                                                CityData.currentCityData.getCityName().replace( " ", "_" ) :
-                                                CityData.currentCityData.getCityName();
-                                String countryName =
-                                        CityData.currentCityData.getCountryName().contains( " " ) ?
-                                                CityData.currentCityData.getCountryName().replace( " ", "_" ) :
-                                                CityData.currentCityData.getCountryName();
-                                String regionName = cityName.equalsIgnoreCase("Kingston") ? "Kingston" :
-                                        CityData.currentCityData.getRegionName().contains( " " ) ?
-                                                CityData.currentCityData.getRegionName().replace( " ", "_" ) :
-                                                CityData.currentCityData.getRegionName();	// Yr data mistakes Kingston as being in St. Andrew
+                                    break;
+                                case WeatherLionApplication.YR_WEATHER:
+                                    String cityName =
+                                            CityData.currentCityData.getCityName().contains( " " ) ?
+                                                    CityData.currentCityData.getCityName().replace( " ", "_" ) :
+                                                    CityData.currentCityData.getCityName();
+                                    String countryName =
+                                            CityData.currentCityData.getCountryName().contains( " " ) ?
+                                                    CityData.currentCityData.getCountryName().replace( " ", "_" ) :
+                                                    CityData.currentCityData.getCountryName();
+                                    String regionName = cityName.equalsIgnoreCase("Kingston") ? "Kingston" :
+                                            CityData.currentCityData.getRegionName().contains( " " ) ?
+                                                    CityData.currentCityData.getRegionName().replace( " ", "_" ) :
+                                                    CityData.currentCityData.getRegionName();	// Yr data mistakes Kingston as being in St. Andrew
 
-                                wxUrl.setLength( 0 );
-                                wxUrl.append( String.format( "https://www.yr.no/place/%s/%s/%s/forecast.xml",
-                                        countryName, regionName, cityName ) );
-                                break;
-                        }// end of switch block
+                                    wxUrl.setLength( 0 );
+                                    wxUrl.append( String.format( "https://www.yr.no/place/%s/%s/%s/forecast.xml",
+                                            countryName, regionName, cityName ) );
+                                    break;
+                            }// end of switch block
 
-                        // Yahoo! Weather uses an OAuth method to access data from the web service
-                        if( !wxDataProvider.equals( WeatherLionApplication.YAHOO_WEATHER ) )
-                        {
-                            if( wxUrl.length() != 0 && fxUrl.length() != 0 && axUrl.length() != 0 )
+                            // Yahoo! Weather uses an OAuth method to access data from the web service
+                            if( !wxDataProvider.equals( WeatherLionApplication.YAHOO_WEATHER ) )
                             {
-                                expectedJSONSize = 3;
-                                retrieveWeatherData( wxUrl.toString() );
-                                retrieveWeatherData( fxUrl.toString() );
-                                retrieveWeatherData( axUrl.toString() );
+                                if( wxUrl.length() != 0 && fxUrl.length() != 0 && axUrl.length() != 0 )
+                                {
+                                    expectedJSONSize = 3;
+                                    retrieveWeatherData( wxUrl.toString() );
+                                    retrieveWeatherData( fxUrl.toString() );
+                                    retrieveWeatherData( axUrl.toString() );
+                                }// end of if block
+                                else if( wxUrl.length() != 0 && fxUrl.length() != 0 && axUrl.length() == 0 )
+                                {
+                                    expectedJSONSize = 2;
+                                    retrieveWeatherData( wxUrl.toString() );
+                                    retrieveWeatherData( fxUrl.toString() );
+                                }// end of if block
+                                else if( ( wxUrl.length() != 0 && fxUrl.length() == 0  && axUrl.length() == 0 ) ||
+                                        ( wxUrl.length() == 0 && fxUrl.length() != 0  && axUrl.length() == 0 ) ||
+                                        ( wxUrl.length() == 0 && fxUrl.length() == 0  && axUrl.length() != 0 ) )
+                                {
+                                    expectedJSONSize = 1;
+                                    retrieveWeatherData( wxUrl.toString() );
+                                }// end of else if block
                             }// end of if block
-                            else if( wxUrl.length() != 0 && fxUrl.length() != 0 && axUrl.length() == 0 )
-                            {
-                                expectedJSONSize = 2;
-                                retrieveWeatherData( wxUrl.toString() );
-                                retrieveWeatherData( fxUrl.toString() );
-                            }// end of if block
-                            else if( ( wxUrl.length() != 0 && fxUrl.length() == 0  && axUrl.length() == 0 ) ||
-                                    ( wxUrl.length() == 0 && fxUrl.length() != 0  && axUrl.length() == 0 ) ||
-                                    ( wxUrl.length() == 0 && fxUrl.length() == 0  && axUrl.length() != 0 ) )
-                            {
-                                expectedJSONSize = 1;
-                                retrieveWeatherData( wxUrl.toString() );
-                            }// end of else if block
                         }// end of if block
                     }// end of if block
                 }// end of if block
+                else
+                {
+                    Intent settingsIntent = new Intent( this, PrefsActivity.class );
+                    settingsIntent.putExtra( LION_LIMIT_EXCEEDED_PAYLOAD, true );
+                    startActivity( settingsIntent );
+                }// end of else
             }// end of if block
         }// end of else block
     }// end of method handleWeatherData
@@ -884,6 +898,11 @@ public class WidgetUpdateService extends JobIntentService
             {
                 for ( int largeWidgetId : WeatherLionApplication.largeWidgetIds )
                 {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                        String.format( Locale.ENGLISH,
+                            "Updating weather data on widget %d...", largeWidgetId ),
+                            TAG + "::updateAllAppWidgets" );
+
                     appWidgetManager.updateAppWidget( largeWidgetId,
                             largeWidgetRemoteViews );
                 }// end of for each loop
@@ -894,6 +913,11 @@ public class WidgetUpdateService extends JobIntentService
                 // update all the small widgets
                 for ( int smallWidgetId : WeatherLionApplication.smallWidgetIds )
                 {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            String.format( Locale.ENGLISH,
+                                    "Updating weather data on widget %d...", smallWidgetId ),
+                            TAG + "::updateAllAppWidgets" );
+
                     appWidgetManager.updateAppWidget( smallWidgetId,
                             smallWidgetRemoteViews );
                 }// end of for each loop
@@ -3354,8 +3378,6 @@ public class WidgetUpdateService extends JobIntentService
 
     private void loadWidgetBackground()
     {
-        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-        "Attempting background change",TAG + LOAD_WIDGET_BACKGROUND );
         SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
         String widBackgroundColor = spf.getString(
             WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,

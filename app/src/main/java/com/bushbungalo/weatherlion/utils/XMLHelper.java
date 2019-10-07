@@ -52,7 +52,7 @@ public class XMLHelper
 	 * @param cityData	The CityData object to be written to an XML file
 	 * @return	A {@code boolean} value representing success or failure
 	 */
-	public static boolean exportToXML( CityData cityData )
+	public static boolean exportCityDataToXML( CityData cityData )
 	{
 		if ( cityData != null )
 		{
@@ -81,6 +81,7 @@ public class XMLHelper
 				city.addContent( new Element( "CountryCode" ).setText( cityData.getCountryCode() ) );
 				city.addContent( new Element( "RegionName" ).setText( cityData.getRegionName() ) );
 				city.addContent( new Element( "RegionCode" ).setText( cityData.getRegionCode() ) );
+				city.addContent( new Element( "TimeZone" ).setText( cityData.getTimeZone() ) );
 				city.addContent( new Element( "Latitude" ).setText( String.valueOf( cityData.getLatitude() ) ) );
 				city.addContent( new Element( "Longitude" ).setText( String.valueOf( cityData.getLongitude() ) ) );
 
@@ -98,13 +99,13 @@ public class XMLHelper
 			catch ( IOException | JDOMException e )
 			{
 				UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-						TAG + "::exportToXML [line: " + UtilityMethod.getExceptionLineNumber(e)  + "]" );
+						TAG + "::exportCityDataToXML [line: " + UtilityMethod.getExceptionLineNumber(e)  + "]" );
 			}// end of catch block
 			// end of catch block
 		}// end of if block
 
 		return false;
-	}// end of method  exportToXML
+	}// end of method  exportCityDataToXML
 
 	/**
 	 * Converts XML data and converts them into a list of CityData objects using the native
@@ -113,7 +114,7 @@ public class XMLHelper
 	 * @return	A {@code List} containing CityData objects that were converted from XML
 	 */
 	@SuppressWarnings("unused")
-	public static List< CityData > importFromXML()
+	public static List< CityData > importCityDataFromXML()
 	{
 		List< CityData > cd = new ArrayList<>();
 
@@ -195,7 +196,7 @@ public class XMLHelper
 							catch( NumberFormatException e )
 							{
 								UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-										TAG + "::importFromXML [line: " +
+										TAG + "::importCityDataFromXML [line: " +
 												UtilityMethod.getExceptionLineNumber(e)  + "]" );
 							}// end of catch block
 						}// end of if block
@@ -213,11 +214,11 @@ public class XMLHelper
 			cd = null;
 
 			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, io.getMessage(),
-					TAG + "::importFromXML [line: " + UtilityMethod.getExceptionLineNumber(io)  + "]" );
+					TAG + "::importCityDataFromXML [line: " + UtilityMethod.getExceptionLineNumber(io)  + "]" );
 		}// end of catch block
 
 		return cd;
-	}// end of method importFromXML
+	}// end of method importCityDataFromXML
 
 	/**
 	 * Converts XML data and converts them into a list of CityData objects using the
@@ -226,7 +227,7 @@ public class XMLHelper
 	 * @return	A {@code List} containing CityData objects that were converted from XML
 	 */
 	@SuppressWarnings("unused")
-	public static List< CityData > importFromXMLJDOM()
+	public static List< CityData > importCityDataFromXMLJDOM()
 	{
 		SAXBuilder builder = new SAXBuilder();
 		List< CityData > cd = new ArrayList<>();
@@ -262,7 +263,7 @@ public class XMLHelper
 			cd = null;
 
 			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, io.getMessage(),
-					TAG + "::importFromXML [line: " + UtilityMethod.getExceptionLineNumber(io)  + "]" );
+					TAG + "::importCityDataFromXML [line: " + UtilityMethod.getExceptionLineNumber(io)  + "]" );
 		}// end of catch block
 
 		return cd;

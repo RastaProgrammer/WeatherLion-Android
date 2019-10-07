@@ -2,6 +2,7 @@ package com.bushbungalo.weatherlion.utils;
 
 import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.model.CityData;
+import com.bushbungalo.weatherlion.model.TimeZoneInfo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -22,18 +23,18 @@ import java.util.List;
  * Created by Paul O. Patterson on 11/28/17.
  */
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class JSONHelper
 {
     public static String TAG = "JSONHelper";
     static List<CityData> cityDataList = new ArrayList<>();
+    static List<TimeZoneInfo> timeZoneList = new ArrayList<>();
 
     // package-private variable
     static final String PREVIOUSLY_FOUND_CITIES_JSON =
         WeatherLionApplication.getAppContext().getFileStreamPath( "previous_cities.json" ).toString();
 
-
-    public static boolean exportToJSON(CityData dataItem)
+    public static boolean exportCityToJSON( CityData dataItem )
     {
         DataItems cityData = new DataItems();
         cityData.setDataItem( dataItem );
@@ -48,7 +49,7 @@ public class JSONHelper
         // attempt to import data from local storage
         if( previousCities.exists() )
         {
-            cityDataList = importPreviousSearches();
+            cityDataList = importPreviousCitySearches();
             cityDataList.add( dataItem );
             jsonString = gson.toJson( cityDataList );
         }// end of if block
@@ -69,7 +70,7 @@ public class JSONHelper
         catch ( IOException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-        TAG + "::exportToJSON [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
+        TAG + "::exportCityToJSON [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
         }// end of catch block
         finally
         {
@@ -88,9 +89,9 @@ public class JSONHelper
         }// end of finally block
 
         return false;
-    }// end of method exportToJSON
+    }// end of method exportCityToJSON
 
-    public static List< CityData > importPreviousSearches()
+    public static List< CityData > importPreviousCitySearches()
     {
         FileReader reader = null;
 
@@ -113,7 +114,7 @@ public class JSONHelper
         catch ( FileNotFoundException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + ":importPreviousSearches [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
+                    TAG + ":importPreviousCitySearches [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
         }// end of catch block
         finally
         {
@@ -132,9 +133,9 @@ public class JSONHelper
         }// end of finally block
 
         return cityDataList;
-    }// end of method importPreviousSearches
+    }// end of method importPreviousCitySearches
 
-    public static LinkedTreeMap<String, Object> importPreviousSearches(String filePath )
+    public static LinkedTreeMap<String, Object> importPreviousLogs( String filePath )
     {
         FileReader reader = null;
         LinkedTreeMap<String, Object> fileData = null;
@@ -151,14 +152,16 @@ public class JSONHelper
                 Gson gson = new Gson();
 
                 // convert the file JSON into a list of objects
-                fileData = gson.fromJson(reader, new TypeToken<LinkedTreeMap<String, Object>>() {}.getType());
+                fileData = gson.fromJson( reader,
+                    new TypeToken<LinkedTreeMap<String, Object>>() {}.getType() );
             }// end of if block
 
         }// end of try block
         catch ( FileNotFoundException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::importFormJSON [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
+        TAG + "::importPreviousLogs [line: " +
+                    UtilityMethod.getExceptionLineNumber( e ) + "]" );
         }// end of catch block
         finally
         {
@@ -171,13 +174,15 @@ public class JSONHelper
                 } // end of try block
                 catch (IOException e)
                 {
-                    e.printStackTrace();
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                            e.getMessage(),TAG + "::importPreviousLogs [line: "
+                                    + UtilityMethod.getExceptionLineNumber( e ) + "]" );
                 }// end of catch block
             }// end of if block
         }// end of finally block
 
         return fileData;
-    }// end of method importPreviousSearches
+    }// end of method importPreviousLogs
 
     /***
      * Saves JSON data to a local file for quicker access later.
