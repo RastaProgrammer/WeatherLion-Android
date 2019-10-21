@@ -1077,11 +1077,13 @@ public abstract class UtilityMethod
         weatherImages.put("mostly cloudy", "10.png");
         weatherImages.put("mostly cloudy (night)", "11.png");
         weatherImages.put("few clouds", "12.png");
+        weatherImages.put("humid", "12.png");
         weatherImages.put("humid and partly cloudy", "12.png");
         weatherImages.put("mostly clear", "12.png");
         weatherImages.put("partly cloudy", "12.png");
         weatherImages.put("mostly sunny", "12.png");
         weatherImages.put("few clouds (night)", "13.png");
+        weatherImages.put("humid (night)", "13.png");
         weatherImages.put("mostly sunny (night)", "13.png");
         weatherImages.put("mostly clear (night)", "13.png");
         weatherImages.put("partly cloudy (night)", "13.png");
