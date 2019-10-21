@@ -1,0 +1,175 @@
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/flWidgetParent"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="120dip">
+
+    <ImageView
+        android:id="@+id/imvWidgetBackground"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:src="@drawable/wl_lion_bg_small"
+        android:contentDescription="@string/widget_background_image"
+        android:adjustViewBounds="true"
+        android:scaleType="fitXY"/>
+
+    <RelativeLayout
+        android:id="@+id/rlWidgetBody"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="4dip"
+        android:paddingBottom="4dip"
+        android:paddingStart="10dip"
+        android:paddingEnd="8dip"
+        android:layout_marginStart="2dip">
+
+        <ImageView
+            android:id="@+id/imvCurrentCondition"
+            android:layout_width="84dip"
+            android:layout_height="84dip"
+            android:contentDescription="@string/current_reading_icon"
+            android:src="@drawable/clear" />
+
+        <TextView
+            android:id="@+id/txvCurrentTemperature"
+            android:includeFontPadding="false"
+            android:layout_width="wrap_content"
+            android:layout_height="84dip"
+            android:layout_toEndOf="@id/imvCurrentCondition"
+            android:layout_alignTop="@+id/imvCurrentCondition"
+            android:gravity="center_vertical"
+            android:layout_marginStart="10dip"
+            android:layout_marginEnd="10dip"
+            android:text="@string/no_reading_u"
+            android:textColor="#FFFFFF"
+            android:textSize="50sp"
+            android:textStyle="normal" />
+
+        <TextView
+            android:id="@+id/txvCurrentLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/txvCurrentTemperature"
+            android:fontFamily="sans-serif-condensed"
+            android:layout_marginTop="2dip"
+            android:text="@string/current_location"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="normal" />
+
+        <TextView
+            android:id="@+id/txvWeatherCondition"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/txvCurrentTemperature"
+            android:layout_below="@id/txvCurrentLocation"
+            android:fontFamily="sans-serif-condensed"
+            android:text="@string/current_conditions"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <RelativeLayout
+            android:id="@+id/llTemps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txvWeatherCondition"
+            android:layout_toEndOf="@+id/txvCurrentTemperature">
+
+            <TextView
+                android:id="@+id/txvDayHigh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-condensed"
+                android:text="@string/no_reading_u"
+                android:textColor="#FFFFFF"
+                android:layout_marginEnd="4dip"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/txvDayLow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/txvDayHigh"
+                android:fontFamily="sans-serif-condensed"
+                android:text="@string/no_reading_u"
+                android:textColor="#C0C0C0"
+                android:textSize="18sp" />
+
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/txvLastUpdated"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/llTemps"
+            android:layout_toEndOf="@+id/txvCurrentTemperature"
+            android:fontFamily="sans-serif-condensed"
+            android:text="@string/last_updated"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:id="@+id/imvOffline"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignTop="@+id/imvCurrentCondition"
+            android:layout_marginTop="2dip"
+            android:layout_marginBottom="1dip"
+            android:layout_toStartOf="@id/imvRefresh"
+            android:adjustViewBounds="false"
+            android:contentDescription="@string/refresh_weather_data"
+            android:scaleType="fitXY"
+            android:src="@drawable/wl_offline"
+            android:visibility="invisible" />
+
+        <ImageView
+            android:id="@+id/imvRefresh"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignTop="@+id/imvCurrentCondition"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="6dip"
+            android:layout_marginTop="2dip"
+            android:layout_marginEnd="2dip"
+            android:adjustViewBounds="false"
+            android:contentDescription="@string/refresh_weather_data"
+            android:src="@drawable/wl_refresh" />
+
+        <RelativeLayout
+            android:id="@+id/relProviderDetails"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imvCurrentCondition"
+            android:layout_centerInParent="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="8dip" >
+
+            <ImageView
+                android:id="@+id/imvWeatherProviderLogo"
+                android:layout_width="20dip"
+                android:layout_height="20dip"
+                android:layout_marginEnd="4dip"
+                android:src="@drawable/wl_norwegian_meteorological_institute"
+                android:contentDescription="@string/weather_provider_logo"/>
+
+            <TextView
+                android:id="@+id/txvProvider"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-condensed"
+                android:layout_toEndOf="@id/imvWeatherProviderLogo"
+                android:includeFontPadding="false"
+                android:layout_centerVertical="true"
+                android:text="@string/provider_placeholder"
+                android:textAlignment="textStart"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+
+        </RelativeLayout>
+    </RelativeLayout>
+
+</FrameLayout>

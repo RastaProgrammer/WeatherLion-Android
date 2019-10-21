@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rlConfiguration"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center_horizontal"
+    android:padding="10dip"
+    android:background="#ff000000">
+
+    <ImageView
+        android:id="@+id/imvBackground"
+        android:layout_width="200dip"
+        android:layout_height="200dip"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/activity_background"
+        android:layout_centerInParent="true"
+        android:src="@drawable/wl_spanner" />
+
+    <RelativeLayout
+        android:id="@+id/rlMainBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:drawable/screen_background_dark_transparent">
+
+        <RelativeLayout
+            android:id="@+id/rlKeyEntry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dip"
+            android:background="@drawable/wl_spinner_bg"
+            android:padding="10dip" >
+
+            <TextView
+                android:id="@+id/txvKeyEntryTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dip"
+                android:textAppearance="?android:attr/textAppearance"
+                android:text="@string/data_access_keys"
+                android:textColor="#62A0C9"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
+
+            <RelativeLayout
+                android:id="@+id/spnAccessProviderParent"
+                android:layout_width="match_parent"
+                android:layout_height="36dip"
+                android:layout_below="@+id/txvKeyEntryTitle"
+                android:background="@drawable/wl_rounded_50r_dark_background"
+                android:orientation="horizontal">
+
+                <Spinner
+                    android:id="@+id/spnAccessProvider"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="5dip"
+                    android:background="@android:color/transparent"
+                    android:gravity="center"
+                    android:overlapAnchor="false"
+                    android:spinnerMode="dropdown"
+                    android:popupBackground="@drawable/wl_dark_list_background"
+                    android:textColor="#F9F9FA" />
+
+                <ImageView
+                    android:id="@+id/imvAccessProviderDropArrow"
+                    android:layout_width="20dip"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="center"
+                    android:layout_marginEnd="8dip"
+                    android:contentDescription="@string/drop_down_arrow"
+                    android:src="@drawable/wl_drop_down_24dp" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/spnKeyNameParent"
+                android:layout_width="match_parent"
+                android:layout_height="36dip"
+                android:layout_below="@+id/spnAccessProviderParent"
+                android:layout_marginTop="10dip"
+                android:background="@drawable/wl_rounded_50r_dark_background"
+                android:orientation="horizontal"
+                android:visibility="visible">
+
+                <Spinner
+                    android:id="@+id/spnKeyName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="5dip"
+                    android:background="@android:color/transparent"
+                    android:gravity="center"
+                    android:overlapAnchor="false"
+                    android:spinnerMode="dropdown"
+                    android:popupBackground="@drawable/wl_dark_list_background"
+                    android:textColor="#F9F9FA" />
+
+                <ImageView
+                    android:id="@+id/imvKeyNameDropArrow"
+                    android:layout_width="20dip"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="center"
+                    android:layout_marginEnd="8dip"
+                    android:contentDescription="@string/drop_down_arrow"
+                    android:src="@drawable/wl_drop_down_24dp" />
+            </RelativeLayout>
+
+            <EditText
+                android:id="@+id/edtKeyName"
+                android:layout_width="match_parent"
+                android:layout_height="36dip"
+                android:layout_below="@id/spnAccessProviderParent"
+                android:layout_marginTop="10dip"
+                android:autofillHints=""
+                android:background="@drawable/wl_rounded_50r_dark_background"
+                android:hint="@string/access_key_name"
+                android:textColorHint="#A0A0A2"
+                android:inputType="text"
+                android:paddingStart="12dip"
+                android:paddingEnd="8dip"
+                android:textCursorDrawable="@drawable/wl_cursor_color"
+                android:textSize="16sp"
+                android:textColor="#F9F9FA"
+                android:visibility="invisible" />
+
+            <EditText
+                android:id="@+id/edtKeyValue"
+                android:layout_width="match_parent"
+                android:layout_height="36dip"
+                android:layout_below="@+id/edtKeyName"
+                android:layout_marginTop="10dip"
+                android:autofillHints=""
+                android:background="@drawable/wl_rounded_50r_dark_background"
+                android:textColorHint="#A0A0A2"
+                android:hint="@string/access_key_value"
+                android:inputType="textPassword"
+                android:paddingStart="12dip"
+                android:paddingEnd="8dip"
+                android:textColor="#F9F9FA"
+                android:textCursorDrawable="@drawable/wl_cursor_color"
+                android:textSize="16sp" />
+
+            <CheckBox
+                android:id="@+id/cbShowPwd"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/edtKeyValue"
+                android:layout_alignEnd="@+id/edtKeyValue"
+                android:layout_marginTop="8dip"
+                android:buttonTint="@color/colorPrimary"
+                android:text="@string/show_key"
+                android:textColor="#F9F9FA" />
+
+            <Button
+                android:id="@+id/btnAddKey"
+                android:layout_width="100dip"
+                android:layout_height="30dip"
+                android:layout_below="@+id/cbShowPwd"
+                android:layout_marginTop="10dip"
+                android:layout_marginEnd="10dip"
+                android:layout_toStartOf="@+id/btnDeleteKey"
+                android:background="@drawable/wl_aqua_rounded_btn_bg"
+                android:gravity="center"
+                android:text="@string/add_key"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/btnDeleteKey"
+                android:layout_width="100dip"
+                android:layout_height="30dip"
+                android:layout_below="@+id/cbShowPwd"
+                android:layout_alignEnd="@+id/edtKeyValue"
+                android:layout_marginTop="10dip"
+                android:background="@drawable/wl_aqua_rounded_btn_bg"
+                android:text="@string/delete_key"
+                android:textColor="#FFFFFF" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/rlCitySearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/rlKeyEntry"
+            android:layout_marginBottom="10dip"
+            android:background="@drawable/wl_spinner_bg"
+            android:padding="10dip" >
+
+            <TextView
+                android:id="@+id/txvCitySearchTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dip"
+                android:textAppearance="?android:attr/textAppearance"
+                android:text="@string/city_search"
+                android:textColor="#62A0C9"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
+
+            <FrameLayout
+                android:id="@+id/searchFrame"
+                android:layout_width="match_parent"
+                android:layout_height="36dip"
+                android:layout_below="@+id/txvCitySearchTitle">
+
+                <EditText
+                    android:id="@+id/edtSearchCity"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:autofillHints=""
+                    android:background="@drawable/wl_rounded_50r_dark_background"
+                    android:drawablePadding="8dip"
+                    android:hint="@string/enter_city_name"
+                    android:textColorHint="#A0A0A2"
+                    android:textColor="#F9F9FA"
+                    android:inputType="text"
+                    android:padding="4dip"
+                    android:paddingStart="40dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="2dp" />
+
+                <ImageButton
+                    android:id="@+id/searchBtn"
+                    android:layout_width="24dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|center_vertical"
+                    android:layout_marginStart="10dip"
+                    android:background="@drawable/wl_search_glass"
+                    android:contentDescription="@string/initiate_search" />
+
+                <ImageButton
+                    android:id="@+id/btnWorking"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_margin="10dp"
+                    android:background="@drawable/wl_loading_arrow"
+                    android:contentDescription="@string/indicate_task_running"
+                    android:visibility="invisible"
+                    tools:visibility="visible" />
+
+                <ImageButton
+                    android:id="@+id/btnClear"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_margin="10dp"
+                    android:background="@drawable/wl_clear_search"
+                    android:contentDescription="@string/clear_search_field"
+                    android:visibility="invisible"
+                    tools:visibility="visible" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/txvDialogMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/searchFrame"
+                android:layout_marginTop="10dip"
+                android:text="@string/city_search_tip"
+                android:textColor="#62A0C9"
+                android:textSize="16sp"
+                android:textStyle="normal" />
+        </RelativeLayout>
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/btnFinish"
+        android:layout_width="100dip"
+        android:layout_height="30dip"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/wl_aqua_rounded_btn_bg"
+        android:layout_centerHorizontal="true"
+        android:text="@string/finish"
+        android:textColor="#FFFFFF" />
+</RelativeLayout>

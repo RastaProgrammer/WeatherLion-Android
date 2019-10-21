@@ -1,0 +1,35 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rlInvalidWidget"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="120dip"
+    android:background="@drawable/wl_config_required_bg">
+
+    <TextView
+        android:id="@+id/txvConfigure"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center_horizontal"
+        android:includeFontPadding="false"
+        android:text="@string/configure_widget"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="normal" />
+
+    <TextView
+        android:id="@+id/txvReconfigure"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/txvConfigure"
+        android:layout_centerInParent="true"
+        android:gravity="center_horizontal"
+        android:includeFontPadding="false"
+        android:text="@string/tap_configure"
+        android:textColor="#E9E9E9"
+        android:textSize="14sp"
+        android:textStyle="normal" />
+
+</RelativeLayout>
+

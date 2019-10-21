@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:id="@+id/rlKeysDialog"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <RelativeLayout
+        android:id="@+id/rlDialogTitleBar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="#3796D2" >
+
+        <ImageView
+            android:id="@+id/diaIcon"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentStart="true"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="10dip"
+            android:src="@drawable/icon"
+            android:contentDescription="@string/dialog_icon" />
+
+        <TextView
+            android:id="@+id/txvDialogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="40dip"
+            android:layout_gravity="center_vertical"
+            android:layout_toEndOf="@+id/diaIcon"
+            android:layout_toStartOf="@+id/imvCloseDialog"
+            android:gravity="start|center_vertical"
+            android:layout_marginStart="8dip"
+            android:text="@string/key_dialog_title"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/imvCloseDialog"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentEnd="true"
+            android:layout_centerInParent="true"
+            android:layout_marginEnd="10dip"
+            android:src="@drawable/wl_close_dialog"
+            android:contentDescription="@string/close_dialog" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/layDialogBody"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rlDialogTitleBar"
+        android:padding="10dp"
+        android:background="#FFFFFF">
+
+        <TextView
+            android:id="@+id/txvAccessProvider"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearance"
+            android:text="@string/access_provider"
+            android:textColor="@color/black_opacity_80"
+            android:textStyle="normal"
+            android:layout_marginBottom="20dip"
+            android:layout_marginStart="10dip"
+            android:layout_marginTop="20dip"
+            android:textSize="16sp"/>
+
+        <RelativeLayout
+            android:id="@+id/spnAccessProviderParent"
+            android:layout_width="224dip"
+            android:layout_height="30dip"
+            android:layout_alignBottom="@+id/txvAccessProvider"
+            android:layout_marginStart="23dip"
+            android:layout_marginEnd="3dp"
+            android:layout_marginBottom="-4dip"
+            android:layout_alignTop="@id/spnAccessProviderParent"
+            android:layout_toEndOf="@+id/txvAccessProvider"
+            android:background="@drawable/wl_spinner_bg"
+            android:orientation="horizontal">
+
+            <Spinner
+                android:id="@+id/spnAccessProvider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dip"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:overlapAnchor="false"
+                android:spinnerMode="dropdown" />
+
+            <ImageView
+                android:id="@+id/imvAccessProviderDropArrow"
+                android:layout_width="20dip"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center"
+                android:contentDescription="@string/drop_down_arrow"
+                android:src="@drawable/wl_drop_down_24dp" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/txvKeyName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txvAccessProvider"
+            android:layout_alignStart="@+id/txvAccessProvider"
+            android:layout_marginBottom="20dip"
+            android:text="@string/key_name"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="@color/black_opacity_80"
+            android:textStyle="normal"
+            android:textSize="16sp" />
+
+        <RelativeLayout
+            android:id="@+id/spnKeyNameParent"
+            android:layout_width="224dip"
+            android:layout_height="30dip"
+            android:layout_alignEnd="@+id/spnAccessProviderParent"
+            android:layout_alignBottom="@+id/txvKeyName"
+            android:layout_marginStart="64dip"
+            android:layout_marginTop="14dip"
+            android:layout_marginEnd="1dp"
+            android:layout_marginBottom="-3dip"
+            android:layout_toEndOf="@+id/txvKeyName"
+            android:layout_below="@id/spnAccessProviderParent"
+            android:background="@drawable/wl_spinner_bg"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <Spinner
+                android:id="@+id/spnKeyName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dip"
+                android:background="@android:color/transparent"
+                android:gravity="center"
+                android:overlapAnchor="false"
+                android:spinnerMode="dropdown" />
+
+            <ImageView
+                android:id="@+id/imvKeyNameDropArrow"
+                android:layout_width="20dip"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center"
+                android:contentDescription="@string/drop_down_arrow"
+                android:src="@drawable/wl_drop_down_24dp" />
+
+        </RelativeLayout>
+
+        <EditText
+            android:id="@+id/edtKeyName"
+            android:layout_width="224dip"
+            android:layout_height="30dip"
+            android:layout_alignEnd="@+id/spnAccessProviderParent"
+            android:layout_alignBottom="@+id/txvKeyName"
+            android:layout_marginStart="64dip"
+            android:layout_marginEnd="1dp"
+            android:layout_marginBottom="-3dip"
+            android:layout_toEndOf="@+id/txvKeyName"
+            android:autofillHints=""
+            android:background="@drawable/wl_round_textbox"
+            android:inputType="text"
+            android:paddingStart="8dip"
+            android:hint="@string/access_key_name"
+            android:paddingEnd="8dip"
+            android:textCursorDrawable="@drawable/wl_cursor_color"
+            android:textSize="16sp"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/txvKeyValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txvKeyName"
+            android:layout_alignStart="@+id/txvKeyName"
+            android:text="@string/key_value"
+            android:textColor="@color/black_opacity_80"
+            android:textStyle="normal"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/edtKeyValue"
+            android:layout_width="224dip"
+            android:layout_height="30dip"
+            android:layout_alignEnd="@+id/spnAccessProviderParent"
+            android:layout_alignBottom="@+id/txvKeyValue"
+            android:layout_marginStart="67dip"
+            android:layout_marginEnd="0dip"
+            android:layout_marginBottom="-4dp"
+            android:layout_toEndOf="@+id/txvKeyValue"
+            android:autofillHints=""
+            android:background="@drawable/wl_round_textbox"
+            android:inputType="textPassword"
+            android:paddingStart="8dip"
+            android:paddingEnd="8dip"
+            android:hint="@string/access_key_value"
+            android:textCursorDrawable="@drawable/wl_cursor_color"
+            android:textSize="16sp" />
+
+        <CheckBox
+
+            android:id="@+id/cbShowPwd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignEnd="@+id/edtKeyValue"
+            android:layout_below="@+id/edtKeyValue"
+            android:layout_marginTop="8dip"
+            android:textColor="@color/black_opacity_80"
+            android:text="@string/show_key" />
+
+        <Button
+            android:id="@+id/btnAddKey"
+            android:layout_width="100dip"
+            android:layout_height="30dip"
+            android:layout_below="@+id/cbShowPwd"
+            android:layout_marginStart="0dip"
+            android:layout_marginTop="10dip"
+            android:layout_toStartOf="@+id/btnDeleteKey"
+            android:background="@drawable/wl_aqua_rounded_btn_bg"
+            android:gravity="center"
+            android:text="@string/add_key"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btnDeleteKey"
+            android:layout_width="100dip"
+            android:layout_height="30dip"
+            android:layout_below="@+id/cbShowPwd"
+            android:layout_toStartOf="@+id/btnFinish"
+            android:layout_marginTop="10dip"
+            android:layout_marginRight="8dip"
+            android:layout_marginLeft="8dip"
+            android:background="@drawable/wl_aqua_rounded_btn_bg"
+            android:gravity="center"
+            android:text="@string/delete_key"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btnFinish"
+            android:layout_width="100dip"
+            android:layout_height="30dip"
+            android:layout_below="@+id/cbShowPwd"
+            android:layout_alignEnd="@+id/edtKeyValue"
+            android:layout_marginTop="10dip"
+            android:background="@drawable/wl_aqua_rounded_btn_bg"
+            android:gravity="center"
+            android:text="@string/finish"
+            android:textColor="#FFFFFF" />
+
+    </RelativeLayout>
+</RelativeLayout>

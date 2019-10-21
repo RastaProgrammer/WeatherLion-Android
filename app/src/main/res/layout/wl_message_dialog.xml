@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rlMessageDialog"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F0F0F0">
+
+    <RelativeLayout
+        android:id="@+id/rlDialogTitleBar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="#3796D2" >
+
+        <ImageView
+            android:id="@+id/diaIcon"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentStart="true"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="10dip"
+            android:src="@drawable/icon"
+            android:contentDescription="@string/dialog_icon" />
+
+        <TextView
+            android:id="@+id/txvDialogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="40dip"
+            android:layout_gravity="center_vertical"
+            android:layout_toEndOf="@+id/diaIcon"
+            android:gravity="center"
+            android:layout_marginStart="10dip"
+            android:text="@string/message_dialog_title"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <ScrollView
+        android:id="@+id/scrMessage"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="vertical"
+        android:fillViewport="true"
+        android:layout_below="@+id/rlDialogTitleBar" >
+
+        <TextView
+            android:id="@+id/txvMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dip"
+            android:text="@string/message_dialog_message"
+            android:textColor="@color/black_opacity_80"
+            android:textStyle="normal"
+            android:textSize="18sp" />
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnOk"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:layout_below="@+id/scrMessage"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="10dip"
+        android:layout_marginTop="10dip"
+        android:layout_marginEnd="11dip"
+        android:background="@drawable/wl_lion_rounded_btn_bg"
+        android:text="@string/Ok"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="10dip"/>
+
+</RelativeLayout>
