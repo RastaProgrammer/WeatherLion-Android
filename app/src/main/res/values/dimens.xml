@@ -1,6 +1,0 @@
-<resources>
-    <dimen name="widget_margin">8dip</dimen>
-    <dimen name="app_bar_height">180dip</dimen>
-    <dimen name="fab_margin">16dip</dimen>
-    <dimen name="text_margin">16dip</dimen>
-</resources>
