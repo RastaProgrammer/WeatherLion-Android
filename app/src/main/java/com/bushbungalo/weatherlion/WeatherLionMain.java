@@ -149,7 +149,7 @@ public class WeatherLionMain extends AppCompatActivity
     private BroadcastReceiver loadingErrorBroadcastReceiver = new BroadcastReceiver()
     {
         @Override
-        public void onReceive( Context context, Intent intent)
+        public void onReceive( Context context, Intent intent )
         {
             // cancel the Visual indication of a refresh
             appRefresh.setRefreshing( false );
@@ -996,7 +996,7 @@ public class WeatherLionMain extends AppCompatActivity
                     /* If the preferences are stored correctly and there is no weather data
                     stored the service data service must obtain the required data based on
                     the stored preferences
-                */
+                    */
                     if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
                     {
                         WeatherLionApplication.restoringWeatherData = true;
@@ -1841,8 +1841,8 @@ public class WeatherLionMain extends AppCompatActivity
             }
         } );
 
-        keyEntryDialog.setCancelable( wxOnly.contains( WeatherLionApplication.GEO_NAMES ) ); // User is only allowed to cancel if GeoNames account exists
-
+//        keyEntryDialog.setCancelable( wxOnly.contains( WeatherLionApplication.GEO_NAMES ) ); // User is only allowed to cancel if GeoNames account exists
+        keyEntryDialog.setCancelable( false ); // User is only allowed to cancel by using the close or finish buttons
         Objects.requireNonNull( keyEntryDialog.getWindow() ).setBackgroundDrawable(
                 new ColorDrawable( Color.TRANSPARENT ) );
         UtilityMethod.loadCustomFont( (RelativeLayout) keyDialogView.findViewById( R.id.rlKeysDialog ) );

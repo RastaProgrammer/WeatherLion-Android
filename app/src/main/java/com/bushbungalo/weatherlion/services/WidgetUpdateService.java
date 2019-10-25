@@ -323,7 +323,7 @@ public class WidgetUpdateService extends JobIntentService
                         if( UtilityMethod.hasInternetConnection( this ) &&
                                 UtilityMethod.updateRequired( getApplicationContext() ) ||
                                 UtilityMethod.hasInternetConnection( this ) &&
-                                        UtilityMethod.refreshRequested )
+                                UtilityMethod.refreshRequested )
                         {
                             wxUrl.setLength( 0 );
                             fxUrl.setLength( 0 );
@@ -420,7 +420,7 @@ public class WidgetUpdateService extends JobIntentService
                                     }// end of try block
                                     catch ( Exception e )
                                     {
-                                        dataRetrievalError( WeatherLionApplication.YAHOO_WEATHER );
+                                        dataRetrievalError( WeatherLionApplication.YAHOO_WEATHER , e);
 
                                         return;
                                     }// end of catch block
@@ -449,7 +449,6 @@ public class WidgetUpdateService extends JobIntentService
                             // Yahoo! Weather uses an OAuth method to access data from the web service
                             if( !wxDataProvider.equals( WeatherLionApplication.YAHOO_WEATHER ) )
                             {
-
                                 try
                                 {
                                     if( wxUrl.length() != 0 && fxUrl.length() != 0 && axUrl.length() != 0 )
@@ -476,7 +475,7 @@ public class WidgetUpdateService extends JobIntentService
                                 }// end of try block
                                 catch ( Exception e )
                                 {
-                                    dataRetrievalError( wxDataProvider );
+                                    dataRetrievalError( wxDataProvider, e );
                                 }// end of catch block
                             }// end of if block
                         }// end of if block
@@ -649,17 +648,22 @@ public class WidgetUpdateService extends JobIntentService
         }// end of catch block
     }// end of method callNMethodByName
 
-    private void dataRetrievalError( final String provider )
+    private void dataRetrievalError( final String provider, Exception e )
     {
         strJSON = null;
 
-        // reverse the attempt to use Yahoo! Weather
+        // inform all receivers that there was a error obtaining weather details
+        broadcastLoadingError();
+
+        // reverse the attempt to use the provider
         loadPreviousWeatherData();
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(
                 WeatherLionApplication.getAppContext() );
         settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
                 WeatherLionApplication.previousWeatherProvider.toString() ).apply();
 
+        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                provider + " returned: " + e.getMessage(), TAG + "::dataRetrievalError" );
         // Calling from a Non-UI Thread
         Handler handler = new Handler( Looper.getMainLooper() );
 
@@ -669,8 +673,8 @@ public class WidgetUpdateService extends JobIntentService
             public void run()
             {
                 UtilityMethod.butteredToast( getApplicationContext(),
-                        provider + " did not return data!",
-                        2, Toast.LENGTH_LONG );
+                    provider + " did not return data!",
+                    2, Toast.LENGTH_LONG );
             }
         });
     }// end of method dataRetrievalError
@@ -916,6 +920,7 @@ public class WidgetUpdateService extends JobIntentService
         // schedule the weather update only if weather was just updated
         if( weatherUpdate && strJSON != null && !strJSON.isEmpty() )
         {
+
             if( WeatherLionApplication.largeWidgetIds.length > 0 )
             {
                 for ( int largeWidgetId : WeatherLionApplication.largeWidgetIds )
@@ -1061,8 +1066,11 @@ public class WidgetUpdateService extends JobIntentService
         String srt = String.format( "%s %s", today,
                 WeatherLionApplication.currentSunriseTime.toString() );
 
-        SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
-                Locale.ENGLISH );
+        // some providers do not include a space between the time and the meridiem
+        String pattern = WeatherLionApplication.currentSunsetTime.toString().contains( " " )
+                ? "MM/dd/yyyy h:mm a" : "MM/dd/yyyy h:mma";
+
+        SimpleDateFormat sdf = new SimpleDateFormat( pattern, Locale.ENGLISH );
 
         // Obtain all default value from the stored preferences
 //        int timeAmount = UtilityMethod.millisecondsToMinutes(
@@ -1329,41 +1337,8 @@ public class WidgetUpdateService extends JobIntentService
         for ( DarkSkyWeatherDataItem.Daily.Data wxForecast : darkSky.getDaily().getData() )
         {
             Date fxDate = UtilityMethod.getDateTime( wxForecast.getTime() );
-            String fCondition = wxForecast.getSummary().toLowerCase();
-
-            if ( fCondition.contains( "until" ) )
-            {
-                fCondition = fCondition.substring( 0, fCondition.indexOf( "until" ) - 1 ).trim();
-            }// end of if block
-
-            if ( fCondition.contains( "starting" ) )
-            {
-                fCondition = fCondition.substring( 0, fCondition.indexOf( "starting" ) - 1 ).trim();
-            }// end of if block
-
-            if ( fCondition.contains( "overnight" ) )
-            {
-                fCondition = fCondition.substring( 0, fCondition.indexOf( "overnight" ) - 1 ).trim();
-            }// end of if block
-
-            if ( fCondition.contains( "throughout" ) )
-            {
-                fCondition = fCondition.substring( 0, fCondition.indexOf( "throughout" ) - 1 ).trim();
-            }// end of if block
-
-            if ( fCondition.contains( " in " ) )
-            {
-                fCondition = fCondition.substring( 0, fCondition.indexOf( " in " ) - 1 ).trim();
-            }// end of if block
-
-            if( fCondition.toLowerCase().contains( "and" ) )
-            {
-                String[] conditions = fCondition.toLowerCase().split( "and" );
-
-                fCondition = conditions[ 0 ].trim();
-            }// end of if block
-
-            fCondition = UtilityMethod.toProperCase( fCondition );
+            String fCondition = UtilityMethod.toProperCase(
+                    validateCondition( wxForecast.getSummary().toLowerCase() ) );
 
             int  fDay= this.getResources().getIdentifier( "txvDay" + (i),
                     "id", this.getPackageName() );
@@ -1376,7 +1351,7 @@ public class WidgetUpdateService extends JobIntentService
             // Load current forecast condition weather image
             if( fCondition.toLowerCase().contains( "(day)" ) )
             {
-                fCondition = fCondition.replace( "(day)", "").trim();
+                fCondition = fCondition.replace( "(day)", "" ).trim();
             }// end of if block
             else if( fCondition.toLowerCase().contains( "(night)" ) )
             {
@@ -1620,7 +1595,6 @@ public class WidgetUpdateService extends JobIntentService
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-
         // Five Day Forecast
         int i = 1;
         Date lastDate = new Date();
@@ -1651,47 +1625,8 @@ public class WidgetUpdateService extends JobIntentService
                 String fCondition =wxForecast.getIconName().contains( "_" ) ?
                         UtilityMethod.toProperCase( wxForecast.getIconName().replaceAll( "_", " " ) ) :
                         UtilityMethod.toProperCase( wxForecast.getIconName().replaceAll( "_", " " ) );
-//                String fDay =  new SimpleDateFormat( "E d", Locale.ENGLISH ).format( fxDate );
-
-                if ( fCondition.contains( "until" ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "until" ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "starting" ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "starting" ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "overnight" ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "overnight" ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "throughout" ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "throughout" ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "in " ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "in " ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "is " ) )
-                {
-                    int len = fCondition.length();
-                    fCondition = fCondition.substring( fCondition.indexOf( "is " ) + 3, len ).trim();
-                }// end of if block
-
-                if( fCondition.toLowerCase().contains( "and" ) )
-                {
-                    String[] conditions = fCondition.toLowerCase().split( "and" );
-
-                    fCondition = conditions[ 0 ].trim();
-                }// end of if block
-
-                fCondition = UtilityMethod.toProperCase( fCondition );
+                fCondition = UtilityMethod.toProperCase(
+                        validateCondition( fCondition ) );
 
                 int  fDayView = this.getResources().getIdentifier( "txvDay" + (i),
                         "id", this.getPackageName() );
@@ -1702,14 +1637,6 @@ public class WidgetUpdateService extends JobIntentService
                 "E d", Locale.ENGLISH ).format( fxDate ) );
 
                 // Load current forecast condition weather image
-                if( fCondition.toLowerCase().contains( "(day)") )
-                {
-                    fCondition = fCondition.replace( "(day)", "").trim();
-                }// end of if block
-                else if( fCondition.toLowerCase().contains( "(night)" ) )
-                {
-                    fCondition = fCondition.replace( "(night)", "" ).trim();
-                }// end of if block
 
                 String fConditionIcon = null;
 
@@ -1951,48 +1878,9 @@ public class WidgetUpdateService extends JobIntentService
             if ( !df.format( fxDate ).equals( df.format( lastDate ) ) )
             {
                 lastDate = UtilityMethod.getDateTime(wxForecast.getDt() );
-                String fCondition = wxForecast.getWeather().get( 0 ).getDescription();
+                String fCondition =  UtilityMethod.toProperCase(
+                        validateCondition( wxForecast.getWeather().get( 0 ).getDescription() ) );
                 String fDay =  new SimpleDateFormat( "E d", Locale.ENGLISH ).format( fxDate );
-
-                if ( fCondition.contains( "until" ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "until" ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "starting" ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "starting" ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "overnight" ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "overnight" ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "throughout" ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "throughout" ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "in " ) )
-                {
-                    fCondition = fCondition.substring( 0, fCondition.indexOf( "in " ) - 1 ).trim();
-                }// end of if block
-
-                if ( fCondition.contains( "is " ) )
-                {
-                    int len = fCondition.length();
-                    fCondition = fCondition.substring( fCondition.indexOf( "is " ) + 3, len ).trim();
-                }// end of if block
-
-                if( fCondition.toLowerCase().contains( "and" ) )
-                {
-                    String[] conditions = fCondition.toLowerCase().split( "and" );
-
-                    fCondition = conditions[ 0 ].trim();
-                }// end of if block
-
-                fCondition = UtilityMethod.toProperCase( fCondition );
 
                 int  fDayView= this.getResources().getIdentifier( "txvDay" + (i),
                         "id", this.getPackageName() );
@@ -2002,15 +1890,6 @@ public class WidgetUpdateService extends JobIntentService
                 largeWidgetRemoteViews.setTextViewText( fDayView,  fDay );
 
                 // Load current forecast condition weather image
-                if( fCondition.toLowerCase().contains( "(day)") )
-                {
-                    fCondition = fCondition.replace( "(day)", "").trim();
-                }// end of if block
-                else if( fCondition.toLowerCase().contains( "(night)" ) )
-                {
-                    fCondition = fCondition.replace( "(night)", "" ).trim();
-                }// end of if block
-
                 String fConditionIcon = null;
 
                 if( UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null )
@@ -2522,44 +2401,6 @@ public class WidgetUpdateService extends JobIntentService
 
                 if ( fxDate.after( new Date() ) )
                 {
-                    if ( fCondition.contains( "until" ) )
-                    {
-                        fCondition = fCondition.substring( 0, fCondition.indexOf( "until" ) - 1 ).trim();
-                    }// end of if block
-
-                    if ( fCondition.contains( "starting" ) )
-                    {
-                        fCondition = fCondition.substring( 0, fCondition.indexOf( "starting" ) - 1 ).trim();
-                    }// end of if block
-
-                    if ( fCondition.contains( "overnight" ) )
-                    {
-                        fCondition = fCondition.substring( 0, fCondition.indexOf( "overnight" ) - 1 ).trim();
-                    }// end of if block
-
-                    if ( fCondition.contains( "throughout" ) )
-                    {
-                        fCondition = fCondition.substring( 0, fCondition.indexOf( "throughout" ) - 1 ).trim();
-                    }// end of if block
-
-                    if ( fCondition.contains( "in " ) )
-                    {
-                        fCondition = fCondition.substring( 0, fCondition.indexOf( "in " ) - 1 ).trim();
-                    }// end of if block
-
-                    if ( fCondition.contains( "is " ) )
-                    {
-                        int len = fCondition.length();
-                        fCondition = fCondition.substring( fCondition.indexOf( "is " ) + 3, len ).trim();
-                    }// end of if block
-
-                    if( fCondition.toLowerCase().contains( "and" ) )
-                    {
-                        String[] conditions = fCondition.toLowerCase().split( "and" );
-
-                        fCondition = conditions[ 0 ].trim();
-                    }// end of if block
-
                     fCondition = UtilityMethod.toProperCase( fCondition );
 
                     int  fDay = this.getResources().getIdentifier( "txvDay" + (i),
@@ -2571,15 +2412,6 @@ public class WidgetUpdateService extends JobIntentService
                         "E d", Locale.ENGLISH ).format( fxDate ) );
 
                     // Load current forecast condition weather image
-                    if(fCondition.toLowerCase().contains( "(day)" ) )
-                    {
-                        fCondition = fCondition.replace( "(day)", "").trim();
-                    }// end of if block
-                    else if(fCondition.toLowerCase().contains( "(night)" ) )
-                    {
-                        fCondition = fCondition.replace( "(night)", "" ).trim();
-                    }// end of if block
-
                     String fConditionIcon = null;
 
                     if( UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null )
@@ -2835,30 +2667,15 @@ public class WidgetUpdateService extends JobIntentService
             Date fDate = UtilityMethod.getDateTime( fdf.get( i ).getDate() );
 
             // Load current forecast condition weather image
-            String fCondition =   UtilityMethod.yahooWeatherCodes[
-                    fdf.get( i ).getCode() ];
+            String fCondition =    UtilityMethod.toProperCase(
+                    validateCondition( UtilityMethod.yahooWeatherCodes[
+                    fdf.get( i ).getCode() ] ) );
             int  fDay = this.getResources().getIdentifier( "txvDay" +  (i + 1),
                     "id", this.getPackageName() );
             int  fIcon = this.getResources().getIdentifier( "imvDay" +  (i + 1) + "Icon",
                     "id", this.getPackageName() );
 
             largeWidgetRemoteViews.setTextViewText(fDay, new SimpleDateFormat( "E d", Locale.ENGLISH ).format( fDate ));
-
-            if( fCondition.toLowerCase().contains( "(day)" ) )
-            {
-                fCondition = fCondition.replace( "(day)", "" ).trim();
-            }// end of if block
-            else if( fCondition.toLowerCase().contains( "(night)" ) )
-            {
-                fCondition = fCondition.replace( "(night)", "" ).trim();
-            }// end of if block
-
-            if( fCondition.toLowerCase().contains( "and" ) )
-            {
-                String[] conditions = fCondition.toLowerCase().split( "and" );
-
-                fCondition = conditions[ 0 ].trim();
-            }// end of if block
 
             String fConditionIcon = null;
 
@@ -3112,7 +2929,8 @@ public class WidgetUpdateService extends JobIntentService
                 Date forecastDate = wxDailyForecast.getTimeFrom();
 
                 // Load current forecast condition weather image
-                String fCondition =   wxDailyForecast.getSymbolName();
+                String fCondition = UtilityMethod.toProperCase(
+                        validateCondition( wxDailyForecast.getSymbolName() ) );
 
                 int  fDay = this.getResources().getIdentifier( "txvDay" + (i),
                         "id", this.getPackageName() );
@@ -3120,22 +2938,6 @@ public class WidgetUpdateService extends JobIntentService
                         "id", this.getPackageName() );
 
                 largeWidgetRemoteViews.setTextViewText(fDay, new SimpleDateFormat( "E d", Locale.ENGLISH ).format( forecastDate ));
-
-                if( fCondition.toLowerCase().contains( "(day)" ) )
-                {
-                    fCondition = fCondition.replace( "(day)", "" ).trim();
-                }// end of if block
-                else if( fCondition.toLowerCase().contains( "(night)" ) )
-                {
-                    fCondition = fCondition.replace( "(night)", "" ).trim();
-                }// end of if block
-
-                if( fCondition.toLowerCase().contains( "and" ) )
-                {
-                    String[] conditions = fCondition.toLowerCase().split( "and" );
-
-                    fCondition = conditions[ 0 ].trim();
-                }// end of if block
 
                 String fConditionIcon = null;
 
@@ -4456,6 +4258,68 @@ public class WidgetUpdateService extends JobIntentService
     }// end of method updateTemps
 
     /**
+     * Returns a valid weather condition that is relevant to the application
+     *
+     * @param condition The weather condition to be validated
+     * @return  A {@code String} value representing a valid weather condition
+     */
+    private String validateCondition( String condition )
+    {
+        if ( condition.contains( "until" ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( "until" ) - 1 ).trim();
+        }// end of if block
+
+        if ( condition.contains( "starting" ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( "starting" ) - 1 ).trim();
+        }// end of if block
+
+        if ( condition.contains( "overnight" ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( "overnight" ) - 1 ).trim();
+        }// end of if block
+
+        if ( condition.contains( "night" ) )
+        {
+            condition = condition.replaceAll( "night", "" ).trim();
+        }// end of if block
+
+        if ( condition.contains( "possible" ) )
+        {
+            condition = condition.replaceAll( "possible", "" ).trim();
+        }// end of if block
+
+        if ( condition.contains( "throughout" ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( "throughout" ) - 1 ).trim();
+        }// end of if block
+
+        if ( condition.contains( " in " ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( " in " ) - 1 ).trim();
+        }// end of if block
+
+        if( condition.toLowerCase().contains( "and" ) )
+        {
+            String[] conditions = condition.toLowerCase().split( "and" );
+
+            condition = conditions[ 0 ].trim();
+        }// end of if block
+
+        if( condition.toLowerCase().contains( "(day)") )
+        {
+            condition = condition.replace( "(day)", "").trim();
+        }// end of if block
+        else if( condition.toLowerCase().contains( "(night)" ) )
+        {
+            condition = condition.replace( "(night)", "" ).trim();
+        }// end of if block
+
+        return condition;
+    }// end of method validateCondition
+
+    /**
      * This broadcast receiver waits for a broadcast from HttpHelper before
      * attempting to load the widget data
      */
@@ -4472,7 +4336,7 @@ public class WidgetUpdateService extends JobIntentService
 
                 if( expectedJSONSize == strJSON.size() )
                 {
-                    updateAllAppWidgets( appWidgetManager );
+                   updateAllAppWidgets( appWidgetManager );
                 }// end of if block
             }// end of if block
         }// end of anonymous method onReceive

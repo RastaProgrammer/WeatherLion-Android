@@ -250,6 +250,11 @@ public class WeatherLionApplication extends Application
             Preference.createDefaultPreferencesPropertiesFile();
             constructDataAccess();
             firstLaunchCompleted = true;
+
+            systemColor = Color.valueOf( getColor( R.color.lion ) );
+            systemButtonDrawable = getDrawable( R.drawable.wl_lion_rounded_btn_bg );
+            widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg_large);
+            setTheme( R.style.LionTheme );
         }//end of if block
         else
         {
@@ -257,10 +262,6 @@ public class WeatherLionApplication extends Application
             firstLaunchCompleted = false;
         }// end of else block
 
-        systemColor = Color.valueOf( getColor( R.color.lion ) );
-        systemButtonDrawable = getDrawable( R.drawable.wl_lion_rounded_btn_bg );
-        widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg_large);
-        setTheme( R.style.LionTheme );
     }// end of method checkFirstRun
 
     /**
@@ -278,23 +279,29 @@ public class WeatherLionApplication extends Application
                             .replaceAll( "\t", "" ).trim() );
 
             storedData = lastDataReceived.getWeatherData();
-            DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
 
-            try
+            // the file may have been corrupted if the date does not exists
+            if( storedData.getProvider().getDate() != null )
             {
-                UtilityMethod.lastUpdated = df.parse( storedData.getProvider().getDate() );
-            }// end of try block
-            catch ( ParseException e )
-            {
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
-                        TAG + "::onCreate [line: " +
-                                e.getStackTrace()[1].getLineNumber()+ "]" );
-            }// end of catch block
+                DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy",
+                        Locale.ENGLISH );
 
-            currentSunriseTime = new StringBuilder( storedData.getAstronomy().getSunrise() );
-            currentSunsetTime = new StringBuilder( storedData.getAstronomy().getSunset() );
+                try
+                {
+                    UtilityMethod.lastUpdated = df.parse( storedData.getProvider().getDate() );
+                }// end of try block
+                catch ( ParseException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                            TAG + "::onCreate [line: " +
+                                    e.getStackTrace()[1].getLineNumber()+ "]" );
+                }// end of catch block
 
-            return true;
+                currentSunriseTime = new StringBuilder( storedData.getAstronomy().getSunrise() );
+                currentSunsetTime = new StringBuilder( storedData.getAstronomy().getSunset() );
+
+                return true;
+            }// end of if block
         }// end of if block
 
         return false;
@@ -1148,6 +1155,12 @@ public class WeatherLionApplication extends Application
         spf = PreferenceManager.getDefaultSharedPreferences( this );
         //spf = getSharedPreferences( "com.bushbungalo.weatherlion", MODE_PRIVATE );
 
+        wxLocation = spf.getString( CURRENT_LOCATION_PREFERENCE, Preference.DEFAULT_WEATHER_LOCATION );
+        useGps = spf.getBoolean( USE_GPS_LOCATION_PREFERENCE, Preference.DEFAULT_USE_GPS );
+        widBackgroundColor = spf.getString( WIDGET_BACKGROUND_PREFERENCE, Preference.DEFAULT_WIDGET_BACKGROUND );
+        final LocationManager manager = (LocationManager) getSystemService( LOCATION_SERVICE );
+        gpsRadioEnabled = manager.isProviderEnabled( LocationManager.GPS_PROVIDER );
+
         systemPreferences = new Preference();
 
         // retrieve user preferences
@@ -1164,12 +1177,6 @@ public class WeatherLionApplication extends Application
         {
             iconSet = DEFAULT_ICON_SET;
         }// end of if block
-
-        wxLocation = spf.getString( CURRENT_LOCATION_PREFERENCE, Preference.DEFAULT_WEATHER_LOCATION );
-        useGps = spf.getBoolean( USE_GPS_LOCATION_PREFERENCE, Preference.DEFAULT_USE_GPS );
-        widBackgroundColor = spf.getString( WIDGET_BACKGROUND_PREFERENCE, Preference.DEFAULT_WIDGET_BACKGROUND );
-        final LocationManager manager = (LocationManager) getSystemService( LOCATION_SERVICE );
-        gpsRadioEnabled = manager.isProviderEnabled( LocationManager.GPS_PROVIDER );
 
         // check if this the first time that the program is being run i.e new installation
         if( firstRun )
@@ -1208,53 +1215,51 @@ public class WeatherLionApplication extends Application
             }// end of switch block
         }// end of if block
 
+        // the system should have a consistent flow based on the selected widget background
+        if( widBackgroundColor != null )
+        {
+            switch( widBackgroundColor.toLowerCase() )
+            {
+                case AQUA_THEME:
+                    systemColor = Color.valueOf( getColor( R.color.aqua ) );
+                    systemButtonDrawable = getDrawable( R.drawable.wl_aqua_rounded_btn_bg );
+                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_aqua_bg_large );
+                    setTheme( R.style.AquaTheme );
+
+                    break;
+                case RABALAC_THEME:
+                    systemColor = Color.valueOf( getColor( R.color.rabalac ) );
+                    systemButtonDrawable = getDrawable( R.drawable.wl_rabalac_rounded_btn_bg );
+                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_rabalac_bg_large );
+                    setTheme( R.style.RabalacTheme );
+
+                    break;
+                default:
+                    systemColor = Color.valueOf( getColor( R.color.lion ) );
+                    systemButtonDrawable = getDrawable( R.drawable.wl_lion_rounded_btn_bg );
+                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg_large );
+                    setTheme( R.style.LionTheme );
+                    break;
+            }// end of switch block
+        }// end of if block
+
         if( WeatherLionApplication.geoNamesAccountLoaded )
         {
-            SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
-
             // we have enough information so exit early
             if( locationSet )
             {
-                // the system should have a consistent flow based on the selected widget background
-                if( widBackgroundColor != null )
+                // load all widget ids associated with the application
+                WidgetHelper.getWidgetIds();
+
+                if( largeWidgetIds.length > 0 || smallWidgetIds.length > 0 )
                 {
-                    switch( widBackgroundColor.toLowerCase() )
-                    {
-                        case AQUA_THEME:
-                            systemColor = Color.valueOf( getColor( R.color.aqua ) );
-                            systemButtonDrawable = getDrawable( R.drawable.wl_aqua_rounded_btn_bg );
-                            widgetBackgroundDrawable = getDrawable( R.drawable.wl_aqua_bg_large);
-                            setTheme( R.style.AquaTheme );
-
-                            break;
-                        case RABALAC_THEME:
-                            systemColor = Color.valueOf( getColor( R.color.rabalac ) );
-                            systemButtonDrawable = getDrawable( R.drawable.wl_rabalac_rounded_btn_bg );
-                            widgetBackgroundDrawable = getDrawable( R.drawable.wl_rabalac_bg_large);
-                            setTheme( R.style.RabalacTheme );
-
-                            break;
-                        default:
-                            systemColor = Color.valueOf( getColor( R.color.lion ) );
-                            systemButtonDrawable = getDrawable( R.drawable.wl_lion_rounded_btn_bg );
-                            widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg_large);
-                            setTheme( R.style.LionTheme );
-                            break;
-                    }// end of switch block
-
-                    // load all widget ids associated with the application
-                    WidgetHelper.getWidgetIds();
-
-                    if( largeWidgetIds.length > 0 || smallWidgetIds.length > 0 )
-                    {
-                        // set the widget background to the current theme color if the widget if a
-                        // widget if on screen
-                        Intent methodIntent = new Intent( this, WidgetUpdateService.class );
-                        methodIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
-                        methodIntent.putExtra( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
-                                WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
-                        WidgetUpdateService.enqueueWork( context, methodIntent );
-                    }// end of if block
+                    // set the widget background to the current theme color if the widget if a
+                    // widget if on screen
+                    Intent methodIntent = new Intent( this, WidgetUpdateService.class );
+                    methodIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                    methodIntent.putExtra( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                            WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
+                    WidgetUpdateService.enqueueWork( context, methodIntent );
                 }// end of if block
             }// end of if block
 
@@ -1263,7 +1268,7 @@ public class WeatherLionApplication extends Application
             {
                 // run the weather service and  call the method that loads the previous weather data
                 actionWeatherService( UNIT_NOT_CHANGED,
-                        WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
+                    WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
             }// end of if block
         }// end of if block
     }// end of method onCreate
@@ -1315,8 +1320,6 @@ public class WeatherLionApplication extends Application
 
         TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
         TextView txvDialogMessage = dialogView.findViewById( R.id.txvMessage );
-
-
 
         Button btnPositive = dialogView.findViewById( R.id.btnPositive );
         btnPositive.setBackground( WeatherLionApplication.systemButtonDrawable );
