@@ -78,16 +78,8 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
             WeatherLionApplication.changeWidgetUnit =  false;
 
             String invoker = this.getClass().getSimpleName() + "::onUpdate";
-            Bundle extras = new Bundle();
-            extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
-            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                    WeatherLionApplication.UNIT_NOT_CHANGED );
-
-            Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-            updateIntent.putExtra( EXTRA_APPWIDGET_ID, appWidgetId );
-            updateIntent.putExtras( extras );
-            WidgetUpdateService.enqueueWork( context, updateIntent );
+            WeatherLionApplication.callMethodByName( null,"refreshWeather",
+                    new Class[]{ String.class }, new Object[]{ invoker } );
 
             // set the click listener for the refresh image
             PendingIntent refreshIntent = PendingIntent.getBroadcast( context,
@@ -160,15 +152,8 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
             smallWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, "Refreshing..." );
 
             String invoker = this.getClass().getSimpleName() + "::onReceive";
-            Bundle extras = new Bundle();
-            extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
-            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                    WeatherLionApplication.UNIT_NOT_CHANGED );
-
-            Intent refreshIntent = new Intent( context, WidgetUpdateService.class );
-            refreshIntent.putExtras( extras );
-            WidgetUpdateService.enqueueWork( context, refreshIntent );
+            WeatherLionApplication.callMethodByName( null, "refreshWeather",
+                    new Class[]{ String.class }, new Object[]{ invoker } );
 
             // update the widget
             appWidgetManager.updateAppWidget( appWidgetIds, smallWidgetRemoteViews);

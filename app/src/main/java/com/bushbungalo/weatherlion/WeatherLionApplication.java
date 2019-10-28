@@ -17,7 +17,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
@@ -1251,7 +1250,6 @@ public class WeatherLionApplication extends Application
 
         if( WeatherLionApplication.geoNamesAccountLoaded )
         {
-            // we have enough information so exit early
             if( locationSet )
             {
                 // load all widget ids associated with the application
@@ -1259,12 +1257,18 @@ public class WeatherLionApplication extends Application
 
                 if( largeWidgetIds.length > 0 || smallWidgetIds.length > 0 )
                 {
+                    String invoker = this.getClass().getSimpleName() + "::onCreate";
+                    Bundle extras = new Bundle();
+                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                    extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                            WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
+                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                            WeatherLionApplication.UNIT_NOT_CHANGED );
+
                     // set the widget background to the current theme color if the widget if a
                     // widget if on screen
                     Intent methodIntent = new Intent( this, WidgetUpdateService.class );
-                    methodIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
-                    methodIntent.putExtra( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
-                            WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
+                    methodIntent.putExtras( extras );
                     WidgetUpdateService.enqueueWork( context, methodIntent );
                 }// end of if block
             }// end of if block
@@ -1273,8 +1277,22 @@ public class WeatherLionApplication extends Application
             if( checkForStoredWeatherData() )
             {
                 // run the weather service and  call the method that loads the previous weather data
-                actionWeatherService( UNIT_NOT_CHANGED,
-                    WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
+                actionWeatherService( UNIT_NOT_CHANGED, WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
+            }// end of if block
+
+            if( UtilityMethod.updateRequired( this ) )
+            {
+                String invoker = this.getClass().getSimpleName() + "::onCreate";
+                Bundle extras = new Bundle();
+                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                        WeatherLionApplication.UNIT_NOT_CHANGED );
+
+                UtilityMethod.refreshRequestedBySystem = true;
+                Intent updateIntent = new Intent( context, WidgetUpdateService.class );
+                updateIntent.putExtras( extras );
+                WidgetUpdateService.enqueueWork( context, updateIntent );
             }// end of if block
         }// end of if block
     }// end of method onCreate
@@ -1298,6 +1316,30 @@ public class WeatherLionApplication extends Application
     {
         WeatherLionApplication.useSystemLocation = useLocation;
     }// end of method setSystemLocationUsage
+
+    /**
+     * Invokes a weather data refresh
+     */
+    private void refreshWeather( String invoker )
+    {
+        if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
+        {
+            UtilityMethod.refreshRequestedBySystem = true;
+
+            Bundle extras = new Bundle();
+            extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                    WeatherLionApplication.UNIT_NOT_CHANGED );
+
+            Intent updateIntent = new Intent( this, WidgetUpdateService.class );
+            updateIntent.putExtras( extras );
+            WidgetUpdateService.enqueueWork( this, updateIntent );
+
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                    "Update requested by " + invoker,  invoker );
+        }// end of if block
+    }// end of method refreshWeather
 
     /**
      * Display a dialog illiciting a response from the user
@@ -1705,15 +1747,9 @@ public class WeatherLionApplication extends Application
                         UtilityMethod.refreshRequestedBySystem = true;
 
                         String invoker = TAG + "::" + this.getClass().getSimpleName() + "::onReceive";
-                        Bundle extras = new Bundle();
-                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
-                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                                WeatherLionApplication.UNIT_NOT_CHANGED );
-
-                        Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-                        updateIntent.putExtras( extras );
-                        WidgetUpdateService.enqueueWork( context, updateIntent );
+                        callMethodByName( WeatherLionApplication.class,
+                                "refreshWeather",
+                                new Class[]{ String.class }, new Object[]{ invoker } );
                     }// end of if block
                 }// end of if block
             }// end of if block

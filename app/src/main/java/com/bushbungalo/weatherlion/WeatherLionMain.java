@@ -763,9 +763,9 @@ public class WeatherLionMain extends AppCompatActivity
                     UtilityMethod.getTimeSince( timeUpdated ) ) );
         }// end of if block
 
-        if( UtilityMethod.refreshRequestedBySystem)
+        if( UtilityMethod.updateRequired( this ) )
         {
-            UtilityMethod.refreshRequestedBySystem = false;
+            refreshWeather();
         }// end of if block
     }// end of method loadMainActivityWeather
 
@@ -914,7 +914,7 @@ public class WeatherLionMain extends AppCompatActivity
         }// end of if block
         else
         {
-            WeatherLionApplication.callMethodByName(null, "checkForStoredWeatherData",
+            WeatherLionApplication.callMethodByName( null, "checkForStoredWeatherData",
                     null, null );
 
             View keysDialogView = View.inflate(this, R.layout.wl_data_keys_layout, null);
@@ -1021,15 +1021,8 @@ public class WeatherLionMain extends AppCompatActivity
                         UtilityMethod.refreshRequestedBySystem = true;
 
                         String invoker = this.getClass().getSimpleName() + "::onCreate";
-                        Bundle extras = new Bundle();
-                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
-                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                                WeatherLionApplication.UNIT_NOT_CHANGED );
-
-                        Intent updateIntent = new Intent( this, WidgetUpdateService.class );
-                        updateIntent.putExtras( extras );
-                        WidgetUpdateService.enqueueWork( this, updateIntent );
+                        WeatherLionApplication.callMethodByName( null,"refreshWeather",
+                                new Class[]{ String.class }, new Object[]{ invoker } );
 
                         // Have a loading screen displayed in the mean time
                     }// end of if block
@@ -1227,19 +1220,8 @@ public class WeatherLionMain extends AppCompatActivity
             showLoadingDialog( "Refreshing widget" );
 
             String invoker = this.getClass().getSimpleName() + "::refreshWeather";
-            Bundle extras = new Bundle();
-            extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
-            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                    WeatherLionApplication.UNIT_NOT_CHANGED );
-
-            Intent updateIntent = new Intent( this, WidgetUpdateService.class );
-            updateIntent.putExtras( extras );
-            WidgetUpdateService.enqueueWork( this, updateIntent );
-
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Update requested by main activity",
-                    TAG + "::onReceive" );
+            WeatherLionApplication.callMethodByName( null,
+    "refreshWeather", new Class[]{ String.class }, new Object[]{ invoker } );
         }// end of if block
     }// end of method refreshWeather
 
@@ -1252,6 +1234,8 @@ public class WeatherLionMain extends AppCompatActivity
      * @param negResponse   The text to be displayed on the negative response button
      * @param positiveAction A string representing a method that should be called after the user click's on the positive button
      * @param negativeAction A string representing a method that should be called after the user click's on the negative button
+     * @param params          An array representing the param value example new Object[]{"GeoNames"} or null can be passed.
+     * @param paramClassTypes   An array representing the param type example new Class[]{String.class} or null can be passed.
      */
     private void responseDialog( String title, String prompt, String posResponse,
                                  String negResponse, final String positiveAction,
@@ -1468,15 +1452,9 @@ public class WeatherLionMain extends AppCompatActivity
                     UtilityMethod.refreshRequestedBySystem = true;
 
                     String invoker = this.getClass().getSimpleName() + "::showPreviousSearches";
-                    Bundle extras = new Bundle();
-                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                    extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
-                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                            WeatherLionApplication.UNIT_NOT_CHANGED );
-
-                    Intent updateIntent = new Intent( WeatherLionMain.this, WidgetUpdateService.class );
-                    updateIntent.putExtras( extras );
-                    WidgetUpdateService.enqueueWork( WeatherLionMain.this, updateIntent );
+                    WeatherLionApplication.callMethodByName( null,
+                            "refreshWeather",
+                            new Class[]{ String.class }, new Object[]{ invoker } );
 
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                             "Switching cities",

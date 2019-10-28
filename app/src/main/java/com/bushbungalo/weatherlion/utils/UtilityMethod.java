@@ -3132,9 +3132,8 @@ public abstract class UtilityMethod
         }// end of if block
         else
         {
-            WeatherLionApplication.callMethodByName( WeatherLionApplication.class,
-                    "createServiceCallLog",
-                    null, null );
+            WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
+    null, null );
 
             ok = true;
         }// end of else block
@@ -3214,9 +3213,8 @@ public abstract class UtilityMethod
         }// end of if block
         else
         {
-            WeatherLionApplication.callMethodByName( WeatherLionApplication.class,
-                    "createServiceCallLog",
-                    null, null );
+            WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
+    null, null );
         }// end of else block
     }// end of method serviceCall
 

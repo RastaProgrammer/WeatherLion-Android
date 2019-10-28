@@ -314,15 +314,9 @@ public class CityFinderPreference extends DialogPreference
                         UtilityMethod.refreshRequestedBySystem = true;
 
                         String invoker = this.getClass().getSimpleName() + "::onDialogClosed";
-                        Bundle extras = new Bundle();
-                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
-                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                                WeatherLionApplication.UNIT_NOT_CHANGED );
-
-                        Intent updateIntent = new Intent( WeatherLionApplication.getAppContext(), WidgetUpdateService.class );
-                        updateIntent.putExtras( extras );
-                        WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(), updateIntent );
+                        WeatherLionApplication.callMethodByName( null,
+                                "refreshWeather",
+                                new Class[]{ String.class }, new Object[]{ invoker } );
 
                         // send out a broadcast to the city storage service to store the city name if it has not already been stored
                         Intent storeCityIntent = new Intent( WeatherLionApplication.getAppContext(),

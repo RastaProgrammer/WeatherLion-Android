@@ -471,7 +471,7 @@ public class ConfigureWidget extends AppCompatActivity
                     UtilityMethod.butteredToast( mContext,"The key was successfully added to the database.",
                             1, Toast.LENGTH_LONG );
 
-                    WeatherLionApplication.callMethodByName( WeatherLionApplication.class,
+                    WeatherLionApplication.callMethodByName( null,
                         "loadAccessProviders",
                         null, null );
                     broadcastKeyUpdate();
@@ -1302,11 +1302,11 @@ public class ConfigureWidget extends AppCompatActivity
 
                 if( params == null || params.length == 0 )
                 {
-                    WeatherLionApplication.callMethodByName( ConfigureWidget.this, methodToCall,null, null );
+                    WeatherLionApplication.callMethodByName( null, methodToCall,null, null );
                 }// end of if block
                 else
                 {
-                    WeatherLionApplication.callMethodByName( ConfigureWidget.this, methodToCall, paramClassTypes, params );
+                    WeatherLionApplication.callMethodByName( null, methodToCall, paramClassTypes, params );
                 }// end of else block
 
                 messageDialog.dismiss();

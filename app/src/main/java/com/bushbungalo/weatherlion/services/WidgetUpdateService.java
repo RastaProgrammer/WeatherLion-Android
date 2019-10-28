@@ -285,7 +285,7 @@ public class WidgetUpdateService extends JobIntentService
         else
         {
             // ensure that a widget refresh has been requested or it is time for an update
-            if( !UtilityMethod.refreshRequestedBySystem || !UtilityMethod.refreshRequestedByUser
+            if( !UtilityMethod.refreshRequestedBySystem && !UtilityMethod.refreshRequestedByUser
                     && !UtilityMethod.updateRequired( this ) )
             {
                 return;
@@ -712,7 +712,31 @@ public class WidgetUpdateService extends JobIntentService
      */
     private void updateAllAppWidgets( AppWidgetManager appWidgetManager )
     {
-        if( !unitChange && UtilityMethod.updateRequired( this ) )
+        if( unitChange )
+        {
+            // there was a unit change
+            updateTemps( false );
+        }// end of if block
+        else if( loadingPreviousWeather )
+        {
+            // if no update is required that means that previous weather data
+            // should be loaded. Since this is so, ensure that the previous
+            // weather data is loaded even if it already is.
+            //loadPreviousWeatherData();
+            WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                    UtilityMethod.readAll(
+                            this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
+                            .replaceAll( "\t", "" ).trim() );
+            WeatherLionApplication.localWeatherDataAvailable = true;
+
+            // The icon updater service will need to look at these values
+            WeatherLionApplication.currentSunriseTime = sunriseTime;
+            WeatherLionApplication.currentSunsetTime = sunsetTime;
+
+            // schedule the update for astronomy switch
+            scheduleAstronomyUpdate();
+        }// end of else if block
+        else
         {
             // check that the ArrayList is not empty and the the first element is not null
             if( strJSON != null && !strJSON.isEmpty() )
@@ -774,8 +798,8 @@ public class WidgetUpdateService extends JobIntentService
                                 catch ( JSONException e )
                                 {
                                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Bad Yahoo data: " + e.getMessage(),
-                                TAG + "::done [line: " +
-                                            e.getStackTrace()[1].getLineNumber()+ "]" );
+                                            TAG + "::done [line: " +
+                                                    e.getStackTrace()[1].getLineNumber()+ "]" );
                                 }// end of catch block
 
                                 if ( json instanceof JSONObject)
@@ -814,16 +838,16 @@ public class WidgetUpdateService extends JobIntentService
                 catch( Exception e )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::updateAllAppWidgets [line: " +
-                            e.getStackTrace()[1].getLineNumber()+ "]" );
+                            TAG + "::updateAllAppWidgets [line: " +
+                                    e.getStackTrace()[1].getLineNumber()+ "]" );
                     WeatherLionApplication.dataLoadedSuccessfully = false;
 
                     // Undo changes made
                     WeatherLionApplication.storedPreferences.setProvider(
-                        WeatherLionApplication.previousWeatherProvider.toString() );
+                            WeatherLionApplication.previousWeatherProvider.toString() );
 
                     WeatherLionApplication.systemPreferences.setPrefValues(
-                        WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
+                            WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
                             WeatherLionApplication.previousWeatherProvider.toString() );
 
                     // reverse the update time to the previous successful update time
@@ -847,11 +871,11 @@ public class WidgetUpdateService extends JobIntentService
                 String storedProviderName = WeatherLionApplication.storedPreferences.getProvider()
                         .equalsIgnoreCase( WeatherLionApplication.YAHOO_WEATHER ) ?
                         WeatherLionApplication.storedPreferences.getProvider()
-                            .replaceAll( "!", "" ) :
+                                .replaceAll( "!", "" ) :
                         WeatherLionApplication.storedPreferences.getProvider();
 
                 String providerIcon = String.format( "%s%s", "wl_",
-                    storedProviderName.toLowerCase().replaceAll( " ", "_" ) );
+                        storedProviderName.toLowerCase().replaceAll( " ", "_" ) );
 
                 largeWidgetRemoteViews.setImageViewResource( R.id.imvWeatherProviderLogo,
                         UtilityMethod.getImageResourceId( providerIcon ) );
@@ -879,8 +903,8 @@ public class WidgetUpdateService extends JobIntentService
                         WeatherLionApplication.weatherLoadedFromProvider = false;
 
                         UtilityMethod.butteredToast(this, "No internet connection was detected so "
-                            + "previous weather\ndata will be used until connection to the internet is restored.",
-                        2, Toast.LENGTH_LONG );
+                                        + "previous weather\ndata will be used until connection to the internet is restored.",
+                                2, Toast.LENGTH_LONG );
 
                         // display the offline icon on the widget
                         largeWidgetRemoteViews.setViewVisibility( R.id.imvOffline, View.VISIBLE );
@@ -906,37 +930,14 @@ public class WidgetUpdateService extends JobIntentService
                             @Override
                             public void run()
                             {
-                            UtilityMethod.butteredToast( getApplicationContext(),
-                            WeatherLionApplication.storedPreferences.getProvider() +
-                                    " did not return data!",2, Toast.LENGTH_LONG );
+                                UtilityMethod.butteredToast( getApplicationContext(),
+                                        WeatherLionApplication.storedPreferences.getProvider() +
+                                                " did not return data!",2, Toast.LENGTH_LONG );
                             }
                         });
                     }// end of if block
                 }// end of else block
             }// end of inner else block
-        }// end of if block
-        else if( unitChange )
-        {
-            updateTemps( false );
-        }// end of else if block
-        else if( loadingPreviousWeather )
-        {
-            // if no update is required that means that previous weather data
-            // should be loaded. Since this is so, ensure that the previous
-            // weather data is loaded even if it already is.
-            //loadPreviousWeatherData();
-            WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
-                    UtilityMethod.readAll(
-                            this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
-                            .replaceAll( "\t", "" ).trim() );
-            WeatherLionApplication.localWeatherDataAvailable = true;
-
-            // The icon updater service will need to look at these values
-            WeatherLionApplication.currentSunriseTime = sunriseTime;
-            WeatherLionApplication.currentSunsetTime = sunsetTime;
-
-            // schedule the update for astronomy switch
-            scheduleAstronomyUpdate();
         }// end of else if block
 
         WidgetHelper.getWidgetIds();
@@ -951,7 +952,6 @@ public class WidgetUpdateService extends JobIntentService
         // schedule the weather update only if weather was just updated
         if( weatherUpdate && strJSON != null && !strJSON.isEmpty() )
         {
-
             if( WeatherLionApplication.largeWidgetIds.length > 0 )
             {
                 for ( int largeWidgetId : WeatherLionApplication.largeWidgetIds )
