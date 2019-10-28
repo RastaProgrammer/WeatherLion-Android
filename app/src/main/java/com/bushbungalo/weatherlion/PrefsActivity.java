@@ -610,7 +610,7 @@ public class PrefsActivity extends AppCompatActivity
                                 UtilityMethod.serviceCall( entry );
                                 WeatherLionApplication.storedPreferences.setProvider( entry );
                                 WeatherLionApplication.storedData.getProvider().setName( entry );
-                                UtilityMethod.refreshRequested = true;
+                                UtilityMethod.refreshRequestedBySystem = true;
                             }// end of if block
                             else
                             {
@@ -639,7 +639,7 @@ public class PrefsActivity extends AppCompatActivity
             }// end of else block
 
             // this means that the change was not done by a binding event
-            if( UtilityMethod.refreshRequested )
+            if( UtilityMethod.refreshRequestedBySystem)
             {
                 WidgetUpdateService.widgetRefreshRequired = true;
                 UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO,
@@ -890,7 +890,7 @@ public class PrefsActivity extends AppCompatActivity
                                 UtilityMethod.serviceCall( entry );
                                 WeatherLionApplication.storedPreferences.setProvider( entry );
                                 WeatherLionApplication.storedData.getProvider().setName( entry );
-                                UtilityMethod.refreshRequested = true;
+                                UtilityMethod.refreshRequestedBySystem = true;
                             }// end of if block
                             else
                             {

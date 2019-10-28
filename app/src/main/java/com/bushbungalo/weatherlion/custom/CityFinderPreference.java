@@ -311,7 +311,7 @@ public class CityFinderPreference extends DialogPreference
                         manager.sendBroadcast( messageIntent );
 
                         // send out a broadcast to the widget service that the location preference has been modified
-                        UtilityMethod.refreshRequested = true;
+                        UtilityMethod.refreshRequestedBySystem = true;
 
                         String invoker = this.getClass().getSimpleName() + "::onDialogClosed";
                         Bundle extras = new Bundle();

@@ -285,7 +285,8 @@ public class WidgetUpdateService extends JobIntentService
         else
         {
             // ensure that a widget refresh has been requested or it is time for an update
-            if( !UtilityMethod.refreshRequested && !UtilityMethod.updateRequired( this ) )
+            if( !UtilityMethod.refreshRequestedBySystem || !UtilityMethod.refreshRequestedByUser
+                    && !UtilityMethod.updateRequired( this ) )
             {
                 return;
             }// end of if block
@@ -340,7 +341,8 @@ public class WidgetUpdateService extends JobIntentService
                         if( UtilityMethod.hasInternetConnection( this ) &&
                                 UtilityMethod.updateRequired( getApplicationContext() ) ||
                                 UtilityMethod.hasInternetConnection( this ) &&
-                                UtilityMethod.refreshRequested )
+                                UtilityMethod.refreshRequestedBySystem ||
+                                UtilityMethod.refreshRequestedByUser )
                         {
                             wxUrl.setLength( 0 );
                             fxUrl.setLength( 0 );
@@ -796,9 +798,13 @@ public class WidgetUpdateService extends JobIntentService
                             break;
                     }// end of switch block
 
-                    if( UtilityMethod.refreshRequested )
+                    if( UtilityMethod.refreshRequestedBySystem )
                     {
-                        UtilityMethod.refreshRequested = false;
+                        UtilityMethod.refreshRequestedBySystem = false;
+                    }// end of if block
+                    else if( UtilityMethod.refreshRequestedByUser )
+                    {
+                        UtilityMethod.refreshRequestedByUser = false;
                     }// end of if block
 
                     UtilityMethod.lastUpdated = new Date();
@@ -2248,9 +2254,13 @@ public class WidgetUpdateService extends JobIntentService
         smallWidgetRemoteViews.setTextViewText( R.id.txvProvider,
                 WeatherLionApplication.storedPreferences.getProvider() );
 
-        if( UtilityMethod.refreshRequested )
+        if( UtilityMethod.refreshRequestedBySystem )
         {
-            UtilityMethod.refreshRequested = false;
+            UtilityMethod.refreshRequestedBySystem = false;
+        }// end of if block
+        else if( UtilityMethod.refreshRequestedByUser )
+        {
+            UtilityMethod.refreshRequestedByUser = false;
         }// end of if block
 
         WeatherLionApplication.localWeatherDataAvailable = true; // indicate that old weather data is being used

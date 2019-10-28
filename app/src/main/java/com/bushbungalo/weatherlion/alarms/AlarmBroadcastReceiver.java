@@ -3,7 +3,6 @@ package com.bushbungalo.weatherlion.alarms;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 
 import com.bushbungalo.weatherlion.WeatherLionApplication;
@@ -26,7 +25,7 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver
         {
             if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
             {
-                UtilityMethod.refreshRequested = true;
+                UtilityMethod.refreshRequestedBySystem = true;
 
                 String invoker = this.getClass().getSimpleName() + "::onReceive";
                 Bundle extras = new Bundle();

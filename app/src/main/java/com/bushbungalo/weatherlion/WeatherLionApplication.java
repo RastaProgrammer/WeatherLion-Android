@@ -1702,7 +1702,7 @@ public class WeatherLionApplication extends Application
                     if( UtilityMethod.updateRequired( getAppContext() ) &&
                             UtilityMethod.hasInternetConnection( getAppContext() ) )
                     {
-                        UtilityMethod.refreshRequested = true;
+                        UtilityMethod.refreshRequestedBySystem = true;
 
                         String invoker = TAG + "::" + this.getClass().getSimpleName() + "::onReceive";
                         Bundle extras = new Bundle();

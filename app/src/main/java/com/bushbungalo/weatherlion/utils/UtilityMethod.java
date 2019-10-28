@@ -1156,7 +1156,8 @@ public abstract class UtilityMethod
     }
 
     public static Date lastUpdated;
-    public static boolean refreshRequested;
+    public static boolean refreshRequestedBySystem;
+    public static boolean refreshRequestedByUser;
 
     public static ArrayList<String> subDirectoriesFound = new ArrayList<>();
     private static File[] files;
@@ -2984,11 +2985,6 @@ public abstract class UtilityMethod
             return true;
         }// end of if block
 
-        if( refreshRequested )
-        {
-            return true;
-        }// end of if block
-
         SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( context );
         int interval = Integer.parseInt( Objects.requireNonNull(
                 spf.getString( WeatherLionApplication.UPDATE_INTERVAL,
@@ -3003,7 +2999,14 @@ public abstract class UtilityMethod
         long elapsedMinutes = difference / minutesInMilli;
         //difference = difference % minutesInMilli;
 
-        return elapsedMinutes >= millisecondsToMinutes( interval );
+        if( refreshRequestedBySystem && elapsedMinutes < 1 )
+        {
+            return false;
+        }// end of if block
+        else
+        {
+            return elapsedMinutes >= millisecondsToMinutes( interval );
+        }// end of else block
     }// end of method updateRequired
 
     /**

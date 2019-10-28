@@ -3,7 +3,6 @@ package com.bushbungalo.weatherlion;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
@@ -31,7 +30,7 @@ public class BootCompleteReceiver extends BroadcastReceiver
                         "createServiceCallLog",
                         null, null );
 
-                UtilityMethod.refreshRequested = true;
+                UtilityMethod.refreshRequestedBySystem = true;
                 Intent updateIntent = new Intent( context, WidgetUpdateService.class );
                 updateIntent.putExtras( extras );
                 WidgetUpdateService.enqueueWork( context, updateIntent );

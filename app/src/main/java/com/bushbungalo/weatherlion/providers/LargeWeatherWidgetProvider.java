@@ -156,7 +156,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
         // If the refresh button was clicked text clicked
         if ( REFRESH_BUTTON_CLICKED.equals( intent.getAction() ) )
         {
-            UtilityMethod.refreshRequested = true;
+            UtilityMethod.refreshRequestedByUser = true;
 
             UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO, "Refresh requested!",
                     TAG + "::onReceive");
@@ -197,7 +197,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
         }// end of else if block
         else
         {
-            UtilityMethod.refreshRequested = false;
+            UtilityMethod.refreshRequestedBySystem = false;
         }// end of else block
 
         if( updateExtra != null )

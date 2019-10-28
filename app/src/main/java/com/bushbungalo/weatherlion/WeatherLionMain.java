@@ -763,9 +763,9 @@ public class WeatherLionMain extends AppCompatActivity
                     UtilityMethod.getTimeSince( timeUpdated ) ) );
         }// end of if block
 
-        if( UtilityMethod.refreshRequested )
+        if( UtilityMethod.refreshRequestedBySystem)
         {
-            UtilityMethod.refreshRequested = false;
+            UtilityMethod.refreshRequestedBySystem = false;
         }// end of if block
     }// end of method loadMainActivityWeather
 
@@ -1018,7 +1018,7 @@ public class WeatherLionMain extends AppCompatActivity
                     if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
                     {
                         WeatherLionApplication.restoringWeatherData = true;
-                        UtilityMethod.refreshRequested = true;
+                        UtilityMethod.refreshRequestedBySystem = true;
 
                         String invoker = this.getClass().getSimpleName() + "::onCreate";
                         Bundle extras = new Bundle();
@@ -1223,7 +1223,7 @@ public class WeatherLionMain extends AppCompatActivity
     {
         if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
         {
-            UtilityMethod.refreshRequested = true;
+            UtilityMethod.refreshRequestedBySystem = true;
             showLoadingDialog( "Refreshing widget" );
 
             String invoker = this.getClass().getSimpleName() + "::refreshWeather";
@@ -1465,7 +1465,7 @@ public class WeatherLionMain extends AppCompatActivity
                     WeatherLionApplication.storedPreferences.setLocation( currentLocation.toString() );
 
                     // send out a broadcast to the widget service that the location preference has been modified
-                    UtilityMethod.refreshRequested = true;
+                    UtilityMethod.refreshRequestedBySystem = true;
 
                     String invoker = this.getClass().getSimpleName() + "::showPreviousSearches";
                     Bundle extras = new Bundle();
