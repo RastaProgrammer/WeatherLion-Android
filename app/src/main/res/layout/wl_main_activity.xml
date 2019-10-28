@@ -187,7 +187,7 @@
                         android:layout_height="30dip"
                         android:clickable="true"
                         android:contentDescription="@string/current_reading_icon"
-                        android:src="@drawable/windmill_blade" />
+                        android:src="@drawable/wl_windmill_blade" />
 
                     <ImageView
                         android:id="@+id/imvPole"
@@ -195,7 +195,7 @@
                         android:layout_height="20dip"
                         android:layout_marginTop="16dip"
                         android:contentDescription="@string/current_reading_icon"
-                        android:src="@drawable/windmill_pole" />
+                        android:src="@drawable/wl_windmill_pole" />
 
                 </RelativeLayout>
             </RelativeLayout>

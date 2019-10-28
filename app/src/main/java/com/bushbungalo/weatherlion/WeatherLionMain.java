@@ -14,7 +14,6 @@ import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -383,7 +382,7 @@ public class WeatherLionMain extends AppCompatActivity
 
         if( v.getAnimation() == null )
         {
-          v.startAnimation( rotateAnim );
+            v.startAnimation( rotateAnim );
         }// end of if block
     }// end of method doGlimpseRotation
 
@@ -849,7 +848,8 @@ public class WeatherLionMain extends AppCompatActivity
     {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences( mContext );
         // return the use gps switch to the off setting
-        settings.edit().putBoolean( "pref_use_gps", false ).apply();
+        settings.edit().putBoolean( WeatherLionApplication.USE_GPS_LOCATION_PREFERENCE,
+                false ).apply();
 
         responseDialog( WeatherLionApplication.PROGRAM_NAME + " - No GPS",
                 "Your GPS seems to be disabled, do you want to enable it?",
@@ -860,13 +860,13 @@ public class WeatherLionMain extends AppCompatActivity
     @Override
     protected void onCreate( Bundle savedInstanceState )
     {
+        super.onCreate( savedInstanceState );
+        mContext = this;
         requestWindowFeature( Window.FEATURE_NO_TITLE ); //will hide the title
         Objects.requireNonNull( getSupportActionBar() ).hide(); // hide the title bar
 
         //this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
         // WindowManager.LayoutParams.FLAG_FULLSCREEN); //enable full screen
-
-        mContext = this;
 
         TextView txvMessage;
         Snackbar quickSnack;
@@ -883,7 +883,6 @@ public class WeatherLionMain extends AppCompatActivity
         if( WeatherLionApplication.firstRun &&
                 !WeatherLionApplication.localWeatherDataAvailable )
         {
-            super.onCreate( savedInstanceState );
             setContentView( R.layout.wl_welcome_activity );
 
             // load the applicable typeface in use
@@ -915,8 +914,6 @@ public class WeatherLionMain extends AppCompatActivity
         }// end of if block
         else
         {
-            super.onCreate( savedInstanceState );
-
             WeatherLionApplication.callMethodByName(null, "checkForStoredWeatherData",
                     null, null );
 
@@ -1023,8 +1020,15 @@ public class WeatherLionMain extends AppCompatActivity
                         WeatherLionApplication.restoringWeatherData = true;
                         UtilityMethod.refreshRequested = true;
 
+                        String invoker = this.getClass().getSimpleName() + "::onCreate";
+                        Bundle extras = new Bundle();
+                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                                WeatherLionApplication.UNIT_NOT_CHANGED );
+
                         Intent updateIntent = new Intent( this, WidgetUpdateService.class );
-                        updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                        updateIntent.putExtras( extras );
                         WidgetUpdateService.enqueueWork( this, updateIntent );
 
                         // Have a loading screen displayed in the mean time
@@ -1220,10 +1224,17 @@ public class WeatherLionMain extends AppCompatActivity
         if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
         {
             UtilityMethod.refreshRequested = true;
-            showLoadingDialog();
+            showLoadingDialog( "Refreshing widget" );
+
+            String invoker = this.getClass().getSimpleName() + "::refreshWeather";
+            Bundle extras = new Bundle();
+            extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                    WeatherLionApplication.UNIT_NOT_CHANGED );
 
             Intent updateIntent = new Intent( this, WidgetUpdateService.class );
-            updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+            updateIntent.putExtras( extras );
             WidgetUpdateService.enqueueWork( this, updateIntent );
 
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
@@ -1455,8 +1466,16 @@ public class WeatherLionMain extends AppCompatActivity
 
                     // send out a broadcast to the widget service that the location preference has been modified
                     UtilityMethod.refreshRequested = true;
+
+                    String invoker = this.getClass().getSimpleName() + "::showPreviousSearches";
+                    Bundle extras = new Bundle();
+                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                    extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                            WeatherLionApplication.UNIT_NOT_CHANGED );
+
                     Intent updateIntent = new Intent( WeatherLionMain.this, WidgetUpdateService.class );
-                    updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                    updateIntent.putExtras( extras );
                     WidgetUpdateService.enqueueWork( WeatherLionMain.this, updateIntent );
 
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
@@ -1878,7 +1897,7 @@ public class WeatherLionMain extends AppCompatActivity
         keyEntryDialog.findViewById( R.id.edtKeyName ).requestFocus();
     }// end of method showDataKeysDialog
 
-    private void showLoadingDialog()
+    private void showLoadingDialog( String loadingMessage )
     {
         View loadingDialogView = View.inflate( this, R.layout.wl_loading_data_layout,
                 null );
@@ -1888,6 +1907,10 @@ public class WeatherLionMain extends AppCompatActivity
         loadingDialog.setView( loadingDialogView );
 
         ImageView strollingLion = loadingDialogView.findViewById( R.id.imvStrollingLion );
+        TextView txvLoadingData = loadingDialogView.findViewById(R.id.txvLoadingData );
+
+        txvLoadingData.setText( String.format( "%s%s", loadingMessage, "..." ) );
+
         loadingAnimation = (AnimationDrawable) strollingLion.getDrawable();
         loadingDialog.setCancelable( false );
 

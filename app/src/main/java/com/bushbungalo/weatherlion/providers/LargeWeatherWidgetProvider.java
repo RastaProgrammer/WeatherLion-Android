@@ -7,7 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.os.Bundle;
 import android.provider.AlarmClock;
 import android.widget.RemoteViews;
 
@@ -77,9 +77,16 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             // set the applicable flags that main will use to start the service
             WeatherLionApplication.changeWidgetUnit =  false;
 
+            String invoker = this.getClass().getSimpleName() + "::onUpdate";
+            Bundle extras = new Bundle();
+            extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                    WeatherLionApplication.UNIT_NOT_CHANGED );
+
             Intent updateIntent = new Intent( context, WidgetUpdateService.class );
             updateIntent.putExtra( EXTRA_APPWIDGET_ID, appWidgetId );
-            updateIntent.setData( Uri.parse( "false" ) );
+            updateIntent.putExtras( extras );
             WidgetUpdateService.enqueueWork( context, updateIntent );
 
             // set the click listener for the refresh image
@@ -157,8 +164,15 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             // Update the weather provider
             largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, "Refreshing..." );
 
+            String invoker = this.getClass().getSimpleName() + "::onReceive";
+            Bundle extras = new Bundle();
+            extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                    WeatherLionApplication.UNIT_NOT_CHANGED );
+
             Intent refreshIntent = new Intent( context, WidgetUpdateService.class );
-            refreshIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+            refreshIntent.putExtras( extras );
             WidgetUpdateService.enqueueWork( context, refreshIntent );
 
             // update the widget

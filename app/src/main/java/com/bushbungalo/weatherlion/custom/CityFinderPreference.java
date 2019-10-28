@@ -7,14 +7,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.ViewCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -47,7 +44,6 @@ import com.google.gson.JsonArray;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Objects;
 
 /**
  * Created by Paul O. Patterson on 11/30/17.
@@ -316,8 +312,16 @@ public class CityFinderPreference extends DialogPreference
 
                         // send out a broadcast to the widget service that the location preference has been modified
                         UtilityMethod.refreshRequested = true;
+
+                        String invoker = this.getClass().getSimpleName() + "::onDialogClosed";
+                        Bundle extras = new Bundle();
+                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                                WeatherLionApplication.UNIT_NOT_CHANGED );
+
                         Intent updateIntent = new Intent( WeatherLionApplication.getAppContext(), WidgetUpdateService.class );
-                        updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                        updateIntent.putExtras( extras );
                         WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(), updateIntent );
 
                         // send out a broadcast to the city storage service to store the city name if it has not already been stored

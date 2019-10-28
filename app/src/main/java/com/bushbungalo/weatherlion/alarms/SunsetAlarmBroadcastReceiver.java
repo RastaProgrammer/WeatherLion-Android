@@ -3,7 +3,7 @@ package com.bushbungalo.weatherlion.alarms;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.os.Bundle;
 
 import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
@@ -20,10 +20,16 @@ public class SunsetAlarmBroadcastReceiver extends BroadcastReceiver
         {
             WeatherLionApplication.timeOfDayToUse = WidgetUpdateService.SUNSET;
 
-            Intent methodIntent = new Intent( context, WidgetUpdateService.class );
-            methodIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
-            methodIntent.putExtra( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+            String invoker = this.getClass().getSimpleName() + "::onReceive";
+            Bundle extras = new Bundle();
+            extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
                     WidgetUpdateService.ASTRONOMY_CHANGE );
+            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                    WeatherLionApplication.UNIT_NOT_CHANGED );
+
+            Intent methodIntent = new Intent( context, WidgetUpdateService.class );
+            methodIntent.putExtras( extras );
             WidgetUpdateService.enqueueWork( context, methodIntent );
 
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,

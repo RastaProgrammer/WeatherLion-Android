@@ -812,6 +812,9 @@ public class ConfigureWidget extends AppCompatActivity
      */
     private void loadWidget()
     {
+        String invoker = this.getClass().getSimpleName() + "::loadWidget";
+        Bundle pendingIntentExtras;
+
         if( largeWidget )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
@@ -834,8 +837,14 @@ public class ConfigureWidget extends AppCompatActivity
             // Update the weather provider
             widgetView.setTextViewText( R.id.txvLastUpdated, "Refreshing..." );
 
+            pendingIntentExtras = new Bundle();
+            pendingIntentExtras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+            pendingIntentExtras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+            pendingIntentExtras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                    WeatherLionApplication.UNIT_NOT_CHANGED );
+
             Intent widgetRefreshIntent = new Intent( mContext, WidgetUpdateService.class );
-            widgetRefreshIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+            widgetRefreshIntent.putExtras( pendingIntentExtras );
             WidgetUpdateService.enqueueWork( mContext, widgetRefreshIntent );
 
             // main intent
@@ -876,8 +885,14 @@ public class ConfigureWidget extends AppCompatActivity
             // Update the weather provider
             widgetView.setTextViewText( R.id.txvLastUpdated, "Refreshing..." );
 
+            pendingIntentExtras = new Bundle();
+            pendingIntentExtras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+            pendingIntentExtras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+            pendingIntentExtras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                    WeatherLionApplication.UNIT_NOT_CHANGED );
+
             Intent widgetRefreshIntent = new Intent( mContext, WidgetUpdateService.class );
-            widgetRefreshIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+            widgetRefreshIntent.putExtras( pendingIntentExtras );
             WidgetUpdateService.enqueueWork( mContext, widgetRefreshIntent );
 
             // main intent
@@ -891,9 +906,30 @@ public class ConfigureWidget extends AppCompatActivity
         // set the applicable flags that main will use to start the service
         WeatherLionApplication.changeWidgetUnit =  false;
 
+        if( checkForStoredWeatherData() )
+        {
+            Bundle previousWeatherExtras = new Bundle();
+            previousWeatherExtras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+            previousWeatherExtras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                    WidgetUpdateService.LOAD_PREVIOUS_WEATHER  );
+            previousWeatherExtras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                    WeatherLionApplication.UNIT_NOT_CHANGED );
+
+            // run the weather service and  call the method that loads the previous weather data
+            Intent methodIntent = new Intent( this, WidgetUpdateService.class );
+            methodIntent.putExtras( previousWeatherExtras );
+            WidgetUpdateService.enqueueWork( this, methodIntent );
+        }// end of else if block
+
+        Bundle updateExtras = new Bundle();
+        updateExtras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+        updateExtras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+        updateExtras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                WeatherLionApplication.UNIT_NOT_CHANGED );
+
         Intent updateIntent = new Intent( mContext, WidgetUpdateService.class );
         updateIntent.putExtra( EXTRA_APPWIDGET_ID, widgetId );
-        updateIntent.setData( Uri.parse( "false" ) );
+        updateIntent.putExtras( updateExtras );
         WidgetUpdateService.enqueueWork( mContext, updateIntent );
 
         widgetManager.updateAppWidget( widgetId, widgetView );
@@ -901,16 +937,6 @@ public class ConfigureWidget extends AppCompatActivity
         Intent resultValue = new Intent();
         resultValue.putExtra( AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId );
         setResult( RESULT_OK, resultValue );
-
-        if( checkForStoredWeatherData() )
-        {
-            // run the weather service and  call the method that loads the previous weather data
-            Intent methodIntent = new Intent( this, WidgetUpdateService.class );
-            methodIntent.setData( Uri.parse(WeatherLionApplication.UNIT_NOT_CHANGED ) );
-            methodIntent.putExtra( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
-                    WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
-            WidgetUpdateService.enqueueWork( this, methodIntent );
-        }// end of else if block
 
         finish();
     }// end of method loadWidget

@@ -18,6 +18,7 @@ import android.graphics.drawable.Drawable;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.text.HtmlCompat;
@@ -316,19 +317,24 @@ public class WeatherLionApplication extends Application
      */
     private void actionWeatherService( String uriData, String methodName )
     {
+        String invoker = this.getClass().getSimpleName() + "::actionWeatherService";
+        Bundle extras = new Bundle();
+
+        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED, uriData );
+
         if( methodName == null )
         {
-            Intent serviceIntent = new Intent( this, WidgetUpdateService.class );
-            serviceIntent.setData( Uri.parse( uriData ) );
-            WidgetUpdateService.enqueueWork( context,serviceIntent );
+            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
         }// end of if block
         else
         {
-            Intent methodIntent = new Intent( this, WidgetUpdateService.class );
-            methodIntent.setData( Uri.parse( uriData ) );
-            methodIntent.putExtra( LAUNCH_METHOD_EXTRA, methodName );
-            WidgetUpdateService.enqueueWork( context, methodIntent );
+            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, methodName );
         }// end of else block
+
+        Intent methodIntent = new Intent( this, WidgetUpdateService.class );
+        methodIntent.putExtras( extras );
+        WidgetUpdateService.enqueueWork( context, methodIntent );
     }// end of method actionWeatherService
 
     /**
@@ -1698,8 +1704,15 @@ public class WeatherLionApplication extends Application
                     {
                         UtilityMethod.refreshRequested = true;
 
+                        String invoker = TAG + "::" + this.getClass().getSimpleName() + "::onReceive";
+                        Bundle extras = new Bundle();
+                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                                WeatherLionApplication.UNIT_NOT_CHANGED );
+
                         Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-                        updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                        updateIntent.putExtras( extras );
                         WidgetUpdateService.enqueueWork( context, updateIntent );
                     }// end of if block
                 }// end of if block

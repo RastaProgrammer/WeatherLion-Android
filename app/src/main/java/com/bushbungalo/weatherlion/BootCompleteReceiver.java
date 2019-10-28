@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
@@ -19,18 +20,25 @@ public class BootCompleteReceiver extends BroadcastReceiver
         {
             if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
             {
+                String invoker = this.getClass().getSimpleName() + "::onReceive";
+                Bundle extras = new Bundle();
+                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                        WeatherLionApplication.UNIT_NOT_CHANGED );
+
                 WeatherLionApplication.callMethodByName( WeatherLionApplication.class,
                         "createServiceCallLog",
                         null, null );
 
                 UtilityMethod.refreshRequested = true;
                 Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-                updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                updateIntent.putExtras( extras );
                 WidgetUpdateService.enqueueWork( context, updateIntent );
 
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                         "Update requested by the boot completed receiver",
-                        this.getClass().getSimpleName() + "::onReceive" );
+                        invoker );
             }// end of if block
         }// end of if block
     }// end of method onReceive

@@ -311,10 +311,16 @@ public class PrefsActivity extends AppCompatActivity
                 // update global value
                 WeatherLionApplication.storedPreferences.setIconSet( WeatherLionApplication.iconSet );
 
+                String invoker = this.getClass().getSimpleName() + "::iconSetPreferenceBR";
+                Bundle extras = new Bundle();
+                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                        WidgetUpdateService.LOAD_WIDGET_ICON_SET );
+                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                        WeatherLionApplication.UNIT_NOT_CHANGED );
+
                 Intent methodIntent = new Intent( getContext(), WidgetUpdateService.class );
-                methodIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
-                methodIntent.putExtra( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
-                        "loadWeatherIconSet" );
+                methodIntent.putExtras( extras );
                 WidgetUpdateService.enqueueWork( context, methodIntent );
             }// end of method onReceive
         };
@@ -336,17 +342,17 @@ public class PrefsActivity extends AppCompatActivity
                     {
                         case WeatherLionApplication.AQUA_THEME:
                             WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.aqua ) );
-                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_aqua_button );
+                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_aqua_rounded_btn_bg );
 
                             break;
                         case WeatherLionApplication.RABALAC_THEME:
                             WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.rabalac ) );
-                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_rabalac_button );
+                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_rabalac_rounded_btn_bg );
 
                             break;
                         case WeatherLionApplication.LION_THEME:
                             WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.lion ) );
-                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_default_button );
+                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_lion_rounded_btn_bg );
 
                             break;
                     }// end of switch block
@@ -354,10 +360,16 @@ public class PrefsActivity extends AppCompatActivity
                     // update global value
                     WeatherLionApplication.storedPreferences.setWidgetBackground( widBackgroundColor );
 
+                    String invoker = this.getClass().getSimpleName() + "::onReceive";
+                    Bundle extras = new Bundle();
+                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                    extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                            WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
+                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                            WeatherLionApplication.UNIT_NOT_CHANGED );
+
                     Intent methodIntent = new Intent( getContext(), WidgetUpdateService.class );
-                    methodIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
-                    methodIntent.putExtra( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
-                        WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
+                    methodIntent.putExtras( extras );
                     WidgetUpdateService.enqueueWork( context, methodIntent );
 
                     // reload all activities in the stack with the updated theme
@@ -505,9 +517,17 @@ public class PrefsActivity extends AppCompatActivity
                     // update global value
                     WeatherLionApplication.storedPreferences.setUseMetric( isEnabled );
 
+                    String invoker = this.getClass().getSimpleName() +
+                            "::onCreate::useMetricSwitch.setOnPreferenceChangeListener";
+                    Bundle extras = new Bundle();
+                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                    extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                            WeatherLionApplication.UNIT_CHANGED );
+
                     Intent updateIntent = new Intent( WeatherLionApplication.getAppContext(),
                             WidgetUpdateService.class );
-                    updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_CHANGED ) );
+                    updateIntent.putExtras( extras );
                     WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(), updateIntent );
 
                     return true;
@@ -626,10 +646,17 @@ public class PrefsActivity extends AppCompatActivity
                         "Preferences requesting a data refresh...",
                         TAG + "::onPreferenceChange");
 
+                String invoker = this.getClass().getSimpleName() + "::onReceive";
+                Bundle extras = new Bundle();
+                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                        WeatherLionApplication.UNIT_NOT_CHANGED );
+
                 // call the weather update service it the user selects a new weather source
                 Intent updateIntent = new Intent( WeatherLionApplication.getAppContext(),
                         WidgetUpdateService.class );
-                updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                updateIntent.putExtras( extras );
                 WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(),
                         updateIntent );
 
@@ -732,9 +759,16 @@ public class PrefsActivity extends AppCompatActivity
                     // bind the values so that the preference screen displays the GPS location
                     bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_location ) ) );
 
+                    String invoker = this.getClass().getSimpleName() + "::setGpsLocation";
+                    Bundle extras = new Bundle();
+                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                    extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                            WeatherLionApplication.UNIT_NOT_CHANGED );
+
                     Intent updateIntent = new Intent( WeatherLionApplication.getAppContext(),
                         WidgetUpdateService.class );
-                    updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                    updateIntent.putExtras( extras );
                     WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(), updateIntent );
 
                 }// end of if block

@@ -3,7 +3,7 @@ package com.bushbungalo.weatherlion.alarms;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.os.Bundle;
 
 import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
@@ -27,13 +27,20 @@ public class UpdateAlarmBroadcastReceiver extends BroadcastReceiver
             {
                 UtilityMethod.refreshRequested = true;
 
+                String invoker = this.getClass().getSimpleName() + "::onReceive";
+                Bundle extras = new Bundle();
+                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                        WeatherLionApplication.UNIT_NOT_CHANGED );
+
                 Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-                updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
+                updateIntent.putExtras( extras );
                 WidgetUpdateService.enqueueWork( context, updateIntent );
 
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                         "Update requested by the alarm broadcast receiver",
-                        "UpdateAlarmBroadcastReceiver::onReceive" );
+                        invoker );
             }// end of if block
         }// end of if block
     }// end of method onReceive

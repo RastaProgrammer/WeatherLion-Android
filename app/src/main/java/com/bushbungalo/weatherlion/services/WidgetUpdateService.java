@@ -16,6 +16,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -27,17 +28,17 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
-import com.bushbungalo.weatherlion.custom.CityFinderPreference;
-import com.bushbungalo.weatherlion.model.FiveDayForecast;
 import com.bushbungalo.weatherlion.Preference;
 import com.bushbungalo.weatherlion.PrefsActivity;
 import com.bushbungalo.weatherlion.R;
+import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.alarms.SunriseAlarmBroadcastReceiver;
 import com.bushbungalo.weatherlion.alarms.SunsetAlarmBroadcastReceiver;
 import com.bushbungalo.weatherlion.alarms.UpdateAlarmBroadcastReceiver;
-import com.bushbungalo.weatherlion.WeatherLionApplication;
+import com.bushbungalo.weatherlion.custom.CityFinderPreference;
 import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.DarkSkyWeatherDataItem;
+import com.bushbungalo.weatherlion.model.FiveDayForecast;
 import com.bushbungalo.weatherlion.model.HereMapsWeatherDataItem;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
 import com.bushbungalo.weatherlion.model.OpenWeatherMapWeatherDataItem;
@@ -82,6 +83,8 @@ public class WidgetUpdateService extends JobIntentService
     private static final int JOB_ID = 79;
 
     public static final String TAG = "WidgetUpdateService";
+    public static final String WEATHER_SERVICE_INVOKER = "WeatherServiceInvoker";
+    public static final String WEATHER_DATA_UNIT_CHANGED = "WeatherDataUnitChanged";
     public static final String WEATHER_UPDATE_SERVICE_MESSAGE = "WidgetUpdateServiceMessage";
     public static final String WEATHER_XML_SERVICE_MESSAGE = "WeatherXmlServiceMessage";
     public static final String  WEATHER_XML_SERVICE_PAYLOAD = "WeatherXmlServicePayload";
@@ -170,6 +173,7 @@ public class WidgetUpdateService extends JobIntentService
     // method name constants
     public static final String LOAD_PREVIOUS_WEATHER = "loadPreviousWeatherData";
     public static final String LOAD_WIDGET_BACKGROUND = "loadWidgetBackground";
+    public static final String LOAD_WIDGET_ICON_SET = "loadWeatherIconSet";
     public static final String ASTRONOMY_CHANGE = "astronomyChange";
 
     private int expectedJSONSize;
@@ -224,8 +228,6 @@ public class WidgetUpdateService extends JobIntentService
         smallWidgetRemoteViews = new RemoteViews( this.getPackageName(),
                 R.layout.wl_small_weather_widget_activity );
 
-        unitChange = Boolean.parseBoolean( intent.getDataString() );
-
         appWidgetManager = AppWidgetManager.getInstance( this );
 
         currentLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
@@ -233,8 +235,22 @@ public class WidgetUpdateService extends JobIntentService
         boolean locationSet = !Objects.requireNonNull( currentLocation ).equalsIgnoreCase(
                 Preference.DEFAULT_WEATHER_LOCATION );
 
-        // the extra must be a string representation of a method
-        String callMethod = intent.getStringExtra( WeatherLionApplication.LAUNCH_METHOD_EXTRA );
+        Bundle extras = intent.getExtras();
+        String callMethod = null;
+        String invoker = null;
+
+        if( extras != null )
+        {
+            // if the unit in use is to be changed
+            unitChange = extras.getString( WEATHER_DATA_UNIT_CHANGED ) != null &&
+                Boolean.parseBoolean( extras.getString( WEATHER_DATA_UNIT_CHANGED ) );
+
+            // the extra must be a string representation of a method
+            callMethod = extras.getString( WeatherLionApplication.LAUNCH_METHOD_EXTRA );
+
+            // the algorithm that invoked this class
+            invoker = extras.getString( WEATHER_SERVICE_INVOKER );
+        }// end of if block
 
         // if no widgets have been created then there is nothing to do
 //        if( WeatherLionApplication.largeWidgetIds.length == 0 &&
@@ -246,7 +262,6 @@ public class WidgetUpdateService extends JobIntentService
             methodCalledByReflection = true;
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                     "Method " + callMethod + " called...", TAG + "::handleIntent" );
-
 
             if( callMethod.equals( ASTRONOMY_CHANGE ) )
             {
@@ -283,7 +298,8 @@ public class WidgetUpdateService extends JobIntentService
             if( WeatherLionApplication.storedPreferences != null )
             {
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                        "Loading weather data...", TAG + "::handleIntent" );
+            "Loading weather data requested by " + invoker + "...",
+                TAG + "::handleIntent" );
 
                 tempUnits = WeatherLionApplication.storedPreferences.getUseMetric() ? CELSIUS : FAHRENHEIT;
                 currentCity.setLength( 0 );
