@@ -5,13 +5,13 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F0F0">
+    android:background="#FFFFFF">
 
     <RelativeLayout
         android:id="@+id/rlDialogTitleBar"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#3796D2" >
+        android:background="@drawable/wl_custom_dialog_title" >
 
         <ImageView
             android:id="@+id/diaIcon"
@@ -70,6 +70,14 @@
         android:text="@string/Ok"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"
-        android:layout_marginBottom="10dip"/>
+        android:stateListAnimator="@null" />
+
+    <RelativeLayout
+        android:id="@+id/rlDialogFooter"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnOk"
+        android:background="@drawable/wl_custom_dialog_footer" />
+
 
 </RelativeLayout>

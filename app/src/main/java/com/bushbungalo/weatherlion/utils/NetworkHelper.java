@@ -8,12 +8,13 @@ import android.net.NetworkInfo;
  * Created by Paul O. Patterson on 11/16/17.
  */
 
+@SuppressWarnings("WeakerAccess")
 public class NetworkHelper
 {
-    public static boolean hasNetworkAccess(Context context)
+    public static boolean hasNetworkAccess( Context context )
     {
         ConnectivityManager cm =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                (ConnectivityManager) context.getSystemService( Context.CONNECTIVITY_SERVICE );
 
         try
         {
@@ -22,9 +23,11 @@ public class NetworkHelper
             return activeNetwork != null &&
                     activeNetwork.isConnectedOrConnecting();
         }// end of try block
-        catch (Exception e)
+        catch ( Exception e )
         {
-            e.printStackTrace();
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                    "NetworkHelper::hasNetworkAccess" );
+
             return false;
         }// end of catch block
 

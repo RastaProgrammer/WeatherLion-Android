@@ -278,4 +278,6 @@
     <string name="locate_city">Locate</string>
     <string name="configure_widget">Weather widget needs to be configured</string>
     <string name="tap_configure">Tap to configure</string>
+    <string name="lion_animation">Lion Animation</string>
+    <string name="refreshing_widget">Refreshing widget...</string>
 </resources>

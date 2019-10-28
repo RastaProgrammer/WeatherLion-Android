@@ -10,8 +10,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
+import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -143,6 +145,11 @@ public class WeatherLionMain extends AppCompatActivity
     private static String selectedCity;
     private StringBuilder currentLocation;
 
+    private Snackbar internetCafe;
+
+    private AlertDialog loadingDialog;
+    private AnimationDrawable loadingAnimation;
+
     /**
      * There was an error getting weather data
      */
@@ -152,7 +159,17 @@ public class WeatherLionMain extends AppCompatActivity
         public void onReceive( Context context, Intent intent )
         {
             // cancel the Visual indication of a refresh
-            appRefresh.setRefreshing( false );
+            if( appRefresh != null )
+            {
+                // cancel the visual indication of a refresh
+                appRefresh.setRefreshing( false );
+            }// end of if block
+
+            if( loadingDialog != null )
+            {
+                stopLoading();
+                loadingDialog.dismiss();
+            }// end of if block
         }// end of method onReceive
     };
 
@@ -177,19 +194,12 @@ public class WeatherLionMain extends AppCompatActivity
 
                 if( !UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
                 {
-                    View mainActivity = findViewById( R.id.main_window );
-
-                    Snackbar.make( mainActivity ,
-                            "Connect to the Internet", Snackbar.LENGTH_INDEFINITE )
-                            .setAction("Wifi Settings", new View.OnClickListener()
-                            {
-                                @Override
-                                public void onClick(View v)
-                                {
-                                    startActivity( new Intent(Settings.ACTION_WIFI_SETTINGS ) );
-                                }// end of method onClick
-                            }).show();
+                    internetCafe.show();
                 }// end of if block
+                else if( internetCafe != null )
+                {
+                    internetCafe.dismiss();
+                }// end of else if block
 
                 WeatherLionApplication.restoringWeatherData = false;
             }  // end of if block
@@ -231,6 +241,12 @@ public class WeatherLionMain extends AppCompatActivity
                 // cancel the visual indication of a refresh
                 appRefresh.setRefreshing( false );
             }// end of if block
+
+            if( loadingDialog != null )
+            {
+                stopLoading();
+                loadingDialog.dismiss();
+            }// end of if block
         }// end of method onReceive
     };
 
@@ -259,7 +275,8 @@ public class WeatherLionMain extends AppCompatActivity
                     "The program will not run without a working internet connection or data " +
                             "that was previously stored locally.",2, Toast.LENGTH_LONG );
 
-            //finish();	// terminate the program
+            // terminate the program
+            //finish();
         }// end of if block
         else if( WeatherLionApplication.connectedToInternet )
         {
@@ -268,7 +285,6 @@ public class WeatherLionMain extends AppCompatActivity
                 // obtain the current city of the connected Internet service
                 UtilityMethod.getGPSCityLocation( false );
             }// end of if block
-
         }// end of else if block
 
         // find the widget view and update it's fonts face
@@ -504,8 +520,8 @@ public class WeatherLionMain extends AppCompatActivity
             public void onRefresh()
             {
                 refreshWeather();
-                UtilityMethod.butteredToast(WeatherLionMain.this, "Refreshing widget...",
-                        1, Toast.LENGTH_SHORT );
+//                UtilityMethod.butteredToast(WeatherLionMain.this, "Refreshing widget...",
+//                        1, Toast.LENGTH_SHORT );
             }
         });
 
@@ -644,7 +660,7 @@ public class WeatherLionMain extends AppCompatActivity
         {
             rn = sdf.parse(sdf.format( rightNow.getTime() ) );
             nightFall.setTime(sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set(Calendar.MINUTE,
+            nightFall.set( Calendar.MINUTE,
                     Integer.parseInt(sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
             sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
 
@@ -943,7 +959,23 @@ public class WeatherLionMain extends AppCompatActivity
                     else
                     {
                         setContentView( R.layout.wl_main_activity );
-                        forecastRecyclerView = findViewById(R.id.lstDayForecast);
+
+                        View mainActivity = findViewById( R.id.main_window );
+
+                        // to be displayed if there is no active internet connection
+                        internetCafe = Snackbar.make( mainActivity, "Connect to the Internet",
+                                Snackbar.LENGTH_INDEFINITE )
+                                .setAction("Wifi Settings", new View.OnClickListener()
+                                        {
+                                            @Override
+                                            public void onClick( View view )
+                                            {
+                                                startActivity( new Intent(Settings.ACTION_WIFI_SETTINGS ) );
+                                            }// end of method onClick
+                                        }// end of method setAction
+                                );
+
+                        forecastRecyclerView = findViewById( R.id.lstDayForecast );
                         forecastRecyclerView.setHasFixedSize( true );
 
                         // use a linear layout manager
@@ -968,18 +1000,7 @@ public class WeatherLionMain extends AppCompatActivity
 
                     if( !UtilityMethod.hasInternetConnection( this ) )
                     {
-                        View mainActivity = findViewById( R.id.main_window );
-
-                        Snackbar.make( mainActivity ,
-                                "Connect to the Internet", Snackbar.LENGTH_INDEFINITE )
-                                .setAction("Wifi Settings", new View.OnClickListener()
-                                {
-                                    @Override
-                                    public void onClick(View v)
-                                    {
-                                        startActivity( new Intent(Settings.ACTION_WIFI_SETTINGS ) );
-                                    }// end of method onClick
-                                }).show();
+                        internetCafe.show();
                     }// end of if block
 
                     doGlimpseRotation( findViewById( R.id.imvBlade ) );
@@ -1199,6 +1220,7 @@ public class WeatherLionMain extends AppCompatActivity
         if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
         {
             UtilityMethod.refreshRequested = true;
+            showLoadingDialog();
 
             Intent updateIntent = new Intent( this, WidgetUpdateService.class );
             updateIntent.setData( Uri.parse( WeatherLionApplication.UNIT_NOT_CHANGED ) );
@@ -1233,7 +1255,10 @@ public class WeatherLionMain extends AppCompatActivity
 
         // Initialize the view objects
         RelativeLayout rlTitleBar = dialogView.findViewById( R.id.rlDialogTitleBar );
-        rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+        //rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+
+        GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
+        bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
         TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
         TextView txvDialogMessage = dialogView.findViewById( R.id.txvMessage );
@@ -1459,7 +1484,10 @@ public class WeatherLionMain extends AppCompatActivity
         keyEntryDialog.setView( keyDialogView );
 
         RelativeLayout rlTitleBar = keyDialogView.findViewById( R.id.rlDialogTitleBar );
-        rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+        //rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+
+        GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
+        bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
         ImageView imvClose = keyDialogView.findViewById( R.id.imvCloseDialog );
         Spinner spnAccessProvider = keyDialogView.findViewById(R.id.spnAccessProvider);
@@ -1850,6 +1878,40 @@ public class WeatherLionMain extends AppCompatActivity
         keyEntryDialog.findViewById( R.id.edtKeyName ).requestFocus();
     }// end of method showDataKeysDialog
 
+    private void showLoadingDialog()
+    {
+        View loadingDialogView = View.inflate( this, R.layout.wl_loading_data_layout,
+                null );
+        //loadingDialogView.setBackgroundColor(Color.parseColor("#FF4A4A4A"));
+
+        loadingDialog = new AlertDialog.Builder( mContext ).create();
+        loadingDialog.setView( loadingDialogView );
+
+        ImageView strollingLion = loadingDialogView.findViewById( R.id.imvStrollingLion );
+        loadingAnimation = (AnimationDrawable) strollingLion.getDrawable();
+        loadingDialog.setCancelable( false );
+
+        loadingDialog.show();
+
+        if( loadingDialog.getWindow() != null )
+        {
+            loadingDialog.getWindow().setLayout( 500, 500 );
+            loadingDialog.getWindow().setBackgroundDrawable( new ColorDrawable( Color.TRANSPARENT ) );
+        }// end of if block
+
+        startLoading();
+    }// end of method showLoadingDialog
+
+    public void startLoading()
+    {
+        loadingAnimation.start();
+    }// end of method startLoading
+
+    public void stopLoading()
+    {
+        loadingAnimation.stop();
+    }// end of method stopLoading
+
     /**
      * Display a dialog with a specific message
      *
@@ -1864,7 +1926,10 @@ public class WeatherLionMain extends AppCompatActivity
         messageDialog.setView( messageDialogView );
 
         RelativeLayout rlTitleBar = messageDialogView.findViewById( R.id.rlDialogTitleBar );
-        rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+        //rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+
+        GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
+        bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
         TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
         txvTitle.setMovementMethod( new ScrollingMovementMethod() );

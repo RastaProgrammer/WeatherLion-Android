@@ -146,7 +146,7 @@
                 android:layout_below="@+id/txvDayHigh"
                 android:background="@drawable/wl_top_border"
                 android:text="@string/no_reading_u"
-                android:textColor="#FFFFFF"
+                android:textColor="#C0C0C0"
                 android:textSize="13sp" />
 
         </RelativeLayout>
@@ -184,12 +184,12 @@
             <ImageView
                 android:id="@+id/imvFlag"
                 android:layout_width="14dip"
-                android:layout_height="16dip"
+                android:layout_height="14dip"
                 android:layout_marginTop="2.5dip"
                 android:layout_marginEnd="2dip"
                 android:contentDescription="@string/weather_icon"
                 android:gravity="center|center_horizontal"
-                android:src="@drawable/wl_wind"
+                android:src="@drawable/wl_wind_flag"
                 android:scaleType="fitCenter"
                 android:layout_alignParentStart="true"/>
 
@@ -197,7 +197,6 @@
                 android:id="@+id/txvWind"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="2dip"
                 android:layout_toEndOf="@+id/imvFlag"
                 android:fontFamily="sans-serif-condensed"
                 android:text="@string/wind"

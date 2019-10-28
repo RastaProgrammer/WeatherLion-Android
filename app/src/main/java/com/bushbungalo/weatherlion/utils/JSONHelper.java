@@ -280,8 +280,8 @@ public class JSONHelper
                         catch ( IOException e )
                         {
                             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                                    TAG + "::saveToJSONFile [line: " +
-                                            UtilityMethod.getExceptionLineNumber( e )  + "]" );
+                        TAG + "::saveToJSONFile [line: " +
+                                    UtilityMethod.getExceptionLineNumber( e )  + "]" );
                         }// end of catch block
                     }// end of if block
                 }// end of finally block
@@ -309,7 +309,8 @@ public class JSONHelper
         }// end of try block
         catch ( Exception e )
         {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Not a JSON Object!",
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+        "Input string is not a JSON Object!",
         TAG + "::toJSONObject [line: " + UtilityMethod.getExceptionLineNumber( e )  + "]" );
         }// end of catch block
 
@@ -332,9 +333,9 @@ public class JSONHelper
         }// end of try block
         catch ( Exception e )
         {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Not a JSON Array!",
-                    TAG + "::toJSONArray [line: " +
-                            UtilityMethod.getExceptionLineNumber( e )  + "]" );
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+        "Input string is not a JSON Array!",
+            TAG + "::toJSONArray [line: " + UtilityMethod.getExceptionLineNumber( e )  + "]" );
         }// end of catch block
 
         return json;

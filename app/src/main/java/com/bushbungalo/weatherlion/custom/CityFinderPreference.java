@@ -7,10 +7,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.ViewCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -43,6 +47,7 @@ import com.google.gson.JsonArray;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Created by Paul O. Patterson on 11/30/17.
@@ -77,7 +82,7 @@ public class CityFinderPreference extends DialogPreference
         super( context, attrs );
 
         setPersistent( false );
-        setDialogLayoutResource( R.layout.wl_location_preference_dialog);
+        setDialogLayoutResource( R.layout.wl_location_preference_dialog );
         setDialogIcon( null );
         setDialogTitle( null );
         setPersistent( true );
@@ -265,8 +270,8 @@ public class CityFinderPreference extends DialogPreference
                 }// end of if block
                 else if( location.length > 1 )
                 {
-                    if( location[ 1 ].trim().equalsIgnoreCase( "US") ||
-                            location[ 1 ].trim().equalsIgnoreCase( "United States") )
+                    if( location[ 1 ].trim().equalsIgnoreCase( "US" ) ||
+                            location[ 1 ].trim().equalsIgnoreCase( "United States" ) )
                     {
                         // if the state name has a length of 2 then nothing needs to be done
                         if( location[ 1 ].trim().length() > 2 )

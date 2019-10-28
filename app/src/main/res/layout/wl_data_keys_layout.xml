@@ -9,7 +9,7 @@
         android:id="@+id/rlDialogTitleBar"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#3796D2" >
+        android:background="@drawable/wl_custom_dialog_title" >
 
         <ImageView
             android:id="@+id/diaIcon"
@@ -52,7 +52,8 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/rlDialogTitleBar"
-        android:padding="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:background="#FFFFFF">
 
         <TextView
@@ -229,7 +230,8 @@
             android:background="@drawable/wl_aqua_rounded_btn_bg"
             android:gravity="center"
             android:text="@string/add_key"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:stateListAnimator="@null"/>
 
         <Button
             android:id="@+id/btnDeleteKey"
@@ -243,7 +245,8 @@
             android:background="@drawable/wl_aqua_rounded_btn_bg"
             android:gravity="center"
             android:text="@string/delete_key"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:stateListAnimator="@null" />
 
         <Button
             android:id="@+id/btnFinish"
@@ -255,7 +258,15 @@
             android:background="@drawable/wl_aqua_rounded_btn_bg"
             android:gravity="center"
             android:text="@string/finish"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:stateListAnimator="@null" />
 
     </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rlDialogFooter"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layDialogBody"
+        android:background="@drawable/wl_custom_dialog_footer" />
 </RelativeLayout>

@@ -27,6 +27,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import com.bushbungalo.weatherlion.custom.CityFinderPreference;
 import com.bushbungalo.weatherlion.model.FiveDayForecast;
 import com.bushbungalo.weatherlion.Preference;
 import com.bushbungalo.weatherlion.PrefsActivity;
@@ -420,7 +421,7 @@ public class WidgetUpdateService extends JobIntentService
                                     }// end of try block
                                     catch ( Exception e )
                                     {
-                                        dataRetrievalError( WeatherLionApplication.YAHOO_WEATHER , e);
+                                        dataRetrievalError( wxDataProvider , e );
 
                                         return;
                                     }// end of catch block
@@ -661,6 +662,14 @@ public class WidgetUpdateService extends JobIntentService
                 WeatherLionApplication.getAppContext() );
         settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
                 WeatherLionApplication.previousWeatherProvider.toString() ).apply();
+
+        // send out a broadcast to the preferences activity that the location preference has been modified
+        Intent messageIntent = new Intent( CityFinderPreference.CITY_LOCATION_SERVICE_MESSAGE );
+        messageIntent.putExtra( CityFinderPreference.CITY_LOCATION_SERVICE_PAYLOAD,
+                WeatherLionApplication.CURRENT_LOCATION_PREFERENCE );
+        LocalBroadcastManager manager =
+                LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );
+        manager.sendBroadcast( messageIntent );
 
         UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
                 provider + " returned: " + e.getMessage(), TAG + "::dataRetrievalError" );
@@ -2061,53 +2070,79 @@ public class WidgetUpdateService extends JobIntentService
         // Load current condition weather image
         Calendar rightNow = Calendar.getInstance();
         Calendar nightFall = Calendar.getInstance();
-        String twenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+        Calendar sunUp = Calendar.getInstance();
+        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
                 Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( sunsetTime.toString() );
-
+                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
+        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                Locale.ENGLISH ).format( rightNow.getTime() )
+                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
         SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null;
-        Date nf = null;
+        Date rn = null; // date time right now (rn)
+        Date nf = null; // date time night fall (nf)
+        Date su = null; // date time sun up (su)
 
         try
         {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( twenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE, Integer.parseInt( twenty4HourTime.split( ":" )[ 1 ].trim() ) );
+            rn = sdf.parse(sdf.format( rightNow.getTime() ) );
+            nightFall.setTime(sdf.parse( sunsetTwenty4HourTime ) );
+            nightFall.set( Calendar.MINUTE,
+                    Integer.parseInt(sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
+            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
+
             nf = sdf.parse( sdf.format( nightFall.getTime() ) );
+            su = sdf.parse( sdf.format( sunUp.getTime() ) );
         } // end of try block
         catch ( ParseException e )
         {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadPreviousWeather [line: " + e.getStackTrace()[1].getLineNumber()+ "]" );
+            UtilityMethod.logMessage(UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                    TAG + "::loadMainActivityWeather [line: " +
+                            e.getStackTrace()[1].getLineNumber() + "]");
         }// end of catch block
 
         String currentConditionIcon;
 
-        if ( Objects.requireNonNull( rn ).equals( nf ) || rn.after( nf ) )
+        if( rn != null )
         {
-            if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
+            if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
             {
-                currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-            }// end of if block
-            else
-            {
-                if( UtilityMethod.weatherImages.containsKey( currentCondition.toString().toLowerCase() + " (night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() + " (night)" );
-                }// end of if block
-                else
+                if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
                 {
                     currentConditionIcon = UtilityMethod.weatherImages.get(
                             currentCondition.toString().toLowerCase() );
+                }// end of if block
+                else
+                {
+                    // Yahoo has a habit of having sunny nights
+                    if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                    {
+                        currentCondition.setLength( 0 );
+                        currentCondition.append( "Clear" );
+                    }// end of if block
+
+                    if ( UtilityMethod.weatherImages.containsKey(
+                            currentCondition.toString().toLowerCase() + " (night)" ) )
+                    {
+                        currentConditionIcon =
+                                UtilityMethod.weatherImages.get(
+                                        currentCondition.toString().toLowerCase() + " (night)" );
+                    }// end of if block
+                    else {
+                        currentConditionIcon = UtilityMethod.weatherImages.get(
+                                currentCondition.toString().toLowerCase() );
+                    }// end of else block
                 }// end of else block
+            }// end of if block
+            else
+            {
+                currentConditionIcon =
+                        UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
             }// end of else block
         }// end of if block
         else
         {
-            currentConditionIcon = UtilityMethod.weatherImages.get(
-                    currentCondition.toString().toLowerCase() );
+            currentConditionIcon =
+                    UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
         }// end of else block
 
         currentConditionIcon =  UtilityMethod.weatherImages.get(
@@ -4336,7 +4371,9 @@ public class WidgetUpdateService extends JobIntentService
 
                 if( expectedJSONSize == strJSON.size() )
                 {
-                   updateAllAppWidgets( appWidgetManager );
+                    UtilityMethod.serviceCall(
+                        WeatherLionApplication.storedPreferences.getProvider() );
+                    updateAllAppWidgets( appWidgetManager );
                 }// end of if block
             }// end of if block
         }// end of anonymous method onReceive

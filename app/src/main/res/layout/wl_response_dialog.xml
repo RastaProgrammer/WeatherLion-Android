@@ -4,14 +4,13 @@
     android:id="@+id/llResponseDialog"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#F0F0F0" >
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:id="@+id/rlDialogTitleBar"
-        android:background="#3796D2">
+        android:background="@drawable/wl_custom_dialog_title" >
 
         <ImageView
             android:id="@+id/diaIcon"
@@ -40,8 +39,10 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/txvDialogBody"
-        android:padding="6dp">
+        android:id="@+id/rlDialogBody"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:background="#FFFFFF">
 
         <TextView
             android:id="@+id/txvMessage"
@@ -64,7 +65,8 @@
             android:gravity="center"
             android:text="@string/cancel"
             android:textAllCaps="true"
-            android:textColor="@color/color_white_opacity_90" />
+            android:textColor="@color/color_white_opacity_90"
+            android:stateListAnimator="@null"/>
 
         <Button
             android:id="@+id/btnPositive"
@@ -78,6 +80,13 @@
             android:gravity="center"
             android:text="@string/Ok"
             android:textAllCaps="true"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:stateListAnimator="@null" />
     </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rlDialogFooter"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/wl_custom_dialog_footer" />
 </LinearLayout>

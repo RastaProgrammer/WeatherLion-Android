@@ -74,7 +74,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"unused", "WeakerAccess", "null"})
+@SuppressWarnings({"unused", "WeakerAccess", "null", "unchecked"})
 public abstract class UtilityMethod
 {
     private static final String TAG = "UtilityMethod";
@@ -3088,7 +3088,7 @@ public abstract class UtilityMethod
      * @param provider  The selected weather provider
      * @return  A value of true/false dependent on the outcome of the check
      */
-    @SuppressWarnings("unchecked")
+
     public static boolean okToUseService( String provider )
     {
         boolean ok = false;
@@ -3118,6 +3118,59 @@ public abstract class UtilityMethod
                             e.getStackTrace()[ 1 ].getLineNumber() + "]" );
         }// end of catch block
 
+        // if we are working with today's log which we should be
+        if( sdf.format( logDate ).equals( sdf.format( new Date() ) ) )
+        {
+            if( importedServiceMap != null )
+            {
+                callCount = (int) (double) importedServiceMap.get( provider );
+                ok = callCount < WeatherLionApplication.DAILY_CALL_LIMIT;
+            }// end of if block
+        }// end of if block
+        else
+        {
+            WeatherLionApplication.callMethodByName( WeatherLionApplication.class,
+                    "createServiceCallLog",
+                    null, null );
+
+            ok = true;
+        }// end of else block
+
+        return ok;
+    }// end of method okToUseService
+
+    /**
+     * Updates a call made to a provider
+     *
+     * @param provider The selected weather provider
+     */
+    public static void serviceCall( String provider )
+    {
+        Map<String, Object> importedServiceLog = JSONHelper.importPreviousLogs(
+                getAppContext().getFileStreamPath(
+                        WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
+        String date = (String) importedServiceLog.get( "Date" );
+        Date logDate = null;
+        Map importedServiceMap = (LinkedTreeMap) Objects.requireNonNull( importedServiceLog )
+                .get( "Service" );
+
+        SimpleDateFormat ldf = new SimpleDateFormat( "MMM dd, yyyy hh:mm:ss a",
+                Locale.ENGLISH );
+        SimpleDateFormat sdf = new SimpleDateFormat( "MMM dd, yyyy", Locale.ENGLISH );
+
+        int callCount;
+
+        try
+        {
+            logDate = ldf.parse( date );
+        } // end of try block
+        catch ( ParseException e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                    TAG + "::serviceCall [line: " +
+                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+        }// end of catch block
+
         Map<String, Object> exportServiceLog = new HashMap<>();
 
         // if we are working with today's log which we should be
@@ -3139,17 +3192,20 @@ public abstract class UtilityMethod
                     // return the JSON string array as a string
                     String json = gson.toJson( exportServiceLog );
 
-                    JSONHelper.updateJSONFile( json,
+                    if( JSONHelper.updateJSONFile( json,
                             getAppContext().getFileStreamPath(
-                                    WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
-
-                    ok = JSONHelper.updateJSONFile( json,
-                            getAppContext().getFileStreamPath(
-                                    WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
-
-                    logMessage( LogLevel.INFO,
-                            "Service log updated!",
-                            TAG + "::okToUseService" );
+                                    WeatherLionApplication.SERVICE_CALL_LOG ).toString() ) )
+                    {
+                        logMessage( LogLevel.INFO,
+                                "Service log updated!",
+                                TAG + "::serviceCall" );
+                    }// end of if block
+                    else
+                    {
+                        logMessage( LogLevel.SEVERE,
+                                "Service log could not be updated!",
+                                TAG + "::serviceCall" );
+                    }// end of else block
                 }// end of if block
             }// end of if block
         }// end of if block
@@ -3158,12 +3214,8 @@ public abstract class UtilityMethod
             WeatherLionApplication.callMethodByName( WeatherLionApplication.class,
                     "createServiceCallLog",
                     null, null );
-
-            ok = true;
         }// end of else block
-
-        return ok;
-    }// end of method okToUseService
+    }// end of method serviceCall
 
     /***
      * Replace the last occurrence of a {@code String} contained in another {@code String}

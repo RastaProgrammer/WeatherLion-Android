@@ -587,6 +587,7 @@ public class PrefsActivity extends AppCompatActivity
 
                             if( okToUse )
                             {
+                                UtilityMethod.serviceCall( entry );
                                 WeatherLionApplication.storedPreferences.setProvider( entry );
                                 WeatherLionApplication.storedData.getProvider().setName( entry );
                                 UtilityMethod.refreshRequested = true;
@@ -852,6 +853,7 @@ public class PrefsActivity extends AppCompatActivity
 
                             if( okToUse )
                             {
+                                UtilityMethod.serviceCall( entry );
                                 WeatherLionApplication.storedPreferences.setProvider( entry );
                                 WeatherLionApplication.storedData.getProvider().setName( entry );
                                 UtilityMethod.refreshRequested = true;

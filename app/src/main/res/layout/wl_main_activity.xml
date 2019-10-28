@@ -198,12 +198,9 @@
                         android:src="@drawable/windmill_pole" />
 
                 </RelativeLayout>
-
-
             </RelativeLayout>
 
-            <RelativeLayout
-                android:id="@+id/forecastList"
+            <ScrollView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_below="@+id/today" >
@@ -211,12 +208,11 @@
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/lstDayForecast"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:divider="#CBCBCB"
                     android:dividerHeight="0.5dip"
                     android:scrollbars="vertical" />
-
-            </RelativeLayout>
+            </ScrollView>
 
             <RelativeLayout
                 android:id="@+id/rlWeatherFooter"
