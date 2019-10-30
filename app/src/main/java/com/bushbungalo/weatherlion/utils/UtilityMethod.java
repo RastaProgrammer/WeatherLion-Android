@@ -2999,14 +2999,15 @@ public abstract class UtilityMethod
         long elapsedMinutes = difference / minutesInMilli;
         //difference = difference % minutesInMilli;
 
-        if( refreshRequestedBySystem && elapsedMinutes < 1 )
+        // the system might send back-to-back requests dependent on the situation
+        // so only one instance must be allowed in th space of a minute
+        if( refreshRequestedBySystem && elapsedMinutes > 1 )
         {
-            return false;
+            return true;
         }// end of if block
-        else
-        {
-            return elapsedMinutes >= millisecondsToMinutes( interval );
-        }// end of else block
+
+        return elapsedMinutes >= millisecondsToMinutes( interval );
+
     }// end of method updateRequired
 
     /**

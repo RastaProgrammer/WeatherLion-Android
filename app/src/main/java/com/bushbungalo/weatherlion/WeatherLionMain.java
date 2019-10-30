@@ -138,6 +138,7 @@ public class WeatherLionMain extends AppCompatActivity
     private TextView txvWeatherLocation;
     private TextClock txcLocalTime;
     private ImageView imvShowPreviousSearches;
+    private TextView txvLastUpdated;
     private static ListPopupWindow popupWindow;
     private static PopupMenu popupMenu;
     private static String[] listItems;
@@ -148,6 +149,42 @@ public class WeatherLionMain extends AppCompatActivity
 
     private AlertDialog loadingDialog;
     private AnimationDrawable loadingAnimation;
+
+    /**
+     * Update the time since the last update
+     */
+    private BroadcastReceiver clockTickBroadcastReceiver = new BroadcastReceiver()
+    {
+        @Override
+        public void onReceive( Context context, Intent intent )
+        {
+            if( txvLastUpdated != null && UtilityMethod.lastUpdated != null )
+            {
+                txvLastUpdated.setTypeface( WeatherLionApplication.currentTypeface );
+
+                if( WeatherLionApplication.currentLocationTimeZone != null )
+                {
+                    txcLocalTime.setTimeZone(
+                            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+                }// end of if block
+
+                txvLastUpdated.setText( String.format( "%s%s", "Updated ",
+                        UtilityMethod.getTimeSince( UtilityMethod.lastUpdated ) ) );
+            }// end of if block
+
+            // if an update is required but was not performed
+            if( UtilityMethod.updateRequired( WeatherLionMain.this ) )
+            {
+                UtilityMethod.refreshRequestedBySystem = true;
+
+                String invoker = WeatherLionMain.this.getClass().getSimpleName() +
+                        "::clockTickBroadcastReceiver::onReceive";
+                WeatherLionApplication.callMethodByName( null,
+                        "refreshWeather",
+                        new Class[]{ String.class }, new Object[]{ invoker } );
+            }// end of if block
+        }// end of method onReceive
+    };
 
     /**
      * There was an error getting weather data
@@ -163,14 +200,9 @@ public class WeatherLionMain extends AppCompatActivity
                 // cancel the visual indication of a refresh
                 appRefresh.setRefreshing( false );
             }// end of if block
-
-            if( loadingDialog != null )
-            {
-                stopLoading();
-                loadingDialog.dismiss();
-            }// end of if block
         }// end of method onReceive
     };
+
 
     /**
      * Refresh the main activity once new data has been stored
@@ -248,6 +280,7 @@ public class WeatherLionMain extends AppCompatActivity
             }// end of if block
         }// end of method onReceive
     };
+
 
     /**
      * Method to be called after the required data accesses have be obtained.
@@ -748,7 +781,7 @@ public class WeatherLionMain extends AppCompatActivity
 
         imvWeatherProviderLogo.setImageResource( UtilityMethod.getImageResourceId( providerIcon ) );
 
-        TextView txvLastUpdated = findViewById( R.id.txvLastUpdated );
+        txvLastUpdated = findViewById( R.id.txvLastUpdated );
         txvLastUpdated.setTypeface( WeatherLionApplication.currentTypeface );
 
         if( WeatherLionApplication.currentLocationTimeZone != null )
@@ -766,6 +799,12 @@ public class WeatherLionMain extends AppCompatActivity
         if( UtilityMethod.updateRequired( this ) )
         {
             refreshWeather();
+        }// end of if block
+
+        if( loadingDialog != null )
+        {
+            stopLoading();
+            loadingDialog.dismiss();
         }// end of if block
     }// end of method loadMainActivityWeather
 
@@ -870,6 +909,10 @@ public class WeatherLionMain extends AppCompatActivity
 
         TextView txvMessage;
         Snackbar quickSnack;
+
+        IntentFilter systemFilter = new IntentFilter();
+        systemFilter.addAction( Intent.ACTION_TIME_TICK );
+        this.registerReceiver( clockTickBroadcastReceiver, systemFilter );
 
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
                 .registerReceiver( xmlStorageBroadcastReceiver, new IntentFilter(
@@ -1103,6 +1146,8 @@ public class WeatherLionMain extends AppCompatActivity
     {
         super.onDestroy();
 
+        this.unregisterReceiver( clockTickBroadcastReceiver );
+
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
                 .unregisterReceiver( xmlStorageBroadcastReceiver );
 
@@ -1157,11 +1202,11 @@ public class WeatherLionMain extends AppCompatActivity
                 if( !findViewById( R.id.weather_main_container ).getTag().equals( "main_screen" ) )
                 {
                     setContentView( R.layout.wl_main_activity );
+
+                    doGlimpseRotation( findViewById( R.id.imvBlade ) );
+
+                    loadMainActivityWeather();
                 }// end of if block
-
-                doGlimpseRotation( findViewById( R.id.imvBlade ) );
-
-                loadMainActivityWeather();
             }// end of if block
         }// end of if block
     }// end of method onResume

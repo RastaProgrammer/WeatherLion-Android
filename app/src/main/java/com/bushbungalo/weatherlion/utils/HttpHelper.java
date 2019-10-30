@@ -34,6 +34,7 @@ import javax.crypto.spec.SecretKeySpec;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okio.ByteString;
 
 /*
  * Helper class for working with a remote server
@@ -141,7 +142,8 @@ public class HttpHelper
         byte[] nonce = new byte[ 32 ];
         Random rand = new Random();
         rand.nextBytes( nonce );
-        String oauthNonce = new String( nonce ).replaceAll( "\\W", "" );
+        //String oauthNonce = new String( nonce ).replaceAll( "[^a-zA-Z0-9]", "" );
+        String oauthNonce = ByteString.of( nonce ).base64().replaceAll( "\\W", "" );
 
         List<String> parameters = new ArrayList<>();
         parameters.add( "oauth_consumer_key=" + yahooConsumerKey );
@@ -180,7 +182,7 @@ public class HttpHelper
         }// end of try block
         catch ( Exception e )
         {
-            broadcastServiceResponse( null );
+            broadcastServiceResponse( WeatherLionApplication.EMPTY_JSON );
             return;
         }// end of catch block
 

@@ -86,6 +86,7 @@ public class WeatherLionApplication extends Application
     private static String TAG = "WeatherLionApplication";
 
     public static final String LAUNCH_METHOD_EXTRA = "MethodToCall";
+    public static final String EMPTY_JSON = "{}";
 
     public static final String LAUNCH_CONFIG = "Configure";
     public static final String LARGE_WIDGET = "LargeWeatherWidgetProvider";
@@ -261,7 +262,6 @@ public class WeatherLionApplication extends Application
             firstRun = false;
             firstLaunchCompleted = false;
         }// end of else block
-
     }// end of method checkFirstRun
 
     /**
@@ -1337,12 +1337,12 @@ public class WeatherLionApplication extends Application
             WidgetUpdateService.enqueueWork( this, updateIntent );
 
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Update requested by " + invoker,  invoker );
+                    "Update requested by " + invoker,  TAG + "::refreshWeather" );
         }// end of if block
     }// end of method refreshWeather
 
     /**
-     * Display a dialog illiciting a response from the user
+     * Display a dialog eliciting a response from the user
      *
      * @param prompt    The prompt to be displayed to the user
      * @param title     The title of the dialog box

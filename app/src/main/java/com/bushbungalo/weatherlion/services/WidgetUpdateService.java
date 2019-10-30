@@ -28,10 +28,11 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.Preference;
 import com.bushbungalo.weatherlion.PrefsActivity;
-import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
+import com.bushbungalo.weatherlion.WeatherLionMain;
 import com.bushbungalo.weatherlion.alarms.SunriseAlarmBroadcastReceiver;
 import com.bushbungalo.weatherlion.alarms.SunsetAlarmBroadcastReceiver;
 import com.bushbungalo.weatherlion.alarms.UpdateAlarmBroadcastReceiver;
@@ -74,8 +75,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-
-import static com.bushbungalo.weatherlion.WeatherLionMain.LION_LIMIT_EXCEEDED_PAYLOAD;
 
 @SuppressWarnings({"unused", "SameParameterValue"})
 public class WidgetUpdateService extends JobIntentService
@@ -188,8 +187,8 @@ public class WidgetUpdateService extends JobIntentService
         spf = PreferenceManager.getDefaultSharedPreferences( this );
 
         LocalBroadcastManager.getInstance( this )
-                .registerReceiver( webServiceData,
-                        new IntentFilter( HttpHelper.WEB_SERVICE_DATA_MESSAGE ) );
+            .registerReceiver( webServiceData,
+                new IntentFilter( HttpHelper.WEB_SERVICE_DATA_MESSAGE ) );
 
     }// end of method onCreate
 
@@ -285,7 +284,12 @@ public class WidgetUpdateService extends JobIntentService
         else
         {
             // ensure that a widget refresh has been requested or it is time for an update
-            if( !UtilityMethod.refreshRequestedBySystem && !UtilityMethod.refreshRequestedByUser
+            if( UtilityMethod.refreshRequestedBySystem
+                    && !UtilityMethod.updateRequired( this ) )
+            {
+                return;
+            }// end of if block
+            else if( !UtilityMethod.refreshRequestedByUser
                     && !UtilityMethod.updateRequired( this ) )
             {
                 return;
@@ -503,7 +507,7 @@ public class WidgetUpdateService extends JobIntentService
                 else
                 {
                     Intent settingsIntent = new Intent( this, PrefsActivity.class );
-                    settingsIntent.putExtra( LION_LIMIT_EXCEEDED_PAYLOAD, true );
+                    settingsIntent.putExtra( WeatherLionMain.LION_LIMIT_EXCEEDED_PAYLOAD, true );
                     startActivity( settingsIntent );
                 }// end of else
             }// end of if block
@@ -1210,7 +1214,8 @@ public class WidgetUpdateService extends JobIntentService
         currentCountry.append( CityData.currentCityData.getCountryName() );
 
         currentCondition.setLength( 0 ); // reset
-        currentCondition.append( UtilityMethod.toProperCase( darkSky.getCurrently().getSummary() ) );
+        currentCondition.append( validateCondition(
+                UtilityMethod.toProperCase( darkSky.getCurrently().getSummary() ) ) );
 
         currentWindDirection.setLength( 0 );
         currentWindDirection.append( UtilityMethod.compassDirection(darkSky.getCurrently().getWindBearing() ) );
@@ -1467,8 +1472,8 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 );
         currentCondition.append( obs.getIconName().contains( "_" ) ?
-                UtilityMethod.toProperCase( obs.getIconName().replaceAll( "_", " " ) ) :
-                UtilityMethod.toProperCase( obs.getIconName().replaceAll( "_", " " ) ) );
+                UtilityMethod.toProperCase( validateCondition( obs.getIconName().replaceAll( "_", " " ) ) ) :
+                UtilityMethod.toProperCase( validateCondition( obs.getIconName().replaceAll( "_", " " ) ) ) );
 
         currentWindDirection.setLength( 0 );
         currentWindDirection.append( obs.getWindDescShort() );
@@ -1742,7 +1747,8 @@ public class WidgetUpdateService extends JobIntentService
         currentCountry.append( CityData.currentCityData.getCountryName() );
 
         currentCondition.setLength( 0 ); // reset
-        currentCondition.append( openWeatherWx.getWeather().get( 0 ).getDescription() );
+        currentCondition.append( validateCondition(
+                openWeatherWx.getWeather().get( 0 ).getDescription() ) );
 
         currentWindDirection.setLength( 0 ); // reset
         currentWindDirection.append( UtilityMethod.compassDirection( openWeatherWx.getWind().getDeg() ) );
@@ -2273,7 +2279,8 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 ); // reset
         currentCondition.append( UtilityMethod.toProperCase(
-                weatherBitWx.getData().get( 0 ).getWeather().getDescription() ) );
+            validateCondition(
+                weatherBitWx.getData().get( 0 ).getWeather().getDescription() ) ) );
 
         currentWindDirection.setLength( 0 );
         currentWindDirection.append( weatherBitWx.getData().get( 0 ).getWind_cdir() );
@@ -2563,7 +2570,7 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 ); // reset
         currentCondition.append(
-                yahoo19.getCurrentObservation().getCondition().getText() );
+            validateCondition( yahoo19.getCurrentObservation().getCondition().getText() ) );
 
         currentHumidity.setLength( 0 );
         currentHumidity.append( Math.round( yahoo19.getCurrentObservation().getAtmosphere().getHumidity() ) );
@@ -2812,7 +2819,8 @@ public class WidgetUpdateService extends JobIntentService
         currentCountry.append( yr.getCountry() );
 
         currentCondition.setLength( 0 ); // reset
-        currentCondition.append( UtilityMethod.toProperCase( yr.getForecast().get( 0 ).getSymbolName() ) );
+        currentCondition.append( UtilityMethod.toProperCase(
+            validateCondition( yr.getForecast().get( 0 ).getSymbolName() ) ) );
 
         currentHumidity.setLength( 0 );
         currentHumidity.append( currentHumidity.toString().length() == 0 ? currentHumidity : String.valueOf( 0 ) ); // use the humidity reading from previous providers
@@ -4390,15 +4398,16 @@ public class WidgetUpdateService extends JobIntentService
         public void onReceive( Context context, Intent intent )
         {
             WidgetHelper.getWidgetIds();
+            String webData = intent.getStringExtra( HttpHelper.WEB_SERVICE_DATA_PAYLOAD );
 
-            if( strJSON != null )
+            if( strJSON != null && !webData.equals( WeatherLionApplication.EMPTY_JSON ) )
             {
-                strJSON.add( intent.getStringExtra( HttpHelper.WEB_SERVICE_DATA_PAYLOAD ) );
+                strJSON.add( webData );
 
                 if( expectedJSONSize == strJSON.size() )
                 {
                     UtilityMethod.serviceCall(
-                        WeatherLionApplication.storedPreferences.getProvider() );
+                            WeatherLionApplication.storedPreferences.getProvider() );
                     updateAllAppWidgets( appWidgetManager );
                 }// end of if block
             }// end of if block
