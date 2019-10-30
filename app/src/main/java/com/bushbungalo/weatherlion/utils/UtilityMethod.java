@@ -3005,6 +3005,12 @@ public abstract class UtilityMethod
         {
             return true;
         }// end of if block
+        else
+        {
+            logMessage( LogLevel.WARNING ,
+            "Simultaneous updates by the system were rejected!",
+                TAG + "::updateRequired" );
+        }// end of else block
 
         return elapsedMinutes >= millisecondsToMinutes( interval );
 
@@ -3117,7 +3123,7 @@ public abstract class UtilityMethod
         } // end of try block
         catch ( ParseException e )
         {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+            logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
                     TAG + "::okToUseService [line: " +
                             e.getStackTrace()[ 1 ].getLineNumber() + "]" );
         }// end of catch block

@@ -234,6 +234,28 @@
             android:src="@drawable/wl_offline"
             android:visibility="invisible" />
 
+        <ViewFlipper
+            android:id="@+id/view_flipper"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignTop="@+id/imvCurrentCondition"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="10dip"
+            android:layout_marginTop="-6dip"
+            android:layout_marginEnd="6dip"
+            android:visibility="invisible"
+            android:inAnimation="@anim/rotate"
+            android:autoStart="true">
+
+            <ImageView
+                android:id="@+id/imvRefreshing"
+                android:layout_width="20dip"
+                android:layout_height="20dip"
+                android:adjustViewBounds="false"
+                android:contentDescription="@string/refresh_weather_data"
+                android:src="@drawable/wl_refresh_anim" />
+        </ViewFlipper>
+
         <ImageView
             android:id="@+id/imvRefresh"
             android:layout_width="20dip"

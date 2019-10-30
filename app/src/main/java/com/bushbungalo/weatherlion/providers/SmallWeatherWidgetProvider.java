@@ -7,14 +7,13 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
+import android.view.View;
 import android.widget.RemoteViews;
 
 import com.bushbungalo.weatherlion.ConfigureWidget;
 import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.WeatherLionMain;
-import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
 import static android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID;
@@ -150,6 +149,9 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
 
             // Update the weather provider
             smallWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, "Refreshing..." );
+
+            smallWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.INVISIBLE );
+            smallWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.VISIBLE );
 
             String invoker = this.getClass().getSimpleName() + "::onReceive";
             WeatherLionApplication.callMethodByName( null, "refreshWeather",

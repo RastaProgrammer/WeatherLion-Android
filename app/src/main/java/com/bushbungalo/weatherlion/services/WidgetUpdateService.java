@@ -1254,10 +1254,17 @@ public class WidgetUpdateService extends JobIntentService
         String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunrise, sunriseTime.toString() );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunset, sunsetTime.toString() );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        smallWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        smallWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
 
         WeatherLionApplication.currentSunriseTime = sunriseTime;
         WeatherLionApplication.currentSunsetTime = sunsetTime;
@@ -1513,10 +1520,17 @@ public class WidgetUpdateService extends JobIntentService
         String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunrise, sunriseTime.toString() );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunset, sunsetTime.toString() );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        smallWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        smallWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
 
         WeatherLionApplication.currentSunriseTime = sunriseTime;
         WeatherLionApplication.currentSunsetTime = sunsetTime;
@@ -1786,10 +1800,17 @@ public class WidgetUpdateService extends JobIntentService
         String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunrise, sunriseTime.toString() );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunset, sunsetTime.toString() );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        smallWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        smallWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
 
         WeatherLionApplication.currentSunriseTime = sunriseTime;
         WeatherLionApplication.currentSunsetTime = sunsetTime;
@@ -2087,10 +2108,17 @@ public class WidgetUpdateService extends JobIntentService
         String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( timeUpdated );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunrise, sunriseTime.toString() );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunset, sunsetTime.toString() );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        smallWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        smallWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
 
         WeatherLionApplication.currentSunriseTime = sunriseTime;
         WeatherLionApplication.currentSunsetTime = sunsetTime;
@@ -2325,11 +2353,18 @@ public class WidgetUpdateService extends JobIntentService
         String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,currentHumidity.toString() + "%" );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunrise, sunriseTime.toString() );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunset, sunsetTime.toString() );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        smallWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        smallWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
 
         WeatherLionApplication.currentSunriseTime = sunriseTime;
         WeatherLionApplication.currentSunsetTime = sunsetTime;
@@ -2612,10 +2647,17 @@ public class WidgetUpdateService extends JobIntentService
         String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunrise, sunriseTime.toString() );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunset, sunsetTime.toString() );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        smallWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        smallWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
 
         WeatherLionApplication.currentSunriseTime = sunriseTime;
         WeatherLionApplication.currentSunsetTime = sunsetTime;
@@ -2869,10 +2911,16 @@ public class WidgetUpdateService extends JobIntentService
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
 
+        largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunrise, sunriseTime.toString() );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunset, sunsetTime.toString() );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+
+        smallWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+        smallWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
 
         WeatherLionApplication.currentSunriseTime = sunriseTime;
         WeatherLionApplication.currentSunsetTime = sunsetTime;
