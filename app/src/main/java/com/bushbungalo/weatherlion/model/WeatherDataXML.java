@@ -30,6 +30,7 @@ public class WeatherDataXML
     private String currentHumidity;
     private String sunriseTime;
     private String sunsetTime;
+    private List<FiveHourForecast> fiveHourForecast;
     private List<FiveDayForecast> fiveDayForecast;
 
     public WeatherDataXML(){}// end of default constructor
@@ -39,7 +40,7 @@ public class WeatherDataXML
                           String currentTemperature, String feelsLikeTemperature, String currentHigh,
                           String currentLow, String currentWindSpeed, String currentWindDirection,
                           String currentHumidity, String sunriseTime, String sunsetTime,
-                          List<FiveDayForecast> fiveDayForecast )
+                          List<FiveHourForecast> fiveHourForecast, List<FiveDayForecast> fiveDayForecast )
     {
         this.providerName = providerName;
         this.datePublished = datePublished;
@@ -55,6 +56,7 @@ public class WeatherDataXML
         this.currentHumidity = currentHumidity;
         this.sunriseTime = sunriseTime;
         this.sunsetTime = sunsetTime;
+        this.fiveHourForecast = fiveHourForecast;
         this.fiveDayForecast = fiveDayForecast;
     }// end of fifteen-argument constructor
 
@@ -206,5 +208,15 @@ public class WeatherDataXML
     public void setFiveDayForecast( List<FiveDayForecast> fiveDayForecast )
     {
         this.fiveDayForecast = fiveDayForecast;
+    }
+
+    public List<FiveHourForecast> getFiveHourForecast()
+    {
+        return fiveHourForecast;
+    }
+
+    public void setFiveHourForecast( List<FiveHourForecast> fiveHourForecast )
+    {
+        this.fiveHourForecast = fiveHourForecast;
     }
 }// end of class WeatherDataXML

@@ -7,9 +7,12 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.AlarmClock;
 import android.view.View;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import com.bushbungalo.weatherlion.ConfigureWidget;
 import com.bushbungalo.weatherlion.R;
@@ -76,6 +79,9 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             // set the applicable flags that main will use to start the service
             WeatherLionApplication.changeWidgetUnit =  false;
 
+            UtilityMethod.refreshRequestedBySystem = true;
+            UtilityMethod.refreshRequestedByUser = false;
+
             String invoker = this.getClass().getSimpleName() + "::onUpdate";
             WeatherLionApplication.callMethodByName( null, "refreshWeather",
                     new Class[]{ String.class }, new Object[]{ invoker } );
@@ -135,6 +141,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     public void onReceive( Context context, Intent intent )
     {
         super.onReceive( context, intent );
+        final Context mContext = context;
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance( context );
         largeWidgetRemoteViews = new RemoteViews( context.getPackageName(),
@@ -148,22 +155,42 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
         if ( REFRESH_BUTTON_CLICKED.equals( intent.getAction() ) )
         {
             UtilityMethod.refreshRequestedByUser = true;
+            UtilityMethod.refreshRequestedBySystem = false;
 
-            UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO, "Refresh requested!",
-                    TAG + "::onReceive");
+            if(  UtilityMethod.hasInternetConnection( context ) )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Refresh requested!",
+                        TAG + "::onReceive" );
 
-            // Update the weather provider
-            largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, "Refreshing..." );
+                // Update the weather provider
+                largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, "Refreshing..." );
 
-            largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.INVISIBLE );
-            largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.VISIBLE );
+                largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.INVISIBLE );
+                largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.VISIBLE );
 
-            String invoker = this.getClass().getSimpleName() + "::onReceive";
-            WeatherLionApplication.callMethodByName( null,"refreshWeather",
-                new Class[]{ String.class }, new Object[]{ invoker } );
+                String invoker = this.getClass().getSimpleName() + "::onReceive";
+                WeatherLionApplication.callMethodByName( null, "refreshWeather",
+                        new Class[]{ String.class }, new Object[]{ invoker } );
 
-            // update the widget
-            appWidgetManager.updateAppWidget( appWidgetIds, largeWidgetRemoteViews);
+                // update the widget
+                appWidgetManager.updateAppWidget( appWidgetIds, largeWidgetRemoteViews );
+            }// end of if block
+            else
+            {
+                // Calling from a Non-UI Thread
+                Handler handler = new Handler( Looper.getMainLooper() );
+
+                handler.post( new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        UtilityMethod.butteredToast(  mContext,
+                                "Please check your internet connection!",
+                                2, Toast.LENGTH_LONG );
+                    }
+                });
+            }// end of else block      
 
         }// end of if block
         else if ( LAUNCH_MAIN.equals( intent.getAction() ) )

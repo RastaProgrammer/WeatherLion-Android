@@ -2980,18 +2980,18 @@ public abstract class UtilityMethod
      */
     public static boolean updateRequired( Context context )
     {
-        if( lastUpdated == null )
+        // allow update if requested by the user
+        if( lastUpdated == null || refreshRequestedByUser )
         {
             return true;
         }// end of if block
 
         SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( context );
         int interval = Integer.parseInt( Objects.requireNonNull(
-                spf.getString( WeatherLionApplication.UPDATE_INTERVAL,
-                        context.getString( R.string.default_update_interval ) ) ) );
+            spf.getString( WeatherLionApplication.UPDATE_INTERVAL, context.getString( R.string.default_update_interval ) ) ) );
 
         //milliseconds
-        long difference = new Date().getTime() - lastUpdated.getTime();
+        long difference = Math.abs( new Date().getTime() - lastUpdated.getTime() );
 
         long secondsInMilli = 1000;
         long minutesInMilli = secondsInMilli * 60;
@@ -3000,16 +3000,21 @@ public abstract class UtilityMethod
         //difference = difference % minutesInMilli;
 
         // the system might send back-to-back requests dependent on the situation
-        // so only one instance must be allowed in th space of a minute
+        // so only one instance must be allowed in the space of a minute
         if( refreshRequestedBySystem && elapsedMinutes > 1 )
         {
             return true;
         }// end of if block
         else
         {
-            logMessage( LogLevel.WARNING ,
-            "Simultaneous updates by the system were rejected!",
-                TAG + "::updateRequired" );
+            if( refreshRequestedBySystem )
+            {
+                logMessage( LogLevel.WARNING,
+                        "Simultaneous updates by the system were rejected!",
+                        TAG + "::updateRequired" );
+
+                return false;
+            }// end of if block
         }// end of else block
 
         return elapsedMinutes >= millisecondsToMinutes( interval );
@@ -3525,7 +3530,7 @@ public abstract class UtilityMethod
     public static String getTimeSince( Date pastDate )
     {
         //milliseconds
-        long difference = new Date().getTime() - pastDate.getTime();
+        long difference = Math.abs( new Date().getTime() - pastDate.getTime() );
 
         long secondsInMilli = 1000;
         long minutesInMilli = secondsInMilli * 60;
@@ -3599,25 +3604,7 @@ public abstract class UtilityMethod
             }// end of if block
             else if ( v instanceof ViewGroup )
             {
-                if( v instanceof RelativeLayout )
-                {
-                    for ( int j = 0; j < ((RelativeLayout) v).getChildCount(); j++ )
-                    {
-                        View v1 = ((RelativeLayout) v).getChildAt( j );
-
-                        if ( v1 instanceof TextView )
-                        {
-                            if( WeatherLionApplication.currentTypeface != null )
-                            {
-                                ( (TextView) v1 ).setTypeface( WeatherLionApplication.currentTypeface );
-                            }// end of if block
-                        }// end of if block
-                    }// end of for loop
-                }// end of if block
-                else
-                {
-                    loadCustomFont( (ViewGroup) v );
-                }// end of else block
+                loadCustomFont( (ViewGroup) v );
             }// end of else if block
         }// end of for loop
     }// end of method loadCustomFont

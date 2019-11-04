@@ -19,6 +19,8 @@ public class LastWeatherDataXmlParser
     private static final String WIND_TAG = "Wind";
     private static final String ASTRONOMY_TAG = "Astronomy";
     private static final String CURRENT_TAG = "Current";
+    private static final String HOURLY_FORECAST_TAG = "HourlyForecast";
+    private static final String HOUR_FORECAST_TAG = "HourForecast";
     private static final String DAILY_FORECAST_TAG = "DailyForecast";
     private static final String DAY_FORECAST_TAG = "DayForecast";
 
@@ -32,13 +34,16 @@ public class LastWeatherDataXmlParser
         WeatherData.Wind lastWind = currentWeatherData.new Wind();
         WeatherData.Astronomy lastAstronomy = currentWeatherData.new Astronomy();
         WeatherData.Current lastCurrentData = currentWeatherData.new Current();
+        WeatherData.HourlyForecast lastHourlyForecast = currentWeatherData.new HourlyForecast();
+        WeatherData.HourlyForecast.HourForecast hourForecast = null;
+        List<WeatherData.HourlyForecast.HourForecast> lastHourlyForecastList = new ArrayList<>();
         WeatherData.DailyForecast lastDailyForecast = currentWeatherData.new DailyForecast();
         WeatherData.DailyForecast.DayForecast dayForecast = null;
         List<WeatherData.DailyForecast.DayForecast> lastForecastList = new ArrayList<>();
 
         List<String> dataTags = Arrays.asList(
-                "WeatherData","Provider","Location","Atmosphere","Wind","Astronomy",
-                "Current","DailyForecast", "DayForecast" );
+                "WeatherData", "Provider", "Location", "Atmosphere", "Wind", "Astronomy",
+                "Current", "HourlyForecast", "HourForecast", "DailyForecast", "DayForecast" );
 
         try
         {
@@ -48,6 +53,8 @@ public class LastWeatherDataXmlParser
             boolean inWindTag = false;
             boolean inAstronomyTag = false;
             boolean inCurrentTag = false;
+            boolean inHourlyForecastTag = false;
+            boolean inHourForecastTag = false;
             boolean inDailyForecastTag = false;
             boolean inDayForecastTag = false;
 
@@ -88,6 +95,14 @@ public class LastWeatherDataXmlParser
                                 case CURRENT_TAG:
                                     inCurrentTag = true;
                                     break;
+                                case HOURLY_FORECAST_TAG:
+                                    inHourlyForecastTag = true;
+                                    break;
+                                case HOUR_FORECAST_TAG:
+                                    inHourForecastTag = true;
+                                    hourForecast = lastHourlyForecast.new HourForecast();
+                                    lastHourlyForecastList.add( hourForecast );
+                                    break;
                                 case DAILY_FORECAST_TAG:
                                     inDailyForecastTag = true;
                                     break;
@@ -121,6 +136,12 @@ public class LastWeatherDataXmlParser
                                 break;
                             case CURRENT_TAG:
                                 inCurrentTag = false;
+                                break;
+                            case HOURLY_FORECAST_TAG:
+                                inHourlyForecastTag = false;
+                                break;
+                            case HOUR_FORECAST_TAG:
+                                inHourForecastTag = false;
                                 break;
                             case DAILY_FORECAST_TAG:
                                 inDailyForecastTag = false;
@@ -211,6 +232,21 @@ public class LastWeatherDataXmlParser
                                     break;
                             }// end of switch block
                         }// end of else if block
+                        else if( inHourlyForecastTag && inHourForecastTag && currentTagName != null )
+                        {
+                            switch ( currentTagName )
+                            {
+                                case "Time":
+                                    hourForecast.setTime( tagText );
+                                    break;
+                                case "Condition":
+                                    hourForecast.setCondition( tagText );
+                                    break;
+                                case "Temperature":
+                                    hourForecast.setTemperature( (int) Float.parseFloat( tagText ) );
+                                    break;
+                            }// end of switch block
+                        }// end of else if block
                         else if( inDailyForecastTag && inDayForecastTag && currentTagName != null )
                         {
                             switch ( currentTagName )
@@ -243,7 +279,8 @@ public class LastWeatherDataXmlParser
             currentWeatherData.setWind( lastWind );
             currentWeatherData.setAstronomy( lastAstronomy );
             currentWeatherData.setCurrent( lastCurrentData );
-            currentWeatherData.setDailyForecast(lastForecastList);
+            currentWeatherData.setHourlyForecast( lastHourlyForecastList );
+            currentWeatherData.setDailyForecast( lastForecastList );
         }// end of try block
         catch( Exception e )
         {

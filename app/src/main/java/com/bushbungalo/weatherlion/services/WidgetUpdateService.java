@@ -40,6 +40,7 @@ import com.bushbungalo.weatherlion.custom.CityFinderPreference;
 import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.DarkSkyWeatherDataItem;
 import com.bushbungalo.weatherlion.model.FiveDayForecast;
+import com.bushbungalo.weatherlion.model.FiveHourForecast;
 import com.bushbungalo.weatherlion.model.HereMapsWeatherDataItem;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
 import com.bushbungalo.weatherlion.model.OpenWeatherMapWeatherDataItem;
@@ -65,6 +66,9 @@ import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -97,12 +101,14 @@ public class WidgetUpdateService extends JobIntentService
     private static OpenWeatherMapWeatherDataItem.ForecastData openWeatherFx;
     private static WeatherBitWeatherDataItem.WeatherData weatherBitWx;
     private static WeatherBitWeatherDataItem.SixteenDayForecastData weatherBitFx;
+    private static WeatherBitWeatherDataItem.FortyEightHourForecastData weatherBitHx;
     private static YahooWeatherYdnDataItem yahoo19;
     private static YrWeatherDataItem yr;
 
-    private StringBuilder wxUrl = new StringBuilder();
-    private StringBuilder fxUrl = new StringBuilder();
-    private StringBuilder axUrl = new StringBuilder();
+    private StringBuilder wxUrl = new StringBuilder();  // weather data url
+    private StringBuilder fxUrl = new StringBuilder();  // forecast data url
+    private StringBuilder hxUrl = new StringBuilder();  // hourly forecast data url
+    private StringBuilder axUrl = new StringBuilder();  // astronomy data url
     private ArrayList<String> strJSON;
 
     private final String CELSIUS = "\u00B0C";
@@ -123,12 +129,13 @@ public class WidgetUpdateService extends JobIntentService
 
     private static String currentLocation;
     private static List< FiveDayForecast > currentFiveDayForecast = new ArrayList<>();
+    private static List< FiveHourForecast > currentFiveHourForecast = new ArrayList<>();
     private static int[][] hl;
 
     private boolean unitChange;
     private boolean weatherUpdate;
     private Dictionary< String, float[][] > dailyReading;
-
+    private Dictionary< String, Float > hourlyReading;
     private String tempUnits;
 
     private static LinkedHashMap<String, String> hereMapsWeatherProductKeys;
@@ -350,6 +357,7 @@ public class WidgetUpdateService extends JobIntentService
                         {
                             wxUrl.setLength( 0 );
                             fxUrl.setLength( 0 );
+                            hxUrl.setLength( 0 );
                             axUrl.setLength( 0 );
 
                             // if this location has already been used there is no need to query the
@@ -380,56 +388,62 @@ public class WidgetUpdateService extends JobIntentService
                                 case WeatherLionApplication.DARK_SKY:
                                     wxUrl.setLength( 0 );
                                     wxUrl.append( String.format( "https://api.darksky.net/forecast/%s/%s,%s",
-                                            darkSkyApiKey, lat, lng ) );
+                                        darkSkyApiKey, lat, lng ) );
 
                                     break;
                                 case WeatherLionApplication.OPEN_WEATHER:
                                     wxUrl.setLength( 0 );
                                     wxUrl.append(
-                                            String.format(
-                                                    "https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=imperial"
-                                                    , lat, lng, openWeatherMapApiKey ) );
+                                        String.format(
+                                            "https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=imperial"
+                                                , lat, lng, openWeatherMapApiKey ) );
 
                                     fxUrl.setLength( 0 );
                                     fxUrl.append(
-                                            String.format(
-                                                    "https://api.openweathermap.org/data/2.5/forecast/daily?lat=%s&lon=%s&appid=%s&units=imperial"
-                                                    , lat, lng, openWeatherMapApiKey ) );
+                                        String.format(
+                                            "https://api.openweathermap.org/data/2.5/forecast/daily?lat=%s&lon=%s&appid=%s&units=imperial"
+                                                , lat, lng, openWeatherMapApiKey ) );
 
                                     break;
                                 case WeatherLionApplication.HERE_MAPS:
                                     wxUrl.setLength( 0 );
                                     wxUrl.append(
-                                            String.format(
-                                                    "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
-                                                    , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "conditions" ),
+                                        String.format(
+                                            "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
+                                                , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "conditions" ),
                                                     UtilityMethod.escapeUriString( currentCity.toString() ) ) );
 
                                     fxUrl.setLength( 0 );
                                     fxUrl.append(
-                                            String.format(
-                                                    "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
-                                                    , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "forecast" ),
+                                        String.format(
+                                            "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
+                                                , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "forecast" ),
                                                     UtilityMethod.escapeUriString( currentCity.toString() ) ) );
 
                                     axUrl.setLength( 0 );
                                     axUrl.append(
-                                            String.format(
-                                                    "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
-                                                    , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "astronomy" ),
+                                        String.format(
+                                            "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
+                                                , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "astronomy" ),
                                                     UtilityMethod.escapeUriString( currentCity.toString() ) ) );
                                     break;
                                 case WeatherLionApplication.WEATHER_BIT:
                                     wxUrl.setLength( 0 );
                                     wxUrl.append(
-                                            String.format( "https://api.weatherbit.io/v2.0/current?city=%s&units=I&key=%s",
-                                                    UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
+                                        String.format( "https://api.weatherbit.io/v2.0/current?city=%s&units=I&key=%s",
+                                            UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
+
+                                    // 48 hour forecast data
+                                    hxUrl.setLength( 0 );
+                                    hxUrl.append(
+                                        String.format( "https://api.weatherbit.io/v2.0/forecast/hourly?city=%s&units=I&key=%s&hours=48",
+                                            UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
 
                                     // Sixteen day forecast will be used as it contains more relevant data
                                     fxUrl.setLength( 0 );
                                     fxUrl.append(
-                                            String.format( "https://api.weatherbit.io/v2.0/forecast/daily?city=%s&units=I&key=%s",
-                                                    UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
+                                        String.format( "https://api.weatherbit.io/v2.0/forecast/daily?city=%s&units=I&key=%s",
+                                            UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
                                     break;
                                 case WeatherLionApplication.YAHOO_WEATHER:
                                     expectedJSONSize = 1;
@@ -466,6 +480,11 @@ public class WidgetUpdateService extends JobIntentService
                                     wxUrl.setLength( 0 );
                                     wxUrl.append( String.format( "https://www.yr.no/place/%s/%s/%s/forecast.xml",
                                             countryName, regionName, cityName ) );
+
+                                    // Hourly forecast data
+                                    hxUrl.setLength( 0 );
+                                    hxUrl.append( String.format( "https://www.yr.no/place/%s/%s/%s/forecast_hour_by_hour.xml",
+                                            countryName, regionName, cityName ) );
                                     break;
                             }// end of switch block
 
@@ -474,25 +493,76 @@ public class WidgetUpdateService extends JobIntentService
                             {
                                 try
                                 {
-                                    if( wxUrl.length() != 0 && fxUrl.length() != 0 && axUrl.length() != 0 )
+                                    if( wxUrl.length() != 0 && fxUrl.length() != 0 && hxUrl.length() != 0 && axUrl.length() != 0 )
+                                    {
+                                        expectedJSONSize = 4;
+                                        retrieveWeatherData( wxUrl.toString() );
+                                        retrieveWeatherData( hxUrl.toString() );
+                                        retrieveWeatherData( fxUrl.toString() );
+                                        retrieveWeatherData( axUrl.toString() );
+                                    }// end of if block
+                                    else if( wxUrl.length() != 0 && fxUrl.length() != 0 && hxUrl.length() != 0 && axUrl.length() == 0 )
+                                    {
+                                        expectedJSONSize = 3;
+                                        retrieveWeatherData( wxUrl.toString() );
+                                        retrieveWeatherData( hxUrl.toString() );
+                                        retrieveWeatherData( fxUrl.toString() );
+                                    }// end of else if block
+                                    else if( wxUrl.length() != 0 && fxUrl.length() != 0 && hxUrl.length() == 0 && axUrl.length() != 0 )
                                     {
                                         expectedJSONSize = 3;
                                         retrieveWeatherData( wxUrl.toString() );
                                         retrieveWeatherData( fxUrl.toString() );
                                         retrieveWeatherData( axUrl.toString() );
-                                    }// end of if block
-                                    else if( wxUrl.length() != 0 && fxUrl.length() != 0 && axUrl.length() == 0 )
+                                    }// end of else if block
+                                    else if( wxUrl.length() != 0 && fxUrl.length() == 0 && hxUrl.length() == 0 && axUrl.length() != 0 )
+                                    {
+                                        expectedJSONSize = 3;
+                                        retrieveWeatherData( wxUrl.toString() );
+                                        retrieveWeatherData( hxUrl.toString() );
+                                        retrieveWeatherData( axUrl.toString() );
+                                    }// end of else if block
+                                    else if( wxUrl.length() != 0 && fxUrl.length() != 0 && hxUrl.length() == 0 && axUrl.length() == 0 )
                                     {
                                         expectedJSONSize = 2;
                                         retrieveWeatherData( wxUrl.toString() );
                                         retrieveWeatherData( fxUrl.toString() );
-                                    }// end of if block
-                                    else if( ( wxUrl.length() != 0 && fxUrl.length() == 0  && axUrl.length() == 0 ) ||
-                                            ( wxUrl.length() == 0 && fxUrl.length() != 0  && axUrl.length() == 0 ) ||
-                                            ( wxUrl.length() == 0 && fxUrl.length() == 0  && axUrl.length() != 0 ) )
+                                    }// end of else if block
+                                    else if( wxUrl.length() != 0 && fxUrl.length() == 0 && hxUrl.length() != 0 && axUrl.length() == 0 )
+                                    {
+                                        expectedJSONSize = 2;
+                                        retrieveWeatherData( wxUrl.toString() );
+                                        retrieveWeatherData( hxUrl.toString() );
+                                    }// end of else if block
+                                    else if( wxUrl.length() != 0 && fxUrl.length() == 0 && hxUrl.length() == 0 && axUrl.length() != 0 )
+                                    {
+                                        expectedJSONSize = 2;
+                                        retrieveWeatherData( wxUrl.toString() );
+                                        retrieveWeatherData( axUrl.toString() );
+                                    }// end of else if block
+                                    else if( ( wxUrl.length() != 0 && fxUrl.length() == 0 && hxUrl.length() == 0 && axUrl.length() == 0 ) ||
+                                            ( wxUrl.length() == 0 && fxUrl.length() != 0  && hxUrl.length() == 0 && axUrl.length() == 0 ) ||
+                                            ( wxUrl.length() == 0 && fxUrl.length() == 0  && hxUrl.length() != 0 && axUrl.length() == 0 ) ||
+                                            ( wxUrl.length() == 0 && fxUrl.length() == 0  && hxUrl.length() == 0 && axUrl.length() != 0 ) )
                                     {
                                         expectedJSONSize = 1;
-                                        retrieveWeatherData( wxUrl.toString() );
+
+                                        if( wxUrl.length() != 0 )
+                                        {
+                                            retrieveWeatherData( wxUrl.toString() );
+                                        }// end of if block
+                                        else if( fxUrl.length() != 0 )
+                                        {
+                                            retrieveWeatherData( fxUrl.toString() );
+                                        }// end of else if block
+                                        else if( hxUrl.length() != 0 )
+                                        {
+                                            retrieveWeatherData( hxUrl.toString() );
+                                        }// end of else if block
+                                        else if( axUrl.length() != 0 )
+                                        {
+                                            retrieveWeatherData( axUrl.toString() );
+                                        }// end of else if block
                                     }// end of else if block
 
                                 }// end of try block
@@ -781,7 +851,8 @@ public class WidgetUpdateService extends JobIntentService
                             break;
                         case WeatherLionApplication.WEATHER_BIT:
                             weatherBitWx = new Gson().fromJson( strJSON.get( 0 ), WeatherBitWeatherDataItem.WeatherData.class );
-                            weatherBitFx = new Gson().fromJson( strJSON.get( 1 ), WeatherBitWeatherDataItem.SixteenDayForecastData.class );
+                            weatherBitHx = new Gson().fromJson( strJSON.get( 1 ), WeatherBitWeatherDataItem.FortyEightHourForecastData.class );
+                            weatherBitFx = new Gson().fromJson( strJSON.get( 2 ), WeatherBitWeatherDataItem.SixteenDayForecastData.class );
                             loadWeatherBitWeather();
 
                             break;
@@ -817,7 +888,8 @@ public class WidgetUpdateService extends JobIntentService
 
                             break;
                         case WeatherLionApplication.YR_WEATHER:
-                            YrWeatherDataItem.deserializeYrXML( strJSON.get( 0 ) );
+                            YrWeatherDataItem.deserializeYrWeatherXML( strJSON.get( 0 ) );
+                            YrWeatherDataItem.deserializeYrHourlyXML( strJSON.get( 1 ) );
                             yr = YrWeatherDataItem.yrWeatherDataItem;
                             loadYrWeather();
 
@@ -835,15 +907,19 @@ public class WidgetUpdateService extends JobIntentService
                         UtilityMethod.refreshRequestedByUser = false;
                     }// end of if block
 
-                    UtilityMethod.lastUpdated = new Date();
+//                    UtilityMethod.lastUpdated = new Date();
+                    Calendar updateCalendar = Calendar.getInstance();
+                    updateCalendar.set( Calendar.SECOND, 0 ); // perform updates on the minute mark
+                    UtilityMethod.lastUpdated = updateCalendar.getTime();
+
                     WeatherLionApplication.weatherLoadedFromProvider = true;
                     WeatherLionApplication.localWeatherDataAvailable = false;
                 }// end of try block
                 catch( Exception e )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                            TAG + "::updateAllAppWidgets [line: " +
-                                    e.getStackTrace()[1].getLineNumber()+ "]" );
+                TAG + "::updateAllAppWidgets [line: " +
+                            e.getStackTrace()[1].getLineNumber()+ "]" );
                     WeatherLionApplication.dataLoadedSuccessfully = false;
 
                     // Undo changes made
@@ -1373,6 +1449,55 @@ public class WidgetUpdateService extends JobIntentService
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
+        // Five Hour Forecast
+        int x = 1;
+        LocalDateTime currentHour = LocalDateTime.now();
+        LocalDateTime currentForecastHour;
+        DateTimeFormatter hourlyFormat = DateTimeFormatter.ofPattern( "h:mm a" );
+
+        // get and store hourly forecast
+        for ( DarkSkyWeatherDataItem.Hourly.Data wxHourlyForecast : darkSky.getHourly().getData() )
+        {
+            currentForecastHour = UtilityMethod.getDateTime(
+                    Integer.parseInt( wxHourlyForecast.getTime() ) ).toInstant().atZone(
+                    ZoneId.systemDefault() ).toLocalDateTime();
+
+            String forecastTime = currentForecastHour.format( hourlyFormat );
+
+            if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
+                    currentForecastHour.getYear() == currentHour.getYear() )
+            {
+                if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                {
+                    currentFiveHourForecast.add(
+                        new FiveHourForecast( currentForecastHour, String.valueOf(
+                            Math.round( hourlyReading.get( forecastTime ) ) ),
+                                UtilityMethod.toProperCase(
+                                    validateCondition(
+                                        wxHourlyForecast.getSummary().toLowerCase() ) ) ) );
+                    x++;
+                }// end of if block
+            }// end of if block
+            else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
+                    currentForecastHour.getYear() == currentHour.getYear() )
+            {
+                currentFiveHourForecast.add(
+                    new FiveHourForecast( currentForecastHour, String.valueOf(
+                        Math.round( hourlyReading.get( forecastTime ) ) ),
+                            UtilityMethod.toProperCase(
+                                validateCondition(
+                                    wxHourlyForecast.getSummary().toLowerCase() ) ) ) );
+                x++;
+            }// end of if block
+
+            if( x == 6 )
+            {
+                break;
+            }// end of if block
+        }// end of first for each loop
+
         // Five Day Forecast
         int i = 1;
         currentFiveDayForecast.clear(); // ensure that this list is clean
@@ -1461,6 +1586,7 @@ public class WidgetUpdateService extends JobIntentService
         xmlMapData.put( "currentHumidity", currentHumidity.toString() );
         xmlMapData.put( "sunriseTime", sunriseTime.toString() );
         xmlMapData.put( "sunsetTime", sunsetTime.toString() );
+        xmlMapData.put( "fiveHourForecast", currentFiveHourForecast );
         xmlMapData.put( "fiveDayForecast", currentFiveDayForecast );
 
         String xmlJSON = new Gson().toJson( xmlMapData );
@@ -2057,17 +2183,17 @@ public class WidgetUpdateService extends JobIntentService
         formatWeatherCondition();
 
         // Some providers like Yahoo! loves to omit a zero on the hour mark example: 7:0 am
-        if( sunriseTime.length() == 6 )
+        if( sunriseTime.length() == 6 && sunriseTime.toString().contains( " " ) )
         {
             String[] ft = sunriseTime.toString().split( ":" );
             sunriseTime.setLength( 0 );
-            sunriseTime.append( String.format( "%s:0%s", ft[ 0 ], ft[ 1 ] ) );
+            sunriseTime.append( String.format( "%s%s%s", ft[ 0 ], ":0", ft[ 1 ] ) );
         }// end of if block
-        else if( sunsetTime.length() == 6 )
+        else if( sunsetTime.length() == 6 && sunsetTime.toString().contains( " " ) )
         {
             String[] ft= sunsetTime.toString().split( ":" );
             sunsetTime.setLength( 0 );
-            sunsetTime.append( String.format( "%s:0%s", ft[ 0 ], ft[ 1 ] ) );
+            sunsetTime.append( String.format( "%s%s%s", ft[ 0 ], ":0", ft[ 1 ] ) );
         }// end if else if block
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
@@ -2332,8 +2458,6 @@ public class WidgetUpdateService extends JobIntentService
                         - tzOffset, Integer.parseInt(
                         weatherBitWx.getData().get( 0 ).getSunset().split( ":" )[ 1 ] ) ) );
 
-        List< WeatherBitWeatherDataItem.SixteenDayForecastData.Data > fdf = weatherBitFx.getData();
-
         // call update temps here
         updateTemps( true );
         formatWeatherCondition();
@@ -2475,9 +2599,57 @@ public class WidgetUpdateService extends JobIntentService
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
+        // Five Hour Forecast
+        float fTemp;    // forecasted hour temperature
+        LocalDateTime currentHour = LocalDateTime.now();
+        LocalDateTime currentForecastHour;
+        DateTimeFormatter hourFormat = DateTimeFormatter.ofPattern( "h:mm a" );
+        DateTimeFormatter localDateFormat = DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm:ss" );
+        List< WeatherBitWeatherDataItem.FortyEightHourForecastData.Data > wFhf = weatherBitHx.getData();
+        int x = 1;
+
+        for ( WeatherBitWeatherDataItem.FortyEightHourForecastData.Data wxHourlyForecast : wFhf )
+        {
+            currentForecastHour = LocalDateTime.parse(
+                    wxHourlyForecast.getTimestampLocal(), localDateFormat );
+            String forecastTime = currentForecastHour.format( hourFormat );
+
+
+            if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
+                    currentForecastHour.getYear() == currentHour.getYear() )
+            {
+                if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                {
+                    currentFiveHourForecast.add(
+                        new FiveHourForecast( currentForecastHour, String.valueOf(
+                            Math.round( hourlyReading.get( forecastTime ) ) ),
+                                wxHourlyForecast.getWeather().getDescription() ) );
+                    x++;
+                }// end of if block
+            }// end of if block
+            else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
+                    currentForecastHour.getYear() == currentHour.getYear() )
+            {
+                currentFiveHourForecast.add(
+                        new FiveHourForecast( currentForecastHour, String.valueOf(
+                                Math.round( hourlyReading.get( forecastTime ) ) ),
+                                wxHourlyForecast.getWeather().getDescription() ) );
+                x++;
+            }// end of if block
+
+            if( x == 6 )
+            {
+                break;
+            }// end of if block
+
+        }// end of for each loop
+
         // Five Day Forecast
         int i = 1;
         currentFiveDayForecast.clear(); // ensure that this list is clean
+        List< WeatherBitWeatherDataItem.SixteenDayForecastData.Data > fdf = weatherBitFx.getData();
 
         // loop through the 16 day forecast data. only 5 days are needed
         for ( WeatherBitWeatherDataItem.SixteenDayForecastData.Data wxForecast : fdf )
@@ -2588,6 +2760,7 @@ public class WidgetUpdateService extends JobIntentService
         xmlMapData.put( "currentHumidity", currentHumidity.toString() );
         xmlMapData.put( "sunriseTime", sunriseTime.toString() );
         xmlMapData.put( "sunsetTime", sunsetTime.toString() );
+        xmlMapData.put( "fiveHourForecast", currentFiveHourForecast );
         xmlMapData.put( "fiveDayForecast", currentFiveDayForecast );
 
         String xmlJSON = new Gson().toJson( xmlMapData );
@@ -2631,16 +2804,18 @@ public class WidgetUpdateService extends JobIntentService
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
-        // Yahoo loves to omit a zero on the hour mark ex: 7:0 am
-        if( sunriseTime.length() == 6 )
+        // Some providers like Yahoo! loves to omit a zero on the hour mark example: 7:0 am
+        if( sunriseTime.length() == 6 && sunriseTime.toString().contains( " " ) )
         {
-            String[] ft= sunriseTime.toString().split( ":" );
-            sunriseTime.append( String.format( "%s:0%s", ft[ 0 ], ft[ 1 ] ) );
+            String[] ft = sunriseTime.toString().split( ":" );
+            sunriseTime.setLength( 0 );
+            sunriseTime.append( String.format( "%s%s%s", ft[ 0 ], ":0", ft[ 1 ] ) );
         }// end of if block
-        else if( sunsetTime.length() == 6 )
+        else if( sunsetTime.length() == 6 && sunsetTime.toString().contains( " " ) )
         {
             String[] ft= sunsetTime.toString().split( ":" );
-            sunsetTime.append( String.format( "%s:0%s", ft[ 0 ], ft[ 1 ] ) );
+            sunsetTime.setLength( 0 );
+            sunsetTime.append( String.format( "%s%s%s", ft[ 0 ], ":0", ft[ 1 ] ) );
         }// end if else if block
 
         // Update the current location and update time stamp
@@ -2894,16 +3069,18 @@ public class WidgetUpdateService extends JobIntentService
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
-        // Some providers like Yahoo love to omit a zero on the hour mark example: 7:0 am
-        if( sunriseTime.length() == 6 )
+        // Some providers like Yahoo! loves to omit a zero on the hour mark example: 7:0 am
+        if( sunriseTime.length() == 6 && sunriseTime.toString().contains( " " ) )
         {
             String[] ft = sunriseTime.toString().split( ":" );
-            sunriseTime.append( String.format( "%s:0%s", ft[ 0 ], ft[ 1 ] ) );
+            sunriseTime.setLength( 0 );
+            sunriseTime.append( String.format( "%s%s%s", ft[ 0 ], ":0", ft[ 1 ] ) );
         }// end of if block
-        else if( sunsetTime.length() == 6 )
+        else if( sunsetTime.length() == 6 && sunsetTime.toString().contains( " " ) )
         {
             String[] ft= sunsetTime.toString().split( ":" );
-            sunsetTime.append( String.format( "%s:0%s", ft[ 0 ], ft[ 1 ] ) );
+            sunsetTime.setLength( 0 );
+            sunsetTime.append( String.format( "%s%s%s", ft[ 0 ], ":0", ft[ 1 ] ) );
         }// end if else if block
 
         // Update the current location and update time stamp
@@ -3029,12 +3206,64 @@ public class WidgetUpdateService extends JobIntentService
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
     "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-        List< YrWeatherDataItem.Forecast > fdf = yr.getForecast();
+        List< YrWeatherDataItem.HourByHourForecast > fhf = yr.getHourlyForecast();
         SimpleDateFormat df = new SimpleDateFormat( "MMMM dd, yyyy", Locale.ENGLISH );
 
-        int i = 1;
-        int x = 0;
+        int x;
+
+        currentFiveHourForecast.clear(); // ensure that this list is clean
+
+        float fTemp;    // forecasted hour temperature
+        LocalDateTime currentHour = LocalDateTime.now();
+        LocalDateTime currentForecastHour;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "h:mm a" );
+
+        x = 1;
+
+        // get five hour forecast
+        for ( YrWeatherDataItem.HourByHourForecast wxTempReading : fhf )
+        {
+            currentForecastHour = wxTempReading.getTimeFrom().toInstant().atZone(
+                    ZoneId.systemDefault() ).toLocalDateTime();
+            String forecastTime = currentForecastHour.format( formatter );
+
+            if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
+                    currentForecastHour.getYear() == currentHour.getYear() )
+            {
+                if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                {
+                    currentFiveHourForecast.add(
+                        new FiveHourForecast( currentForecastHour, String.valueOf(
+                            Math.round( hourlyReading.get( forecastTime ) ) ),
+                                wxTempReading.getSymbolName() ) );
+
+                    x++;
+                }// end of if block
+            }// end of if block
+            else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
+                    currentForecastHour.getYear() == currentHour.getYear() )
+            {
+                currentFiveHourForecast.add(
+                    new FiveHourForecast( currentForecastHour, String.valueOf(
+                        Math.round( hourlyReading.get( forecastTime ) ) ),
+                            wxTempReading.getSymbolName() ) );
+
+                x++;
+            }// end of if block
+
+            if( x == 6 )
+            {
+                break;
+            }// end of if block
+        }// end of first for each loop
+
+        List< YrWeatherDataItem.Forecast > fdf = yr.getForecast();
         currentFiveDayForecast.clear(); // ensure that this list is clean
+
+        int i = 1;
+        x = 0;
 
         for ( Forecast wxDailyForecast : fdf )
         {
@@ -3054,7 +3283,8 @@ public class WidgetUpdateService extends JobIntentService
                 int  fIcon = this.getResources().getIdentifier( "imvDay" + (i) + "Icon",
                         "id", this.getPackageName() );
 
-                largeWidgetRemoteViews.setTextViewText(fDay, new SimpleDateFormat( "E d", Locale.ENGLISH ).format( forecastDate ));
+                largeWidgetRemoteViews.setTextViewText( fDay, new SimpleDateFormat(
+                        "E d", Locale.ENGLISH ).format( forecastDate ) );
 
                 String fConditionIcon = null;
 
@@ -3083,13 +3313,13 @@ public class WidgetUpdateService extends JobIntentService
                 }// end of if block
 
                 loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-            "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+                        "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
                 currentFiveDayForecast.add(
-                    new FiveDayForecast( forecastDate, String.valueOf(
-                        Math.round( dailyReading.get( df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 0 ] ) ),
-                            String.valueOf( Math.round( dailyReading.get(
-                                df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 1 ] ) ), fCondition ) );
+                        new FiveDayForecast( forecastDate, String.valueOf(
+                                Math.round( dailyReading.get( df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 0 ] ) ),
+                                String.valueOf( Math.round( dailyReading.get(
+                                        df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 1 ] ) ), fCondition ) );
                 if( i == 5 )
                 {
                     break;
@@ -3122,6 +3352,7 @@ public class WidgetUpdateService extends JobIntentService
         xmlMapData.put( "currentHumidity", currentHumidity.toString() );
         xmlMapData.put( "sunriseTime", sunriseTime.toString() );
         xmlMapData.put( "sunsetTime", sunsetTime.toString() );
+        xmlMapData.put( "fiveHourForecast", currentFiveHourForecast );
         xmlMapData.put( "fiveDayForecast", currentFiveDayForecast );
 
         String xmlJSON = new Gson().toJson( xmlMapData );
@@ -3451,11 +3682,52 @@ public class WidgetUpdateService extends JobIntentService
                     smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
                     smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
+                    // Five Hour Forecast
+                    int x = 1;
+                    LocalDateTime currentHour = LocalDateTime.now();
+                    LocalDateTime currentForecastHour;
+                    hourlyReading = new Hashtable<>();
+                    DateTimeFormatter hourlyFormat = DateTimeFormatter.ofPattern( "h:mm a" );
+
+                    // get the highs and lows from the forecast first
+                    for ( DarkSkyWeatherDataItem.Hourly.Data wxHourlyForecast : darkSky.getHourly().getData() )
+                    {
+                        currentForecastHour = UtilityMethod.getDateTime(
+                            Integer.parseInt( wxHourlyForecast.getTime() ) ).toInstant().atZone(
+                                ZoneId.systemDefault() ).toLocalDateTime();
+
+                        float fTemp = wxHourlyForecast.getTemperature();
+                        String forecastTime = currentForecastHour.format( hourlyFormat );
+
+                        if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
+                                currentForecastHour.getYear() == currentHour.getYear() )
+                        {
+                            if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                            {
+                                hourlyReading.put( forecastTime, fTemp );
+                                x++;
+                            }// end of if block
+                        }// end of if block
+                        else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
+                                currentForecastHour.getYear() == currentHour.getYear() )
+                        {
+                            hourlyReading.put( forecastTime, fTemp );
+                            x++;
+                        }// end of if block
+
+                        if( x == 6 )
+                        {
+                            break;
+                        }// end of if block
+                    }// end of first for each loop
+
                     // Five Day Forecast
                     i = 1;
                     hl = new int[ 5 ][ 2 ];
 
-                    for ( DarkSkyWeatherDataItem.Daily.Data wxForecast : darkSky.getDaily().getData()  )
+                    for ( DarkSkyWeatherDataItem.Daily.Data wxForecast : darkSky.getDaily().getData() )
                     {
                         String fHigh;
                         String fLow;
@@ -3833,6 +4105,46 @@ public class WidgetUpdateService extends JobIntentService
                     smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
                     smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
+                    hourlyReading = new Hashtable<>();
+                    float fTemp;    // forecasted hour temperature
+                    currentHour = LocalDateTime.now();
+                    DateTimeFormatter hourFormat = DateTimeFormatter.ofPattern( "h:mm a" );
+                    DateTimeFormatter localDateFormat = DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm:ss" );
+                    List< WeatherBitWeatherDataItem.FortyEightHourForecastData.Data > wFhf = weatherBitHx.getData();
+                    x = 1;
+
+                    for ( WeatherBitWeatherDataItem.FortyEightHourForecastData.Data wxHourlyForecast : wFhf )
+                    {
+                        currentForecastHour = LocalDateTime.parse(
+                            wxHourlyForecast.getTimestampLocal(), localDateFormat );
+                        String forecastTime = currentForecastHour.format( hourFormat );
+
+                        fTemp = Math.round( wxHourlyForecast.getTemp() );
+
+                        if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
+                                currentForecastHour.getYear() == currentHour.getYear() )
+                        {
+                            if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                            {
+                                hourlyReading.put( forecastTime, fTemp );
+                                x++;
+                            }// end of if block
+                        }// end of if block
+                        else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
+                                currentForecastHour.getYear() == currentHour.getYear() )
+                        {
+                            hourlyReading.put( forecastTime, fTemp );
+                            x++;
+                        }// end of if block
+
+                        if( x == 6 )
+                        {
+                            break;
+                        }// end of if block
+                    }// end of for each loop
+
                     // Five Day Forecast
                     List< WeatherBitWeatherDataItem.SixteenDayForecastData.Data > wFdf = weatherBitFx.getData();
 //                    int count = wFdf.size(); // number of items in the array
@@ -4090,51 +4402,125 @@ public class WidgetUpdateService extends JobIntentService
                     smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
                     List< YrWeatherDataItem.Forecast > fdf = yr.getForecast();
+                    List< YrWeatherDataItem.HourByHourForecast > fhf = yr.getHourlyForecast();
+
+                    float lowestTempToday = 0;
+                    float highestTempToday = Float.parseFloat(currentLow.toString() );
+                    currentHour = LocalDateTime.now();
+                    hourlyReading = new Hashtable<>();
+                    hourlyFormat = DateTimeFormatter.ofPattern( "h:mm a" );
+
+                    x = 1;
+
+                    // get the highs and lows from the forecast first
+                    for ( YrWeatherDataItem.HourByHourForecast wxTempReading : fhf )
+                    {
+                        currentForecastHour = wxTempReading.getTimeFrom().toInstant().atZone(
+                                ZoneId.systemDefault() ).toLocalDateTime();
+
+                        fTemp = (float) Math.round(
+                                UtilityMethod.celsiusToFahrenheit(
+                                        wxTempReading.getTemperatureValue() ) );
+
+                        if( highestTempToday == 0 || fTemp > highestTempToday )
+                        {
+                            highestTempToday = Math.round( fTemp );
+                        }// end of if block
+
+                        if( lowestTempToday == 0 || fTemp < lowestTempToday )
+                        {
+                            lowestTempToday = Math.round( fTemp );
+                        }// end of if block
+
+                        String forecastTime = currentForecastHour.format( hourlyFormat );
+
+                        if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
+                                currentForecastHour.getYear() == currentHour.getYear() )
+                        {
+                            if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                            {
+                                hourlyReading.put( forecastTime, fTemp );
+                                x++;
+                            }// end of if block
+                        }// end of if block
+                        else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
+                            currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
+                            currentForecastHour.getYear() == currentHour.getYear() )
+                        {
+                           hourlyReading.put( forecastTime, fTemp );
+                            x++;
+                        }// end of if block
+
+                        if( x == 6 )
+                        {
+                            break;
+                        }// end of if block
+                    }// end of first for each loop
 
                     // Five Day Forecast
                     i = 1;
                     float fHigh = 0;    // forecasted high
                     float fLow = 0;     // forecasted low
                     Date currentDate = new Date();
+                    Date readingDate;
                     dailyReading = new Hashtable<>();
-                    int x = 0;
+
                     df = new SimpleDateFormat( "MMMM dd, yyyy", Locale.ENGLISH );
                     String temps;
+
+                    x = 0;
 
                     // get the highs and lows from the forecast first
                     for ( Forecast wxTempReading : fdf )
                     {
+                        readingDate = wxTempReading.getTimeFrom();
+                        String cd = df.format( currentDate );
+                        String rd = df.format( readingDate );
                         x++;
 
-                        if ( x == 1 )
+                        if( x == 1 && dailyReading.size() == 0 )
                         {
-                            currentDate = wxTempReading.getTimeFrom();
-                            fHigh = (float) Math.round( UtilityMethod.celsiusToFahrenheit( wxTempReading.getTemperatureValue() ) );
-                            fLow = (float) Math.round( UtilityMethod.celsiusToFahrenheit( wxTempReading.getTemperatureValue() ) );
-                        }// end of if block
-
-                        // monitor date change
-                        if ( df.format( wxTempReading.getTimeFrom() ).equals( df.format( currentDate ) ) )
-                        {
-                            float cr = (float) Math.round( UtilityMethod.celsiusToFahrenheit( wxTempReading.getTemperatureValue() ) );
-
-                            if ( cr > fHigh )
+                            if( rd.equals(cd ) || readingDate.after( currentDate ) )
                             {
-                                fHigh = cr;
-                            }// end of if block
+                                fHigh = highestTempToday;
+                                fLow = lowestTempToday;
 
-                            if (cr < fLow)
-                            {
-                                fLow = cr;
+                                float[][] hl = { { highestTempToday, lowestTempToday } };
+                                dailyReading.put( df.format( wxTempReading.getTimeFrom() ), hl );
+                                x = 0;
                             }// end of if block
-                        }// end of if block
-
-                        if ( wxTempReading.getTimePeriod() == 3 )
+                        }// end of block
+                        else
                         {
-                            x = 0;
-                            float[][] hl = { { fHigh, fLow } };
-                            dailyReading.put( df.format( wxTempReading.getTimeFrom() ), hl );
-                        }// end of if block
+                            if( !df.format( readingDate ).equals( df.format( currentDate ) ) )
+                            {
+                                if ( x == 1 )
+                                {
+                                    fHigh = (float) Math.round( UtilityMethod.celsiusToFahrenheit( wxTempReading.getTemperatureValue() ) );
+                                    fLow = (float) Math.round( UtilityMethod.celsiusToFahrenheit( wxTempReading.getTemperatureValue() ) );
+                                }// end of if block
+
+                                float cr = (float) Math.round( UtilityMethod.celsiusToFahrenheit( wxTempReading.getTemperatureValue() ) );
+
+                                if ( cr > fHigh )
+                                {
+                                    fHigh = cr;
+                                }// end of if block
+
+                                if (cr < fLow)
+                                {
+                                    fLow = cr;
+                                }// end of if block
+
+                                if ( wxTempReading.getTimePeriod() == 3 )
+                                {
+                                    x = 0;
+                                    float[][] hl = { { fHigh, fLow } };
+                                    dailyReading.put( df.format( wxTempReading.getTimeFrom() ), hl );
+                                }// end of if block
+                            }// end of if block
+                        }// end of else block
                     }// end of first for each loop
 
                     x = 0;
@@ -4149,8 +4535,8 @@ public class WidgetUpdateService extends JobIntentService
                         // the first time period is always the current reading for this moment
                         if ( x == 1 )
                         {
-                            fHigh = dailyReading.get( df.format( wxForecast.getTimeFrom() ) ) [ 0 ][ 0 ];
-                            fLow = dailyReading.get( df.format( wxForecast.getTimeFrom() ) ) [ 0 ][ 1 ];
+                            fHigh = dailyReading.get( fDate ) [ 0 ][ 0 ];
+                            fLow = dailyReading.get( fDate ) [ 0 ][ 1 ];
 
                             if( WeatherLionApplication.storedPreferences.getUseMetric() )
                             {
@@ -4301,7 +4687,7 @@ public class WidgetUpdateService extends JobIntentService
 //                try
 //                {
 //                    forecastDate = new SimpleDateFormat( "EEE MMM dd HH:mm:ss z yyyy",
-//                        Locale.ENGLISH ).parse( wxDayForecast.getDate() );
+//                        Locale.ENGLISH ).parse( wxDayForecast.getTime() );
 //                }// end of try block
 //                catch ( ParseException e )
 //                {

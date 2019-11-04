@@ -21,15 +21,17 @@ import java.util.List;
  * </ul>
  */
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class WeatherBitWeatherDataItem
 {
 //	private static WeatherBitWeatherDataItem.FiveDayForecastData wbFxWeatherData; // Deprecated
 	static WeatherBitWeatherDataItem.SixteenDayForecastData wbFxWeatherData;
+	static WeatherBitWeatherDataItem.FortyEightHourForecastData wbHxWeatherData;
 	static WeatherBitWeatherDataItem.WeatherData wbWxWeatherData;
 
     private WeatherData wx;
     private FiveDayForecastData fx;
+	private FortyEightHourForecastData hx;
     
     public WeatherBitWeatherDataItem()
     {
@@ -53,6 +55,16 @@ public class WeatherBitWeatherDataItem
 	public void setFx(FiveDayForecastData fx) 
 	{
 		this.fx = fx;
+	}
+
+	public FortyEightHourForecastData getHx()
+	{
+		return hx;
+	}
+
+	public void setHx( FortyEightHourForecastData hx )
+	{
+		this.hx = hx;
 	}
 
     public class WeatherData
@@ -462,6 +474,413 @@ public class WeatherBitWeatherDataItem
 
         }// end of class Weather
     }// end of class WeatherData
+
+	public class FortyEightHourForecastData
+	{
+		private List<Data> data;
+
+		public List<Data> getData()
+		{
+			return data;
+		}
+
+		public void setData(List<Data> data)
+		{
+			this.data = data;
+		}
+
+		public class Data
+		{
+			private String wind_cdir;
+			private double rh;
+			private String pod;
+			private String timestamp_utc;
+			private double pres;
+			private double solar_rad;
+			private double ozone;
+			private Weather weather;
+			private double wind_gust_spd;
+			private String timestamp_local;
+			private int snow_depth;
+			private int clouds;
+			private int ts;
+			private double wind_spd;
+			private int pop;
+			private String wind_cdir_full;
+			private double slp;
+			private double dni;
+			private double dewpt;
+			private int snow;
+			private double uv;
+			private int wind_dir;
+			private int clouds_hi;
+			private double precip;
+			private double vis;
+			private double dhi;
+			private double app_temp;
+			private String datetime;
+			private double temp;
+			private double ghi;
+			private int clouds_mid;
+			private int clouds_low;
+
+			public String getWindCDir()
+			{
+				return wind_cdir;
+			}
+
+			public void setWindCDir( String wind_cdir )
+			{
+				this.wind_cdir = wind_cdir;
+			}
+
+			public double getRh()
+			{
+				return rh;
+			}
+
+			public void setRh( double rh )
+			{
+				this.rh = rh;
+			}
+
+			public String getPod()
+			{
+				return pod;
+			}
+
+			public void setPod( String pod )
+			{
+				this.pod = pod;
+			}
+
+			public String getTimestampUtc()
+			{
+				return timestamp_utc;
+			}
+
+			public void setTimestampUtc( String timestamp_utc )
+			{
+				this.timestamp_utc = timestamp_utc;
+			}
+
+			public double getPres()
+			{
+				return pres;
+			}
+
+			public void setPres( double pres )
+			{
+				this.pres = pres;
+			}
+
+			public double getSolarRad()
+			{
+				return solar_rad;
+			}
+
+			public void setSolar_rad( double solar_rad )
+			{
+				this.solar_rad = solar_rad;
+			}
+
+			public double getOzone()
+			{
+				return ozone;
+			}
+
+			public void setOzone( double ozone )
+			{
+				this.ozone = ozone;
+			}
+
+			public Weather getWeather()
+			{
+				return weather;
+			}
+
+			public void setWeather( Weather weather )
+			{
+				this.weather = weather;
+			}
+
+			public double getWindGustSpd()
+			{
+				return wind_gust_spd;
+			}
+
+			public void setWindGustSpd( double wind_gust_spd )
+			{
+				this.wind_gust_spd = wind_gust_spd;
+			}
+
+			public String getTimestampLocal()
+			{
+				return timestamp_local;
+			}
+
+			public void setTimestampLocal( String timestamp_local )
+			{
+				this.timestamp_local = timestamp_local;
+			}
+
+			public int getSnowDepth()
+			{
+				return snow_depth;
+			}
+
+			public void setSnowDepth( int snow_depth )
+			{
+				this.snow_depth = snow_depth;
+			}
+
+			public int getClouds()
+			{
+				return clouds;
+			}
+
+			public void setClouds( int clouds )
+			{
+				this.clouds = clouds;
+			}
+
+			public int getTs()
+			{
+				return ts;
+			}
+
+			public void setTs( int ts )
+			{
+				this.ts = ts;
+			}
+
+			public double getWindSpd()
+			{
+				return wind_spd;
+			}
+
+			public void setWindSpd( double wind_spd )
+			{
+				this.wind_spd = wind_spd;
+			}
+
+			public int getPop()
+			{
+				return pop;
+			}
+
+			public void setPop( int pop )
+			{
+				this.pop = pop;
+			}
+
+			public String getWindCDirFull()
+			{
+				return wind_cdir_full;
+			}
+
+			public void setWindCDirFull( String wind_cdir_full )
+			{
+				this.wind_cdir_full = wind_cdir_full;
+			}
+
+			public double getSlp()
+			{
+				return slp;
+			}
+
+			public void setSlp( double slp )
+			{
+				this.slp = slp;
+			}
+
+			public double getDni()
+			{
+				return dni;
+			}
+
+			public void setDni( double dni )
+			{
+				this.dni = dni;
+			}
+
+			public double getDewpt()
+			{
+				return dewpt;
+			}
+
+			public void setDewpt( double dewpt )
+			{
+				this.dewpt = dewpt;
+			}
+
+			public int getSnow()
+			{
+				return snow;
+			}
+
+			public void setSnow( int snow )
+			{
+				this.snow = snow;
+			}
+
+			public double getUv()
+			{
+				return uv;
+			}
+
+			public void setUv( double uv )
+			{
+				this.uv = uv;
+			}
+
+			public int getWindDir()
+			{
+				return wind_dir;
+			}
+
+			public void setWindDir( int wind_dir )
+			{
+				this.wind_dir = wind_dir;
+			}
+
+			public int getCloudsHi() {
+				return clouds_hi;
+			}
+
+			public void setCloudsHi( int clouds_hi )
+			{
+				this.clouds_hi = clouds_hi;
+			}
+
+			public double getPrecip()
+			{
+				return precip;
+			}
+
+			public void setPrecip( double precip )
+			{
+				this.precip = precip;
+			}
+
+			public double getVis()
+			{
+				return vis;
+			}
+
+			public void setVis( double vis )
+			{
+				this.vis = vis;
+			}
+
+			public double getDhi()
+			{
+				return dhi;
+			}
+
+			public void setDhi( double dhi )
+			{
+				this.dhi = dhi;
+			}
+
+			public double getAppTemp()
+			{
+				return app_temp;
+			}
+
+			public void setAppTemp( double app_temp )
+			{
+				this.app_temp = app_temp;
+			}
+
+			public String getDatetime()
+			{
+				return datetime;
+			}
+
+			public void setDatetime( String datetime )
+			{
+				this.datetime = datetime;
+			}
+
+			public double getTemp()
+			{
+				return temp;
+			}
+
+			public void setTemp( double temp )
+			{
+				this.temp = temp;
+			}
+
+			public double getGhi()
+			{
+				return ghi;
+			}
+
+			public void setGhi( double ghi )
+			{
+				this.ghi = ghi;
+			}
+
+			public int getCloudsMid()
+			{
+				return clouds_mid;
+			}
+
+			public void setCloudsMid( int clouds_mid )
+			{
+				this.clouds_mid = clouds_mid;
+			}
+
+			public int getCloudsLow()
+			{
+				return clouds_low;
+			}
+
+			public void setCloudsLow( int clouds_low )
+			{
+				this.clouds_low = clouds_low;
+			}
+
+			public class Weather
+			{
+				private String icon;
+				private String code;
+				private String description;
+
+				public String getIcon()
+				{
+					return icon;
+				}
+				public void setIcon(String icon)
+				{
+					this.icon = icon;
+				}
+
+				public String getCode()
+				{
+					return code;
+				}
+				public void setCode(String code)
+				{
+					this.code = code;
+				}
+
+				public String getDescription()
+				{
+					return description;
+				}
+
+				public void setDescription(String description)
+				{
+					this.description = description;
+				}
+
+			}// end of class Weather
+
+		}// end of class Data
+	}// end of inner class FortyEightHourForecastData
 
     public class FiveDayForecastData
     {
@@ -1358,19 +1777,27 @@ public class WeatherBitWeatherDataItem
         
     }// end of inner class SixteenDayForecastData
 
-    private static boolean DeserializeWeatherBitWxJSON( String strJSON )
+    private static boolean deserializeWeatherBitWxJSON( String strJSON )
     {
     	Gson gson = new Gson();
         wbWxWeatherData = gson.fromJson( strJSON, WeatherBitWeatherDataItem.WeatherData.class );
 
 		return wbWxWeatherData != null;
-    }// end of method DeserializeWeatherBitWxJSON
+    }// end of method deserializeWeatherBitWxJSON
 
-    private static boolean DeserializeWeatherBitFxJSON( String strJSON )
+	private static boolean deserializeWeatherBitHxJSON( String strJSON )
+	{
+		Gson gson = new Gson();
+		wbHxWeatherData = gson.fromJson( strJSON, WeatherBitWeatherDataItem.FortyEightHourForecastData.class );
+
+		return wbHxWeatherData != null;
+	}// end of method deserializeWeatherBitHxJSON
+
+    private static boolean deserializeWeatherBitFxJSON( String strJSON )
     {
     	Gson gson = new Gson();
         wbFxWeatherData = gson.fromJson( strJSON, WeatherBitWeatherDataItem.SixteenDayForecastData.class );
 
 		return wbFxWeatherData != null;
-    }// end of method DeserializeWeatherBitFxJSON
+    }// end of method deserializeWeatherBitFxJSON
 }// end of class WeatherBitWeatherDataItem

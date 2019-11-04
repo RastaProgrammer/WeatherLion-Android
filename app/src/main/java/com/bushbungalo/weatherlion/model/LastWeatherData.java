@@ -27,6 +27,7 @@ public class LastWeatherData
         private Wind wind;
         private Astronomy astronomy;
         private Current current;
+        private List<HourlyForecast.HourForecast> hourlyForecast;
         private List<DailyForecast.DayForecast> dailyForecast;
 
         public Wind getWind ()
@@ -47,6 +48,16 @@ public class LastWeatherData
         public void setAtmosphere ( Atmosphere atmosphere )
         {
             this.atmosphere = atmosphere;
+        }
+
+        public List<HourlyForecast.HourForecast> getHourlyForecast()
+        {
+            return hourlyForecast;
+        }
+
+        public void setHourlyForecast( List<HourlyForecast.HourForecast> hourlyForecast )
+        {
+            this.hourlyForecast = hourlyForecast;
         }
 
         public List<DailyForecast.DayForecast> getDailyForecast()
@@ -276,6 +287,63 @@ public class LastWeatherData
                 this.lowTemperature = lowTemperature;
             }
         }// end of class Current
+
+        public class HourlyForecast
+        {
+            private HourForecast hourForecast;
+
+            public HourForecast getHourForecast()
+            {
+                return hourForecast;
+            }
+
+            public void setHourForecast( HourForecast hourForecast )
+            {
+                this.hourForecast = hourForecast;
+            }
+
+            public List< HourForecast > getHourlyForecast()
+            {
+                return hourlyForecast;
+            }
+
+            public class HourForecast
+            {
+                private String time;
+                private String condition;
+                private int temperature;
+
+                public String getTime()
+                {
+                    return this.time;
+                }
+
+                public void setTime(String time)
+                {
+                    this.time = time;
+                }
+
+                public String getCondition()
+                {
+                    return condition;
+                }
+
+                public void setCondition( String condition )
+                {
+                    this.condition = condition;
+                }
+
+                public int getTemperature()
+                {
+                    return temperature;
+                }
+
+                public void setTemperature(int temperature)
+                {
+                    this.temperature = temperature;
+                }
+            }// end of class HourForecast
+        }// end of class HourlyForecast
 
         public class DailyForecast
         {

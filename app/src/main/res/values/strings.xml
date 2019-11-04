@@ -44,6 +44,11 @@
     <string name="Wednesday">Wed</string>
     <string name="Thursday">Thu</string>
     <string name="Friday">Fri</string>
+    <string name="Hour1">1:00</string>
+    <string name="Hour2">2:00</string>
+    <string name="Hour3">3:00</string>
+    <string name="Hour4">4:00</string>
+    <string name="Hour5">5:00</string>
     <string name="weather_icon">Weather Icon</string>
     <string name="refresh_weather_data">Refresh weather data</string>
     <string name="sunrise_placeholder">6:00 AM</string>

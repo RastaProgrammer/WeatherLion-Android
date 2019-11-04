@@ -3,9 +3,7 @@ package com.bushbungalo.weatherlion;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 
-import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
 import java.util.Objects;
@@ -20,6 +18,9 @@ public class BootCompleteReceiver extends BroadcastReceiver
             if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
             {
                 String invoker = this.getClass().getSimpleName() + "::onReceive";
+
+                UtilityMethod.refreshRequestedBySystem = true;
+                UtilityMethod.refreshRequestedByUser = false;
 
                 WeatherLionApplication.callMethodByName( null,
                         "refreshWeather",

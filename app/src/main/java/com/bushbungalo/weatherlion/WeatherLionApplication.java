@@ -1324,20 +1324,22 @@ public class WeatherLionApplication extends Application
     {
         if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
         {
-            UtilityMethod.refreshRequestedBySystem = true;
+            // do not execute back-to-back requests
+            if( UtilityMethod.updateRequired( context ) )
+            {
+                Bundle extras = new Bundle();
+                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                        WeatherLionApplication.UNIT_NOT_CHANGED );
 
-            Bundle extras = new Bundle();
-            extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
-            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                    WeatherLionApplication.UNIT_NOT_CHANGED );
+                Intent updateIntent = new Intent( this, WidgetUpdateService.class );
+                updateIntent.putExtras( extras );
+                WidgetUpdateService.enqueueWork( this, updateIntent );
 
-            Intent updateIntent = new Intent( this, WidgetUpdateService.class );
-            updateIntent.putExtras( extras );
-            WidgetUpdateService.enqueueWork( this, updateIntent );
-
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Update requested by " + invoker,  TAG + "::refreshWeather" );
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                        "Update requested by " + invoker,  TAG + "::refreshWeather" );
+            }// end of if block
         }// end of if block
     }// end of method refreshWeather
 
@@ -1745,6 +1747,7 @@ public class WeatherLionApplication extends Application
                             UtilityMethod.hasInternetConnection( getAppContext() ) )
                     {
                         UtilityMethod.refreshRequestedBySystem = true;
+                        UtilityMethod.refreshRequestedByUser = false;
 
                         String invoker = TAG + "::" + this.getClass().getSimpleName() + "::onReceive";
                         callMethodByName( WeatherLionApplication.class,

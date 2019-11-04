@@ -8,6 +8,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.bushbungalo.weatherlion.model.FiveDayForecast;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
+import com.bushbungalo.weatherlion.model.FiveHourForecast;
 import com.bushbungalo.weatherlion.model.WeatherDataXML;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 import com.google.gson.Gson;
@@ -20,6 +21,7 @@ import org.jdom2.output.XMLOutputter;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 
@@ -144,6 +146,27 @@ public class WeatherDataXMLService extends JobIntentService
 			current.addContent( new Element( "HighTemperature" ).setText( String.valueOf( xmlData.getCurrentHigh() ) ) );
 			current.addContent( new Element( "LowTemperature" ).setText( String.valueOf( xmlData.getCurrentLow() ) ) );
 			doc.getRootElement().addContent( current );
+
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "h a" );
+
+			// not all providers supply an hourly forecast
+			if( xmlData.getFiveHourForecast() != null )
+			{
+				Element hourlyForecastList = new Element( "HourlyForecast" );
+
+				// Five Hour Forecast
+				for ( FiveHourForecast forecast : xmlData.getFiveHourForecast() )
+				{
+					Element forecastData = new Element( "HourForecast" );
+					forecastData.addContent( new Element( "Time" ).setText( forecast.getForecastTime().format( formatter ) ) );
+					forecastData.addContent( new Element( "Condition" ).setText( UtilityMethod.toProperCase(
+							forecast.getForecastCondition() ) ) );
+					forecastData.addContent( new Element( "Temperature" ).setText( forecast.getForecastTemperature() ) );
+					hourlyForecastList.addContent( forecastData );
+				}// end of for each loop
+
+				doc.getRootElement().addContent( hourlyForecastList );
+			}// end of if block
 
 			Element forecastList = new Element( "DailyForecast" );
 

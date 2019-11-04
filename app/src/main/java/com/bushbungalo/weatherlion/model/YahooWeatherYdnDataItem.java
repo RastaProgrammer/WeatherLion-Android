@@ -353,12 +353,12 @@ public class YahooWeatherYdnDataItem
 		public long getDate()
 		{
 			return date;
-		}// end of method getDate
+		}// end of method getTime
 		
 		public void setDate( long date )
 		{
 			this.date = date;
-		}// end of method setDate
+		}// end of method setTime
 		
 		public double getLow()
 		{

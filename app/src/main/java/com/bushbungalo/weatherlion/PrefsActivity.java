@@ -444,7 +444,7 @@ public class PrefsActivity extends AppCompatActivity
             locationPref.setEnabled( !useSystemLocation );
 
             LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .registerReceiver(gpsBroadcastReceiver, new IntentFilter(
+                .registerReceiver( gpsBroadcastReceiver, new IntentFilter(
                     GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE ) );
 
             LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
@@ -610,7 +610,8 @@ public class PrefsActivity extends AppCompatActivity
                                 UtilityMethod.serviceCall( entry );
                                 WeatherLionApplication.storedPreferences.setProvider( entry );
                                 WeatherLionApplication.storedData.getProvider().setName( entry );
-                                UtilityMethod.refreshRequestedBySystem = true;
+                                UtilityMethod.refreshRequestedByUser = true;
+                                UtilityMethod.refreshRequestedBySystem = false;
                             }// end of if block
                             else
                             {
@@ -639,7 +640,7 @@ public class PrefsActivity extends AppCompatActivity
             }// end of else block
 
             // this means that the change was not done by a binding event
-            if( UtilityMethod.refreshRequestedBySystem)
+            if( UtilityMethod.refreshRequestedBySystem || UtilityMethod.refreshRequestedByUser )
             {
                 WidgetUpdateService.widgetRefreshRequired = true;
                 UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO,
@@ -758,6 +759,8 @@ public class PrefsActivity extends AppCompatActivity
 
                     // bind the values so that the preference screen displays the GPS location
                     bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_location ) ) );
+                    UtilityMethod.refreshRequestedBySystem = true;
+                    UtilityMethod.refreshRequestedByUser = false;
 
                     String invoker = this.getClass().getSimpleName() + "::setGpsLocation";
                     WeatherLionApplication.callMethodByName( null,
@@ -883,7 +886,8 @@ public class PrefsActivity extends AppCompatActivity
                                 UtilityMethod.serviceCall( entry );
                                 WeatherLionApplication.storedPreferences.setProvider( entry );
                                 WeatherLionApplication.storedData.getProvider().setName( entry );
-                                UtilityMethod.refreshRequestedBySystem = true;
+                                UtilityMethod.refreshRequestedByUser = true;
+                                UtilityMethod.refreshRequestedBySystem = false;
                             }// end of if block
                             else
                             {

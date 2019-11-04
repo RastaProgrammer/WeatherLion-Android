@@ -28,6 +28,8 @@ public class UpdateAlarmBroadcastReceiver extends BroadcastReceiver
             if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
             {
                 UtilityMethod.refreshRequestedBySystem = true;
+                UtilityMethod.refreshRequestedByUser = false;
+
                 WeatherLionApplication.callMethodByName( null,
         "refreshWeather", new Class[]{ String.class }, new Object[]{ invoker } );
             }// end of if block

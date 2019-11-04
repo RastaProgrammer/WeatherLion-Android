@@ -33,6 +33,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -48,6 +49,7 @@ import android.widget.LinearLayout;
 import android.widget.ListPopupWindow;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextClock;
 import android.widget.TextView;
@@ -133,7 +135,8 @@ public class WeatherLionMain extends AppCompatActivity
     private SwipeRefreshLayout appRefresh;
 
     private RecyclerView forecastRecyclerView;
-    List< LastWeatherData.WeatherData.DailyForecast.DayForecast > forecastList;
+    List< LastWeatherData.WeatherData.HourlyForecast.HourForecast > hourlyForecastList;
+    List< LastWeatherData.WeatherData.DailyForecast.DayForecast > fiveDayForecastList;
 
     private TextView txvWeatherLocation;
     private TextClock txcLocalTime;
@@ -176,6 +179,7 @@ public class WeatherLionMain extends AppCompatActivity
             if( UtilityMethod.updateRequired( WeatherLionMain.this ) )
             {
                 UtilityMethod.refreshRequestedBySystem = true;
+                UtilityMethod.refreshRequestedByUser = false;
 
                 String invoker = WeatherLionMain.this.getClass().getSimpleName() +
                         "::clockTickBroadcastReceiver::onReceive";
@@ -471,7 +475,7 @@ public class WeatherLionMain extends AppCompatActivity
      * @param rl The {@code RelativeLayout} in which the image will be displayed
      * @param imageFile  The file name for the background image
      */
-    private static void loadWeatherBackdrop( RelativeLayout rl, String imageFile )
+    private static void loadWeatherBackdrop( ViewGroup rl, String imageFile )
     {
         InputStream is;
         Drawable d;
@@ -528,8 +532,10 @@ public class WeatherLionMain extends AppCompatActivity
      */
     private void loadMainActivityWeather()
     {
+        ViewGroup rootView = findViewById( R.id.weather_main_container );
+
         // load the applicable typeface in use
-        UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container ) );
+        UtilityMethod.loadCustomFont( rootView );
 
         WeatherLionApplication.storedData =
                 WeatherLionApplication.lastDataReceived.getWeatherData();
@@ -539,21 +545,87 @@ public class WeatherLionMain extends AppCompatActivity
         StringBuilder sunsetTime = new StringBuilder(
                 WeatherLionApplication.storedData.getAstronomy().getSunset() );
 
-        forecastList = new ArrayList<>( WeatherLionApplication.storedData.getDailyForecast() );
+        LinearLayout hourlyForecastGrid = findViewById( R.id.hourlyForecastGrid );
 
-        WeeklyForecastAdapter weeklyForecastAdapter = new WeeklyForecastAdapter( forecastList );
+        // if an hourly forecast is present then show it
+        if( WeatherLionApplication.storedData.getHourlyForecast().size() > 0 )
+        {
+            hourlyForecastGrid.setVisibility( View.VISIBLE );
+            hourlyForecastList = new ArrayList<>( WeatherLionApplication.storedData.getHourlyForecast() );
+
+            TextView txvHour;
+            ImageView imvHour;
+            TextView txvTemp;
+
+            for ( int i = 0; i < WeatherLionApplication.storedData.getHourlyForecast().size(); i++ )
+            {
+                LastWeatherData.WeatherData.HourlyForecast.HourForecast wxHourForecast =
+                        WeatherLionApplication.storedData.getHourlyForecast().get( i );
+                String forecastTime = null;
+
+                int  fTime = this.getResources().getIdentifier( "txvHour" + (i + 1),
+                        "id", this.getPackageName() );
+                int  fIcon = this.getResources().getIdentifier( "imvHour" + (i + 1) + "Icon",
+                        "id", this.getPackageName() );
+
+                int  fTemp = this.getResources().getIdentifier( "txvHour" + (i + 1) + "Temp",
+                        "id", this.getPackageName() );
+
+                txvHour = findViewById( fTime );
+                imvHour = findViewById( fIcon );
+                txvTemp = findViewById( fTemp );
+
+                txvHour.setText( wxHourForecast.getTime() );
+
+                // Load current forecast condition weather image
+                String fCondition = wxHourForecast.getCondition();
+
+                if( fCondition.toLowerCase().contains( "(day)" ) )
+                {
+                    fCondition = fCondition.replace( "(day)", "" ).trim();
+                }// end of if block
+                else if( fCondition.toLowerCase().contains( "(night)" ) )
+                {
+                    fCondition = fCondition.replace( "(night)", "" ).trim();
+                }// end of if block
+
+                String fConditionIcon
+                        = UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
+                        ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
+
+
+                loadWeatherIcon( imvHour, String.format(
+                    "weather_images/%s/weather_%s", WeatherLionApplication.iconSet, fConditionIcon ) );
+
+                txvTemp.setText( String.format( "%s%s", wxHourForecast.getTemperature(),
+                        WeatherLionApplication.DEGREES ) );
+
+                if( i == 4 )
+                {
+                    break;
+                }// end of if block
+            }// end of for loop
+        }// end of if block
+        else
+        {
+            hourlyForecastGrid.setVisibility( View.GONE );
+        }// end of else block
+
+        fiveDayForecastList = new ArrayList<>( WeatherLionApplication.storedData.getDailyForecast() );
+
+        WeeklyForecastAdapter weeklyForecastAdapter = new WeeklyForecastAdapter( fiveDayForecastList );
         forecastRecyclerView.setAdapter( weeklyForecastAdapter );
 
-        appRefresh =  findViewById( R.id.swlRefresh );
+        appRefresh = findViewById( R.id.swlRefresh );
 
         appRefresh.setOnRefreshListener( new SwipeRefreshLayout.OnRefreshListener()
         {
             @Override
             public void onRefresh()
             {
+                UtilityMethod.refreshRequestedBySystem = false;
+                UtilityMethod.refreshRequestedByUser = true;
                 refreshWeather();
-//                UtilityMethod.butteredToast(WeatherLionMain.this, "Refreshing widget...",
-//                        1, Toast.LENGTH_SHORT );
             }
         });
 
@@ -587,13 +659,13 @@ public class WeatherLionMain extends AppCompatActivity
         updateTemps(); // call update temps here
 
         // Some providers like Yahoo! loves to omit a zero on the hour mark example: 7:0 am
-        if( sunriseTime.length() == 6 )
+        if( sunriseTime.length() == 6 && sunriseTime.toString().contains( " " ) )
         {
             String[] ft = sunriseTime.toString().split( ":" );
             sunriseTime.setLength( 0 );
             sunriseTime.append( String.format( "%s%s%s", ft[ 0 ], ":0", ft[ 1 ] ) );
         }// end of if block
-        else if( sunsetTime.length() == 6 )
+        else if( sunsetTime.length() == 6 && sunsetTime.toString().contains( " " ) )
         {
             String[] ft= sunsetTime.toString().split( ":" );
             sunsetTime.setLength( 0 );
@@ -690,8 +762,8 @@ public class WeatherLionMain extends AppCompatActivity
 
         try
         {
-            rn = sdf.parse(sdf.format( rightNow.getTime() ) );
-            nightFall.setTime(sdf.parse( sunsetTwenty4HourTime ) );
+            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
+            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
             nightFall.set( Calendar.MINUTE,
                     Integer.parseInt(sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
             sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
@@ -701,9 +773,9 @@ public class WeatherLionMain extends AppCompatActivity
         } // end of try block
         catch ( ParseException e )
         {
-            UtilityMethod.logMessage(UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
                     TAG + "::loadMainActivityWeather [line: " +
-                            e.getStackTrace()[1].getLineNumber() + "]");
+                            e.getStackTrace()[1].getLineNumber() + "]" );
         }// end of catch block
 
         String currentConditionIcon;
@@ -755,11 +827,11 @@ public class WeatherLionMain extends AppCompatActivity
 
             loadWeatherIcon( imvCurrentConditionImage, imageFile );
 
-            RelativeLayout rlBackdrop = findViewById( R.id.weather_main_container);
+            //RelativeLayout rlBackdrop = findViewById( R.id.weather_main_container);
             String backdropFile = "weather_backgrounds/background_" +
                     Objects.requireNonNull( currentConditionIcon ).replace(".png", ".jpg" );
 
-            loadWeatherBackdrop( rlBackdrop, backdropFile );
+            loadWeatherBackdrop( rootView, backdropFile );
         }// end of if block
 
         // Update the weather provider
@@ -796,16 +868,29 @@ public class WeatherLionMain extends AppCompatActivity
                     UtilityMethod.getTimeSince( timeUpdated ) ) );
         }// end of if block
 
-        if( UtilityMethod.updateRequired( this ) )
-        {
-            refreshWeather();
-        }// end of if block
+//        if( UtilityMethod.updateRequired( this ) )
+//        {
+//            refreshWeather();
+//        }// end of if block
 
         if( loadingDialog != null )
         {
             stopLoading();
             loadingDialog.dismiss();
         }// end of if block
+
+        final ScrollView forecastScroll = findViewById( R.id.svForecastScroll );
+
+        forecastScroll.getViewTreeObserver().addOnGlobalLayoutListener(
+            new ViewTreeObserver.OnGlobalLayoutListener()
+            {
+                @Override
+                public void onGlobalLayout()
+                {
+                    forecastScroll.getViewTreeObserver().removeOnGlobalLayoutListener( this );
+                    forecastScroll.fullScroll( View.FOCUS_DOWN );
+                }
+            });
     }// end of method loadMainActivityWeather
 
     /**
@@ -1026,11 +1111,10 @@ public class WeatherLionMain extends AppCompatActivity
                         RecyclerView.ItemDecoration dividerItemDecoration = new DividerItemDecoration( dividerDrawable );
                         forecastRecyclerView.addItemDecoration( dividerItemDecoration );
 
-                        TextView txvLocalTime = findViewById(R.id.txvLocalTime);
+                        TextView txvLocalTime = findViewById( R.id.txvLocalTime );
                         txvLocalTime.setTypeface( WeatherLionApplication.currentTypeface );
                         txcLocalTime = findViewById( R.id.tcLocalTime );
                         txcLocalTime.setTypeface( WeatherLionApplication.currentTypeface );
-
                     }// end of if block
 
                     if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
@@ -1062,6 +1146,7 @@ public class WeatherLionMain extends AppCompatActivity
                     {
                         WeatherLionApplication.restoringWeatherData = true;
                         UtilityMethod.refreshRequestedBySystem = true;
+                        UtilityMethod.refreshRequestedByUser = false;
 
                         String invoker = this.getClass().getSimpleName() + "::onCreate";
                         WeatherLionApplication.callMethodByName( null,"refreshWeather",
@@ -1179,8 +1264,16 @@ public class WeatherLionMain extends AppCompatActivity
 
             try
             {
-                UtilityMethod.lastUpdated = df.parse(
-                        WeatherLionApplication.storedData.getProvider().getDate() );
+                if( WeatherLionApplication.storedData.getProvider().getDate() != null )
+                {
+                    UtilityMethod.lastUpdated = df.parse(
+                            WeatherLionApplication.storedData.getProvider().getDate() );
+
+                    WeatherLionApplication.currentSunriseTime = new StringBuilder(
+                            WeatherLionApplication.storedData.getAstronomy().getSunrise() );
+                    WeatherLionApplication.currentSunsetTime = new StringBuilder(
+                            WeatherLionApplication.storedData.getAstronomy().getSunset() );
+                }// end of if block
             }// end of try block
             catch ( ParseException e )
             {
@@ -1188,11 +1281,6 @@ public class WeatherLionMain extends AppCompatActivity
                         TAG + "::onCreate [line: " +
                                 e.getStackTrace()[1].getLineNumber()+ "]" );
             }// end of catch block
-
-            WeatherLionApplication.currentSunriseTime = new StringBuilder(
-                    WeatherLionApplication.storedData.getAstronomy().getSunrise() );
-            WeatherLionApplication.currentSunsetTime = new StringBuilder(
-                    WeatherLionApplication.storedData.getAstronomy().getSunset() );
         }// end of if block
 
         if( WeatherLionApplication.lastDataReceived != null )
@@ -1202,9 +1290,7 @@ public class WeatherLionMain extends AppCompatActivity
                 if( !findViewById( R.id.weather_main_container ).getTag().equals( "main_screen" ) )
                 {
                     setContentView( R.layout.wl_main_activity );
-
                     doGlimpseRotation( findViewById( R.id.imvBlade ) );
-
                     loadMainActivityWeather();
                 }// end of if block
             }// end of if block
@@ -1261,17 +1347,22 @@ public class WeatherLionMain extends AppCompatActivity
     {
         if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
         {
-            UtilityMethod.refreshRequestedBySystem = true;
-            showLoadingDialog( "Refreshing widget" );
+//            UtilityMethod.refreshRequestedBySystem = true;
+//            UtilityMethod.refreshRequestedByUser = false;
 
-            String invoker = this.getClass().getSimpleName() + "::refreshWeather";
-            WeatherLionApplication.callMethodByName( null,
-    "refreshWeather", new Class[]{ String.class }, new Object[]{ invoker } );
+            if( UtilityMethod.updateRequired( this ) )
+            {
+                showLoadingDialog( "Refreshing widget" );
+
+                String invoker = this.getClass().getSimpleName() + "::refreshWeather";
+                WeatherLionApplication.callMethodByName( null,
+            "refreshWeather", new Class[]{ String.class }, new Object[]{ invoker } );
+            }// end of if block
         }// end of if block
     }// end of method refreshWeather
 
     /**
-     * Display a dialog illiciting a response from the user
+     * Display a dialog eliciting a response from the user
      *
      * @param prompt    The prompt to be displayed to the user
      * @param title     The title of the dialog box
@@ -1495,6 +1586,7 @@ public class WeatherLionMain extends AppCompatActivity
 
                     // send out a broadcast to the widget service that the location preference has been modified
                     UtilityMethod.refreshRequestedBySystem = true;
+                    UtilityMethod.refreshRequestedByUser = false;
 
                     String invoker = this.getClass().getSimpleName() + "::showPreviousSearches";
                     WeatherLionApplication.callMethodByName( null,

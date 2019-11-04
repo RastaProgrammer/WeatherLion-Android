@@ -26,6 +26,7 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver
             if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
             {
                 UtilityMethod.refreshRequestedBySystem = true;
+                UtilityMethod.refreshRequestedByUser = false;
 
                 String invoker = this.getClass().getSimpleName() + "::onReceive";
                 WeatherLionApplication.callMethodByName( null,

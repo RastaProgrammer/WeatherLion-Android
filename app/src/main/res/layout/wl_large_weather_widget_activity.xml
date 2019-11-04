@@ -132,7 +132,6 @@
             <TextView
                 android:id="@+id/txvDayHigh"
                 android:layout_width="wrap_content"
-
                 android:layout_height="16dp"
                 android:gravity="center|top"
                 android:text="@string/no_reading_u"

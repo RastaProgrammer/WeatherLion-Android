@@ -109,6 +109,9 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
             Drawable d = Drawable.createFromStream( is, null );
 
             Date forecastDate = null;
+            SimpleDateFormat dayFormat = new SimpleDateFormat( "EEEE, MMM d",
+                    Locale.ENGLISH );
+            String today = dayFormat.format( new Date() );
 
             try
             {
@@ -122,8 +125,16 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                         e.getStackTrace()[1].getLineNumber()+ "]" );
             }// end of catch block
 
-            holder.txvDayDate.setText( new SimpleDateFormat( "EEEE, MMM d",
-                    Locale.ENGLISH ).format( forecastDate ) );
+            if( today.equals( dayFormat.format( forecastDate ) ) )
+            {
+                holder.txvDayDate.setText( String.format( "Today, %s",
+                    dayFormat.format( forecastDate ) ) );
+            }// end of if block
+            else
+            {
+                holder.txvDayDate.setText( dayFormat.format( forecastDate ) );
+            }// end of else block
+
             holder.txvDayConditions.setText( fCondition );
             holder.imvDayConditionImage.setImageDrawable( d );
         }// end of try block

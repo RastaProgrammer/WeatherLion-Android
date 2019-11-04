@@ -28,7 +28,7 @@ import java.util.Objects;
  * 11/21/17
  */
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class YrWeatherDataItem
 {
     private String name;
@@ -46,17 +46,13 @@ public class YrWeatherDataItem
     private Date sunset;
 
     public static YrWeatherDataItem yrWeatherDataItem;
-    private List<Forecast> forecast;   
+    private List<Forecast> forecast;
+	private List<HourByHourForecast> hourlyForecast;
 
 	private YrWeatherDataItem()
     {
-    }   
-    
-	public List<Forecast> getForecast()
-    {
-		return forecast;
-	}
-	
+    }
+
     public String getName() 
     {
 		return name;
@@ -185,11 +181,26 @@ public class YrWeatherDataItem
 	public void setSunset(Date sunset) 
 	{
 		this.sunset = sunset;
-	}	
+	}
 
-	public void setForecast(List<Forecast> forecast)
+	public List<Forecast> getForecast()
+	{
+		return forecast;
+	}
+
+	public void setForecast( List<Forecast> forecast )
 	{
 		this.forecast = forecast;
+	}
+
+	public List<HourByHourForecast> getHourlyForecast()
+	{
+		return hourlyForecast;
+	}
+
+	public void setHourlyForecast( List<HourByHourForecast> hourlyForecast )
+	{
+		this.hourlyForecast = hourlyForecast;
 	}
 
 	public static class Forecast
@@ -307,7 +318,7 @@ public class YrWeatherDataItem
 			this.symbolVar = symbolVar;
 		}
 
-		public float getPrecipValue() 
+		public float getPrecipValue()
 		{
 			return precipValue;
 		}
@@ -406,9 +417,214 @@ public class YrWeatherDataItem
 		{
 			this.pressureValue = pressureValue;
 		}
-    }// end of inner class Forecast 
+    }// end of inner class Forecast
 
-	public static void deserializeYrXML( String xmlData )
+	public static class HourByHourForecast
+	{
+		private Date timeFrom;
+		private Date timeTo;
+		private int symbolNumber;
+		private int symbolNumberEx;
+		private String symbolName;
+		private String symbolVar;
+		private float precipValue;
+		private float windDirDeg;
+		private String windDirCode;
+		private String windDirName;
+		private float windSpeedMps;
+		private String windSpeedName;
+		private String temperatureUnit;
+		private float temperatureValue;
+		private String pressureUnit;
+		private float pressureValue;
+
+		public HourByHourForecast( Date timeFrom, Date timeTo, int symbolNumber,
+					    int symbolNumberEx, String symbolName, String symbolVar,
+					    float precipValue, float windDirDeg, String windDirCode,
+						String windDirName, float windSpeedMps, String windSpeedName,
+						String temperatureUnit, float temperatureValue, String pressureUnit,
+					    float pressureValue )
+		{
+			this.timeFrom = timeFrom;
+			this.timeTo = timeTo;
+			this.symbolNumber = symbolNumber;
+			this.symbolNumberEx = symbolNumberEx;
+			this.symbolName = symbolName;
+			this.symbolVar = symbolVar;
+			this.precipValue = precipValue;
+			this.windDirDeg = windDirDeg;
+			this.windDirCode = windDirCode;
+			this.windDirName = windDirName;
+			this.windSpeedMps = windSpeedMps;
+			this.windSpeedName = windSpeedName;
+			this.temperatureUnit = temperatureUnit;
+			this.temperatureValue = temperatureValue;
+			this.pressureUnit = pressureUnit;
+			this.pressureValue = pressureValue;
+		}// end of constructor
+
+		public Date getTimeFrom()
+		{
+			return timeFrom;
+		}
+
+		public void setTimeFrom( Date timeFrom )
+		{
+			this.timeFrom = timeFrom;
+		}
+
+		public Date getTimeTo()
+		{
+			return timeTo;
+		}
+
+		public void setTimeTo( Date timeTo )
+		{
+			this.timeTo = timeTo;
+		}
+
+		public int getSymbolNumber()
+		{
+			return symbolNumber;
+		}
+
+		public void setSymbolNumber( int symbolNumber )
+		{
+			this.symbolNumber = symbolNumber;
+		}
+
+		public int getSymbolNumberEx()
+		{
+			return symbolNumberEx;
+		}
+
+		public void setSymbolNumberEx( int symbolNumberEx )
+		{
+			this.symbolNumberEx = symbolNumberEx;
+		}
+
+		public String getSymbolName()
+		{
+			return symbolName;
+		}
+
+		public void setSymbolName( String symbolName )
+		{
+			this.symbolName = symbolName;
+		}
+
+		public String getSymbolVar()
+		{
+			return symbolVar;
+		}
+
+		public void setSymbolVar( String symbolVar )
+		{
+			this.symbolVar = symbolVar;
+		}
+
+		public float getPrecipValue()
+		{
+			return precipValue;
+		}
+
+		public void setPrecipValue( float precipValue )
+		{
+			this.precipValue = precipValue;
+		}
+
+		public float getWindDirDeg()
+		{
+			return windDirDeg;
+		}
+
+		public void setWindDirDeg( float windDirDeg )
+		{
+			this.windDirDeg = windDirDeg;
+		}
+
+		public String getWindDirCode()
+		{
+			return windDirCode;
+		}
+
+		public void setWindDirCode( String windDirCode )
+		{
+			this.windDirCode = windDirCode;
+		}
+
+		public String getWindDirName()
+		{
+			return windDirName;
+		}
+
+		public void setWindDirName( String windDirName )
+		{
+			this.windDirName = windDirName;
+		}
+
+		public float getWindSpeedMps()
+		{
+			return windSpeedMps;
+		}
+
+		public void setWindSpeedMps( float windSpeedMps )
+		{
+			this.windSpeedMps = windSpeedMps;
+		}
+
+		public String getWindSpeedName()
+		{
+			return windSpeedName;
+		}
+
+		public void setWindSpeedName( String windSpeedName )
+		{
+			this.windSpeedName = windSpeedName;
+		}
+
+		public String getTemperatureUnit()
+		{
+			return temperatureUnit;
+		}
+
+		public void setTemperatureUnit( String temperatureUnit )
+		{
+			this.temperatureUnit = temperatureUnit;
+		}
+
+		public float getTemperatureValue()
+		{
+			return temperatureValue;
+		}
+
+		public void setTemperatureValue( float temperatureValue )
+		{
+			this.temperatureValue = temperatureValue;
+		}
+
+		public String getPressureUnit()
+		{
+			return pressureUnit;
+		}
+
+		public void setPressureUnit( String pressureUnit )
+		{
+			this.pressureUnit = pressureUnit;
+		}
+
+		public float getPressureValue()
+		{
+			return pressureValue;
+		}
+
+		public void setPressureValue( float pressureValue )
+		{
+			this.pressureValue = pressureValue;
+		}
+	}// end of inner class HourByHourForecast
+
+	public static void deserializeYrWeatherXML( String xmlData )
     {
 		SAXBuilder builder = new SAXBuilder();
 		Document weatherXML = null;
@@ -421,7 +637,7 @@ public class YrWeatherDataItem
 		catch ( IOException | JDOMException e )
 		{
 			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-			"::deserializeYrXML [line: " +
+			"::deserializeYrWeatherXML [line: " +
 						e.getStackTrace()[1].getLineNumber()+ "]" );
 		}// end of catch block
 		
@@ -504,10 +720,81 @@ public class YrWeatherDataItem
             String pressureUnit = elemList.get( i ).getChild( "pressure" ).getAttributeValue( "unit" );
             float pressureValue = Float.parseFloat( elemList.get( i ).getChild( "pressure" ).getAttributeValue( "value" ) );
             
-            yrWeatherDataItem.getForecast().add( new Forecast(timeFrom, timeTo, timePeriod, symbolNumber,
-                                       symbolNumberEx, symbolName, symbolVar, precipValue,
-                                       wdDeg, wdCode, wdName, wsMps, wsName,
-                                       tempUnit, tempValue, pressureUnit, pressureValue ) );
+            yrWeatherDataItem.getForecast().add(
+				new Forecast( timeFrom, timeTo, timePeriod, symbolNumber,
+				   symbolNumberEx, symbolName, symbolVar, precipValue,
+				   wdDeg, wdCode, wdName, wsMps, wsName,
+				   tempUnit, tempValue, pressureUnit, pressureValue ) );
         }// end of for loop
-    }// end of method deserializeYrXML
+    }// end of method deserializeYrWeatherXML
+
+	public static void deserializeYrHourlyXML( String xmlData )
+	{
+		SAXBuilder builder = new SAXBuilder();
+		Document weatherXML = null;
+
+		try
+		{
+			InputStream xmlStream = new ByteArrayInputStream( xmlData.getBytes( StandardCharsets.UTF_8 ) );
+			weatherXML = builder.build( xmlStream );
+		}// end of try block
+		catch ( IOException | JDOMException e )
+		{
+			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+					"::deserializeYrHourlyXML [line: " +
+							e.getStackTrace()[1].getLineNumber() + "]" );
+		}// end of catch block
+
+		// just in case the document contains unnecessary white spaces
+		builder.setIgnoringElementContentWhitespace( true );
+
+		// get the root node of the XML document
+		Element rootNode = Objects.requireNonNull( weatherXML ).getRootElement();
+		Element xnlCurrentLocation = rootNode.getChild( "location" );
+		Element meta = rootNode.getChild( "meta" );
+		Element sun = rootNode.getChild( "sun" );
+		Element xmlForecast = rootNode.getChild( "forecast" );
+		Element tabular = xmlForecast.getChild( "tabular" );
+		List<Element> elemList = tabular.getChildren( "time" );
+		DateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH );
+
+		yrWeatherDataItem.hourlyForecast = new ArrayList<>();
+
+		for ( int i = 0; i < elemList.size(); i++ )
+		{
+			Date timeFrom = null;
+			Date timeTo = null;
+
+			try
+			{
+				timeFrom = dateFormat.parse( elemList.get( i ).getAttributeValue( "from" ) );
+				timeTo = dateFormat.parse( elemList.get( i ).getAttributeValue( "to" ) );
+			}// end of try block
+			catch ( ParseException e )
+			{
+				e.printStackTrace();
+			}// end of catch block
+
+			int symbolNumber = Integer.parseInt( elemList.get( i ).getChild( "symbol" ).getAttributeValue( "number" ) );
+			int symbolNumberEx = Integer.parseInt( elemList.get( i ).getChild( "symbol" ).getAttributeValue( "numberEx" ) );
+			String symbolName = elemList.get( i ).getChild( "symbol" ).getAttributeValue( "name" );
+			String symbolVar = elemList.get( i ).getChild( "symbol" ).getAttributeValue( "var" );
+			float precipValue = Float.parseFloat( elemList.get( i ).getChild( "precipitation" ).getAttributeValue( "value" ) );
+			float wdDeg = Float.parseFloat( elemList.get( i ).getChild( "windDirection" ).getAttributeValue( "deg" ) );
+			String wdName = elemList.get( i ).getChild( "windDirection" ).getAttributeValue( "name" );
+			String wdCode = elemList.get( i ).getChild( "windDirection" ).getAttributeValue( "code" );
+			float wsMps = Float.parseFloat( elemList.get( i ).getChild( "windSpeed" ).getAttributeValue( "mps" ) );
+			String wsName = elemList.get( i ).getChild( "windSpeed" ).getAttributeValue( "name" );
+			String tempUnit = elemList.get( i ).getChild( "temperature" ).getAttributeValue( "unit" );
+			float tempValue = Float.parseFloat( elemList.get( i ).getChild( "temperature" ).getAttributeValue( "value" ) );
+			String pressureUnit = elemList.get( i ).getChild( "pressure" ).getAttributeValue( "unit" );
+			float pressureValue = Float.parseFloat( elemList.get( i ).getChild( "pressure" ).getAttributeValue( "value" ) );
+
+			yrWeatherDataItem.getHourlyForecast().add(
+				new HourByHourForecast( timeFrom, timeTo, symbolNumber,
+					symbolNumberEx, symbolName, symbolVar, precipValue,
+					wdDeg, wdCode, wdName, wsMps, wsName,
+					tempUnit, tempValue, pressureUnit, pressureValue ) );
+		}// end of for loop
+	}// end of method deserializeYrHourlyXML
 }// end of class yrWeatherDataItem

@@ -8,7 +8,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.net.Uri;
-import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
@@ -312,6 +311,7 @@ public class CityFinderPreference extends DialogPreference
 
                         // send out a broadcast to the widget service that the location preference has been modified
                         UtilityMethod.refreshRequestedBySystem = true;
+                        UtilityMethod.refreshRequestedByUser = false;
 
                         String invoker = this.getClass().getSimpleName() + "::onDialogClosed";
                         WeatherLionApplication.callMethodByName( null,
