@@ -398,7 +398,28 @@ public class CityFinderPreference extends DialogPreference
         popupWindow.setAdapter( new ArrayAdapter<>( getContext(), R.layout.wl_popup_list_item_dark_bg, listItems ) );
         popupWindow.setWidth( anchor.getWidth() );
         popupWindow.setVerticalOffset( 6 );
-        popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_blue) );
+
+        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( getContext() );
+        String widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
+            com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
+
+        if( widBackgroundColor != null )
+        {
+            switch ( widBackgroundColor.toLowerCase() )
+            {
+                case WeatherLionApplication.AQUA_THEME:
+                    popupWindow.setBackgroundDrawable(getContext().getDrawable(R.drawable.wl_round_list_popup_aqua));
+
+                    break;
+                case WeatherLionApplication.RABALAC_THEME:
+                    popupWindow.setBackgroundDrawable(getContext().getDrawable(R.drawable.wl_round_list_popup_rabalac));
+                    break;
+                case WeatherLionApplication.LION_THEME:
+                    popupWindow.setBackgroundDrawable(getContext().getDrawable(R.drawable.wl_round_list_popup_lion));
+
+                    break;
+            }// end of switch block
+        }// end of if block
 
         // if the list has more than 9 elements we will set the height if the window manually
         if( listItems.length > 9 )
