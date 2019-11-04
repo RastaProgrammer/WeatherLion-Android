@@ -1468,7 +1468,12 @@ public class WidgetUpdateService extends JobIntentService
                     currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
                     currentForecastHour.getYear() == currentHour.getYear() )
             {
-                if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                if( currentForecastHour.getHour() == currentHour.getHour() ||
+                        currentForecastHour.getHour() < currentHour.getHour())
+                {
+                    continue;
+                }// end of if block
+                else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
                 {
                     currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(
@@ -1477,7 +1482,7 @@ public class WidgetUpdateService extends JobIntentService
                                     validateCondition(
                                         wxHourlyForecast.getSummary().toLowerCase() ) ) ) );
                     x++;
-                }// end of if block
+                }// end of else if block
             }// end of if block
             else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
                     currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
@@ -2619,14 +2624,19 @@ public class WidgetUpdateService extends JobIntentService
                     currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
                     currentForecastHour.getYear() == currentHour.getYear() )
             {
-                if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                if( currentForecastHour.getHour() == currentHour.getHour() ||
+                        currentForecastHour.getHour() < currentHour.getHour())
+                {
+                    continue;
+                }// end of if block
+                else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
                 {
                     currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(
                             Math.round( hourlyReading.get( forecastTime ) ) ),
                                 wxHourlyForecast.getWeather().getDescription() ) );
                     x++;
-                }// end of if block
+                }// end of else if block
             }// end of if block
             else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
                     currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
@@ -3231,15 +3241,19 @@ public class WidgetUpdateService extends JobIntentService
                     currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
                     currentForecastHour.getYear() == currentHour.getYear() )
             {
-                if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                if( currentForecastHour.getHour() == currentHour.getHour() ||
+                        currentForecastHour.getHour() < currentHour.getHour())
+                {
+                    continue;
+                }// end of if block
+                else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
                 {
                     currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(
                             Math.round( hourlyReading.get( forecastTime ) ) ),
                                 wxTempReading.getSymbolName() ) );
-
                     x++;
-                }// end of if block
+                }// end of else if block
             }// end of if block
             else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
                     currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
@@ -3703,11 +3717,16 @@ public class WidgetUpdateService extends JobIntentService
                                 currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
                                 currentForecastHour.getYear() == currentHour.getYear() )
                         {
-                            if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                            if( currentForecastHour.getHour() == currentHour.getHour() ||
+                                    currentForecastHour.getHour() < currentHour.getHour())
+                            {
+                                continue;
+                            }// end of if block
+                            else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
                             {
                                 hourlyReading.put( forecastTime, fTemp );
                                 x++;
-                            }// end of if block
+                            }// end of else if block
                         }// end of if block
                         else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
                                 currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
@@ -4125,11 +4144,17 @@ public class WidgetUpdateService extends JobIntentService
                                 currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
                                 currentForecastHour.getYear() == currentHour.getYear() )
                         {
-                            if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                            // we don't need the current hour's forecast data or any before
+                            if( currentForecastHour.getHour() == currentHour.getHour() ||
+                                currentForecastHour.getHour() < currentHour.getHour())
+                            {
+                                continue;
+                            }// end of if block
+                            else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
                             {
                                 hourlyReading.put( forecastTime, fTemp );
                                 x++;
-                            }// end of if block
+                            }// end of else if block
                         }// end of if block
                         else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
                                 currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
@@ -4438,11 +4463,16 @@ public class WidgetUpdateService extends JobIntentService
                                 currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
                                 currentForecastHour.getYear() == currentHour.getYear() )
                         {
-                            if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                            if( currentForecastHour.getHour() == currentHour.getHour() ||
+                                    currentForecastHour.getHour() < currentHour.getHour())
+                            {
+                                continue;
+                            }// end of if block
+                            else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
                             {
                                 hourlyReading.put( forecastTime, fTemp );
                                 x++;
-                            }// end of if block
+                            }// end of else if block
                         }// end of if block
                         else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
                             currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&

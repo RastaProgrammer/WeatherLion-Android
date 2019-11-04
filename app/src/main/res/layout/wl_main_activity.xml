@@ -22,7 +22,8 @@
                 android:id="@+id/rlWeatherLocation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal" >
+                android:orientation="horizontal"
+                android:background="@drawable/wl_bottom_shadow_border">
 
                 <TextView
                     android:id="@+id/txvCurrentWeatherLocation"
@@ -65,6 +66,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/rlWeatherLocation"
+                android:layout_marginTop="4dip"
                 android:layout_marginBottom="7dip"
                 android:orientation="horizontal" >
 
