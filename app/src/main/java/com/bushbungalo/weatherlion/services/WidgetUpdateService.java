@@ -4798,6 +4798,8 @@ public class WidgetUpdateService extends JobIntentService
      */
     private String validateCondition( String condition )
     {
+        condition = condition.toLowerCase();
+
         if ( condition.contains( "until" ) )
         {
             condition = condition.substring( 0, condition.indexOf( "until" ) - 1 ).trim();
