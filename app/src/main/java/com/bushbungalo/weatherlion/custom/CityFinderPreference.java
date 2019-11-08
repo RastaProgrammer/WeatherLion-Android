@@ -14,10 +14,12 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -166,6 +168,20 @@ public class CityFinderPreference extends DialogPreference
                     popupWindow.dismiss();
                 }// end of if block
             }// end of method onTextChanged
+        });
+
+        edtCityName.setOnEditorActionListener( new TextView.OnEditorActionListener()
+        {
+            @Override
+            public boolean onEditorAction( TextView v, int actionId, KeyEvent event )
+            {
+                if ( actionId == EditorInfo.IME_ACTION_DONE )
+                {
+                    performSearch();
+                }// end of if block
+
+                return false;
+            }
         });
 
         imbSearch.setOnClickListener( new View.OnClickListener()
@@ -408,15 +424,13 @@ public class CityFinderPreference extends DialogPreference
             switch ( widBackgroundColor.toLowerCase() )
             {
                 case WeatherLionApplication.AQUA_THEME:
-                    popupWindow.setBackgroundDrawable(getContext().getDrawable(R.drawable.wl_round_list_popup_aqua));
-
+                    popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_aqua ) );
                     break;
                 case WeatherLionApplication.RABALAC_THEME:
-                    popupWindow.setBackgroundDrawable(getContext().getDrawable(R.drawable.wl_round_list_popup_rabalac));
+                    popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_rabalac ));
                     break;
                 case WeatherLionApplication.LION_THEME:
-                    popupWindow.setBackgroundDrawable(getContext().getDrawable(R.drawable.wl_round_list_popup_lion));
-
+                    popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_lion ) );
                     break;
             }// end of switch block
         }// end of if block

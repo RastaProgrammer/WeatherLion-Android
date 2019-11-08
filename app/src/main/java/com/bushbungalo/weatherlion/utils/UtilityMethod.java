@@ -62,6 +62,8 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -2172,7 +2174,58 @@ public abstract class UtilityMethod
      */
     public static Date getDateTime( long unixTimeValue )
     {
-        return new Date( unixTimeValue * 1000L ); // *1000 is to convert seconds to milliseconds
+        // Time zone now taken into consideration
+        LocalDateTime ldt = new Date( unixTimeValue * 1000L ).toInstant().atZone(
+            ZoneId.of( WeatherLionApplication.storedData.getLocation().getTimezone()
+                ) ).toLocalDateTime();
+
+        String cDate = String.format( "%s/%s/%s %s:%s", ldt.getDayOfMonth(),
+            ldt.getMonthValue(), ldt.getYear(), ldt.getHour(), ldt.getMinute() );
+
+        Date d = null;
+        SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy H:mm",
+                Locale.ENGLISH );
+
+        try
+        {
+            d = df.parse( cDate );
+        }// end of try block
+        catch ( ParseException e )
+        {
+            logMessage( LogLevel.SEVERE, e.getMessage(), TAG + "::getDateTime" );
+        }// end of catch block
+
+        // the time zone might still be incorrect
+        return d;
+    }// end of method getDateTime
+
+    /**
+     * Accepts a @code LocalDateTime} object and converts it to a {@code Date}
+     *
+     * @param ldt  A @code LocalDateTime} object
+     * @return  The {@code Date} object.
+     */
+    public static Date getDateTime( LocalDateTime ldt )
+    {
+        // Time zone now taken into consideration
+        String cDate = String.format( "%s/%s/%s %s:%s", ldt.getDayOfMonth(),
+                ldt.getMonthValue(), ldt.getYear(), ldt.getHour(), ldt.getMinute() );
+
+        Date d = null;
+        SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy H:mm",
+                Locale.ENGLISH );
+
+        try
+        {
+            d = df.parse( cDate );
+        }// end of try block
+        catch ( ParseException e )
+        {
+            logMessage( LogLevel.SEVERE, e.getMessage(), TAG + "::getDateTime" );
+        }// end of catch block
+
+        // the time zone might still be incorrect
+        return d;
     }// end of method getDateTime
 
     /**
@@ -2341,6 +2394,148 @@ public abstract class UtilityMethod
     {
         return cityName.contains( "," );
     }// end of method isValidCityName
+
+    /**
+     * Returns a {@code String} indicating the applicable weather condition icon
+     *
+     * @param currentCondition  The current weather condition
+     * @return  A {@code String} indicating the applicable weather condition icon
+     */
+    public static String getConditionIcon( StringBuilder currentCondition )
+    {
+        // Load current condition weather image
+        Calendar rightNow = Calendar.getInstance();
+
+        if ( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
+        {
+            if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
+                    WeatherLionApplication.storedData.getLocation().getTimezone() ) )
+            {
+                rightNow.setTime( UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ) );
+            }// end of if block
+        }// end of if block
+
+        Calendar nightFall = Calendar.getInstance();
+        Calendar sunUp = Calendar.getInstance();
+        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                Locale.ENGLISH ).format( rightNow.getTime() )
+                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
+        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                Locale.ENGLISH ).format( rightNow.getTime() )
+                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
+        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
+        Date rn = null; // date time right now (rn)
+        Date nf = null; // date time night fall (nf)
+        Date su = null; // date time sun up (su)
+
+        try
+        {
+            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
+            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
+            nightFall.set( Calendar.MINUTE,
+                    Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
+            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
+
+            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
+            su = sdf.parse( sdf.format( sunUp.getTime() ) );
+        } // end of try block
+        catch ( ParseException e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+        TAG + "::getConditionIcon [line: " +
+                    e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+        }// end of catch block
+
+        String currentConditionIcon;
+
+        if ( rn != null )
+        {
+            if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
+            {
+                if ( currentCondition.toString().toLowerCase().contains( "(night)") )
+                {
+                    currentConditionIcon = UtilityMethod.weatherImages.get(
+                            currentCondition.toString().toLowerCase() );
+                }// end of if block
+                else
+                {
+                    // Yahoo has a habit of having sunny nights
+                    if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                    {
+                        currentCondition.setLength( 0 );
+                        currentCondition.append( "Clear" );
+                    }// end of if block
+
+                    if ( UtilityMethod.weatherImages.containsKey(
+                            currentCondition.toString().toLowerCase() + " (night)") )
+                    {
+                        currentConditionIcon =
+                            UtilityMethod.weatherImages.get(
+                                currentCondition.toString().toLowerCase() + " (night)" );
+                    }// end of if block
+                    else
+                    {
+                        currentConditionIcon = UtilityMethod.weatherImages.get(
+                            currentCondition.toString().toLowerCase() );
+                    }// end of else block
+                }// end of else block
+
+                if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
+                {
+                    // sometimes the JSON data received is incomplete so this has to be taken into account
+                    for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
+                    {
+                        if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
+                        {
+                            currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
+                            break; // exit the loop
+                        }// end of if block
+                    }// end of for block
+
+                    // if a match still could not be found, use the not available icon
+                    if( currentConditionIcon == null )
+                    {
+                        currentConditionIcon = "na.png";
+                    }// end of if block
+                }// end of if block
+            }// end of if block
+            else
+            {
+                currentConditionIcon =
+                    UtilityMethod.weatherImages.get(
+                        currentCondition.toString().toLowerCase() );
+            }// end of else block
+
+            currentConditionIcon = UtilityMethod.weatherImages.get(
+                currentCondition.toString().toLowerCase() ) == null ?
+                "na.png" : currentConditionIcon;
+
+            return currentConditionIcon;
+        }// end of if block
+
+        return null;
+    }// end of method getConditionIcon
+
+    /**
+     * Returns a {@code String} indicating the applicable weather condition icon
+     *
+     * @param fCondition  The forecasted weather condition
+     * @return  A {@code String} indicating the applicable weather condition icon
+     */
+    public static String getForecastConditionIcon( String fCondition )
+    {
+        if( fCondition.toLowerCase().contains( "(day)" ) )
+        {
+            fCondition = fCondition.replace( "(day)", "" ).trim();
+        }// end of if block
+        else if( fCondition.toLowerCase().contains( "(night)" ) )
+        {
+            fCondition = fCondition.replace( "(night)", "" ).trim();
+        }// end of if block
+
+        return UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
+                ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
+    }// end of method getForecastConditionIcon
 
     /***
      * Returns the number of files found in a specific path
@@ -3588,6 +3783,10 @@ public abstract class UtilityMethod
         return timeElapsed;
     }// end of method getTimeSince
 
+    /**
+     * Loads a custom font to all applicable child {@code Object}s of a {@code ViewGroup}
+     * @param view The {@code ViewGroup} containing children with font attributes
+     */
     public static void loadCustomFont( ViewGroup view )
     {
         for ( int i = 0; i < view.getChildCount(); i++ )

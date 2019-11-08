@@ -28,9 +28,9 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
-import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.Preference;
 import com.bushbungalo.weatherlion.PrefsActivity;
+import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.WeatherLionMain;
 import com.bushbungalo.weatherlion.alarms.SunriseAlarmBroadcastReceiver;
@@ -44,6 +44,7 @@ import com.bushbungalo.weatherlion.model.FiveHourForecast;
 import com.bushbungalo.weatherlion.model.HereMapsWeatherDataItem;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
 import com.bushbungalo.weatherlion.model.OpenWeatherMapWeatherDataItem;
+import com.bushbungalo.weatherlion.model.TimeZoneInfo;
 import com.bushbungalo.weatherlion.model.WeatherBitWeatherDataItem;
 import com.bushbungalo.weatherlion.model.YahooWeatherYdnDataItem;
 import com.bushbungalo.weatherlion.model.YrWeatherDataItem;
@@ -137,6 +138,7 @@ public class WidgetUpdateService extends JobIntentService
     private Dictionary< String, float[][] > dailyReading;
     private Dictionary< String, Float > hourlyReading;
     private String tempUnits;
+    private LocalDateTime checkTime;
 
     private static LinkedHashMap<String, String> hereMapsWeatherProductKeys;
     static
@@ -328,8 +330,8 @@ public class WidgetUpdateService extends JobIntentService
                 }// ed of else block
 
                 String json;
-                float lat;
-                float lng;
+                float lat = 0.0f;
+                float lng = 0.0f;
                 strJSON = new ArrayList<>();
                 String wxDataProvider;
 
@@ -362,26 +364,67 @@ public class WidgetUpdateService extends JobIntentService
 
                             // if this location has already been used there is no need to query the
                             // web service as the location data has been stored locally
-                            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( currentCity.toString() );
+                            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( WeatherLionApplication.wxLocation );
 
                             if( CityData.currentCityData == null )
                             {
                                 json =
-                                        UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress( currentCity.toString() );
+                                    UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                                        WeatherLionApplication.wxLocation );
                                 CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
-                            }// end of if block
 
-                            lat = CityData.currentCityData.getLatitude();
-                            lng = CityData.currentCityData.getLongitude();
+                                lat = CityData.currentCityData.getLatitude();
+                                lng = CityData.currentCityData.getLongitude();
 
-                            if( WeatherLionApplication.currentLocationTimeZone == null )
-                            {
-                                WeatherLionApplication.currentLocationTimeZone =
+                                if(  WeatherLionApplication.currentLocationTimeZone == null)
+                                {
+                                    WeatherLionApplication.currentLocationTimeZone =
                                         UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
-                            }// end of if block
+                                }// end of if block
 
-                            CityData.currentCityData.setTimeZone(
+                                CityData.currentCityData.setTimeZone(
                                     WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+                            }// end of if block
+                            else
+                            {
+                                String today = new SimpleDateFormat( "MM/dd/yyyy",
+                                    Locale.ENGLISH ).format( new Date() );
+
+                                String sst = String.format( "%s %s", today,  WeatherLionApplication.currentSunsetTime.toString() );
+                                String srt = String.format( "%s %s", today,  WeatherLionApplication.currentSunriseTime.toString() );
+
+                                Date schedSunriseTime = null;
+                                Date schedSunsetTime = null;
+
+                                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
+                                    Locale.ENGLISH );
+
+                                try
+                                {
+                                    schedSunsetTime = sdf.parse( sst );
+                                    schedSunriseTime = sdf.parse( srt );
+                                } // end of try block
+                                catch ( ParseException e )
+                                {
+                                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                                            TAG + "::scheduleAstronomyUpdate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                                }// end of catch block
+
+                                WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
+                                        ZoneId.of( CityData.currentCityData.getTimeZone()
+                                        ) ).toLocalDateTime();
+
+                                // Load the time zone info for the current city
+                                WeatherLionApplication.currentLocationTimeZone = new TimeZoneInfo(
+                                        CityData.currentCityData.getCountryCode(),
+                                        CityData.currentCityData.getCountryName(),
+                                        CityData.currentCityData.getLatitude(),
+                                        CityData.currentCityData.getLongitude(),
+                                        CityData.currentCityData.getTimeZone(),
+                                        UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ),
+                                        schedSunriseTime,
+                                        schedSunsetTime );
+                            }// end of else block
 
                             switch( wxDataProvider )
                             {
@@ -1041,6 +1084,11 @@ public class WidgetUpdateService extends JobIntentService
                             "Updating weather data on widget %d...", largeWidgetId ),
                             TAG + "::updateAllAppWidgets" );
 
+                    largeWidgetRemoteViews.setString( R.id.tcCurrentTime, "setTimeZone",
+                        CityData.currentCityData.getTimeZone() );
+                    largeWidgetRemoteViews.setString( R.id.tcAMPM, "setTimeZone",
+                        CityData.currentCityData.getTimeZone() );
+
                     appWidgetManager.updateAppWidget( largeWidgetId,
                             largeWidgetRemoteViews );
                 }// end of for each loop
@@ -1309,6 +1357,9 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.getDateTime( darkSky.getDaily().getData().get( 0 ).getSunsetTime() ) ).
                 toUpperCase() );
 
+        WeatherLionApplication.currentSunriseTime = sunriseTime;
+        WeatherLionApplication.currentSunsetTime = sunsetTime;
+
         updateTemps( true ); // call update temps here
         formatWeatherCondition();
 
@@ -1346,102 +1397,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( sunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( sunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null;
-        Date nf = null;
-        Date su = null;
-
-        try
-        {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE, Integer.parseInt(
-                    sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
-
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadDarkSkyWeather [line: "
-                            + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-        }// end of catch block
-
-        String currentConditionIcon = null;
-
-        if ( Objects.requireNonNull( rn ).equals( nf ) || rn.after( nf ) || rn.before( su ) )
-        {
-            if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-            }// end of if block
-            else
-            {
-                if( UtilityMethod.weatherImages.containsKey( currentCondition.toString().toLowerCase() + " (night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(currentCondition.toString().toLowerCase() + " (night)");
-                }// end of if block
-                else
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-                }// end of else block
-            }// end of else block
-
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-        }// end of if block
-        else
-        {
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey().startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        currentCondition.setLength( 0 ); // reset
-                        currentCondition.append( e.getKey() );
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-            else
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-            }// end of else block
-        }// end of else block
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -1451,7 +1407,17 @@ public class WidgetUpdateService extends JobIntentService
 
         // Five Hour Forecast
         int x = 1;
-        LocalDateTime currentHour = LocalDateTime.now();
+
+        if( ZoneId.systemDefault().getId().toLowerCase().equals(
+                WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+        {
+            checkTime = LocalDateTime.now();
+        }// end of if block
+        else
+        {
+            checkTime = WeatherLionApplication.localDateTime;
+        }// end of else block
+
         LocalDateTime currentForecastHour;
         DateTimeFormatter hourlyFormat = DateTimeFormatter.ofPattern( "h:mm a" );
 
@@ -1459,21 +1425,21 @@ public class WidgetUpdateService extends JobIntentService
         for ( DarkSkyWeatherDataItem.Hourly.Data wxHourlyForecast : darkSky.getHourly().getData() )
         {
             currentForecastHour = UtilityMethod.getDateTime(
-                    Integer.parseInt( wxHourlyForecast.getTime() ) ).toInstant().atZone(
+                Integer.parseInt( wxHourlyForecast.getTime() ) ).toInstant().atZone(
                     ZoneId.systemDefault() ).toLocalDateTime();
 
             String forecastTime = currentForecastHour.format( hourlyFormat );
 
-            if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
-                    currentForecastHour.getYear() == currentHour.getYear() )
+            if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() &&
+                    currentForecastHour.getYear() == checkTime.getYear() )
             {
-                if( currentForecastHour.getHour() == currentHour.getHour() ||
-                        currentForecastHour.getHour() < currentHour.getHour())
+                if( currentForecastHour.getHour() == checkTime.getHour() ||
+                        currentForecastHour.getHour() < checkTime.getHour())
                 {
                     continue;
                 }// end of if block
-                else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                else if( currentForecastHour.getHour() == ( checkTime.getHour() + x ) )
                 {
                     currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(
@@ -1484,9 +1450,9 @@ public class WidgetUpdateService extends JobIntentService
                     x++;
                 }// end of else if block
             }// end of if block
-            else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
-                    currentForecastHour.getYear() == currentHour.getYear() )
+            else if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() + 1 &&
+                    currentForecastHour.getYear() == checkTime.getYear() )
             {
                 currentFiveHourForecast.add(
                     new FiveHourForecast( currentForecastHour, String.valueOf(
@@ -1521,41 +1487,8 @@ public class WidgetUpdateService extends JobIntentService
             largeWidgetRemoteViews.setTextViewText( fDay, new SimpleDateFormat(
             "E d", Locale.ENGLISH ).format( fxDate ) );
 
-            // Load current forecast condition weather image
-            if( fCondition.toLowerCase().contains( "(day)" ) )
-            {
-                fCondition = fCondition.replace( "(day)", "" ).trim();
-            }// end of if block
-            else if( fCondition.toLowerCase().contains( "(night)" ) )
-            {
-                fCondition = fCondition.replace( "(night)", "" ).trim();
-            }// end of if block
-
-            String fConditionIcon = null;
-
-            if( UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( fCondition.toLowerCase() ) )
-                    {
-                        fConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        fCondition = e.getKey();
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( fConditionIcon == null )
-                {
-                    fConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-            else
-            {
-                fConditionIcon = UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
-            }// end of if block
+            String fConditionIcon = UtilityMethod.getForecastConditionIcon(
+                    fCondition );
 
             loadWeatherIcon( largeWidgetRemoteViews, fIcon,
             "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
@@ -1667,108 +1600,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format(
-                rightNow.getTime() ) + " " + UtilityMethod.get24HourTime( sunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format(
-                rightNow.getTime() ) + " " + UtilityMethod.get24HourTime( sunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null;
-        Date nf = null;
-        Date su = null;
-
-        try
-        {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE, Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
-
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadHereMapsWeather [line: "
-                            + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-        }// end of catch block
-
-        String currentConditionIcon = null;
-
-        if ( Objects.requireNonNull( rn ).equals( nf ) || rn.after( nf ) || rn.before( su ) )
-        {
-            if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
-            {
-                currentConditionIcon =
-                        UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-            }// end of if block
-            else
-            {
-                if( UtilityMethod.weatherImages.containsKey(
-                        currentCondition.toString().toLowerCase() + " (night)" ) )
-                {
-                    currentConditionIcon =
-                            UtilityMethod.weatherImages.get(
-                                    currentCondition.toString().toLowerCase() + " (night)" );
-                }// end of if block
-                else
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() );
-                }// end of else block
-            }// end of else block
-
-            if( UtilityMethod.weatherImages.get(
-                    currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-        }// end of if block
-        else
-        {
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey().startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        currentCondition.setLength( 0 ); // reset
-                        currentCondition.append( e.getKey() );
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-            else
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get(
-                        currentCondition.toString().toLowerCase() );
-            }// end of else block
-        }// end of else block
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -1803,7 +1635,7 @@ public class WidgetUpdateService extends JobIntentService
             {
                 lastDate = fxDate;
 
-                String fCondition =wxForecast.getIconName().contains( "_" ) ?
+                String fCondition = wxForecast.getIconName().contains( "_" ) ?
                         UtilityMethod.toProperCase( wxForecast.getIconName().replaceAll( "_", " " ) ) :
                         UtilityMethod.toProperCase( wxForecast.getIconName().replaceAll( "_", " " ) );
                 fCondition = UtilityMethod.toProperCase(
@@ -1817,33 +1649,8 @@ public class WidgetUpdateService extends JobIntentService
                 largeWidgetRemoteViews.setTextViewText( fDayView, new SimpleDateFormat(
                 "E d", Locale.ENGLISH ).format( fxDate ) );
 
-                // Load current forecast condition weather image
-
-                String fConditionIcon = null;
-
-                if( UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null )
-                {
-                    // sometimes the JSON data received is incomplete so this has to be taken into account
-                    for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                    {
-                        if ( e.getKey() .startsWith( fCondition.toLowerCase() ) )
-                        {
-                            fConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                            fCondition = e.getKey();
-                            break; // exit the loop
-                        }// end of if block
-                    }// end of for block
-
-                    // if a match still could not be found, use the not available icon
-                    if( fConditionIcon == null )
-                    {
-                        fConditionIcon = "na.png";
-                    }// end of if block
-                }// end of if block
-                else
-                {
-                    fConditionIcon = UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
-                }// end of if block
+                String fConditionIcon = UtilityMethod.getForecastConditionIcon(
+                        fCondition );
 
                 loadWeatherIcon( largeWidgetRemoteViews, fIcon,
                         "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
@@ -1947,105 +1754,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( sunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( sunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null;
-        Date nf = null;
-        Date su = null;
-
-        try
-        {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE, Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
-
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadOpenWeather [line: " +
-                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-        }// end of catch block
-
-        String currentConditionIcon = null;
-
-        if ( Objects.requireNonNull( rn ).equals( nf ) || rn.after( nf ) || rn.before( su ) )
-        {
-            if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-            }// end of if block
-            else
-            {
-                if( UtilityMethod.weatherImages.containsKey(
-                        currentCondition.toString().toLowerCase() + " (night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() + " (night)");
-                }// end of if block
-                else
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() );
-                }// end of else block
-            }// end of else block
-
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-        }// end of if block
-        else
-        {
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        currentCondition.setLength( 0 ); // reset
-                        currentCondition.append( e.getKey() );
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-            else
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get(
-                        currentCondition.toString().toLowerCase() );
-            }// end of else block
-        }// end of else block
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -2079,31 +1788,8 @@ public class WidgetUpdateService extends JobIntentService
                 largeWidgetRemoteViews.setTextViewText( fDayView,  fDay );
 
                 // Load current forecast condition weather image
-                String fConditionIcon = null;
-
-                if( UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null )
-                {
-                    // sometimes the JSON data received is incomplete so this has to be taken into account
-                    for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                    {
-                        if ( e.getKey() .startsWith( fCondition.toLowerCase() ) )
-                        {
-                            fConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                            fCondition = e.getKey();
-                            break; // exit the loop
-                        }// end of if block
-                    }// end of for block
-
-                    // if a match still could not be found, use the not available icon
-                    if( fConditionIcon == null )
-                    {
-                        fConditionIcon = "na.png";
-                    }// end of if block
-                }// end of if block
-                else
-                {
-                    fConditionIcon = UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
-                }// end of if block
+                String fConditionIcon = UtilityMethod.getForecastConditionIcon(
+                        fCondition );
 
                 loadWeatherIcon( largeWidgetRemoteViews, fIcon,
             "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
@@ -2255,87 +1941,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null; // date time right now (rn)
-        Date nf = null; // date time night fall (nf)
-        Date su = null; // date time sun up (su)
-
-        try
-        {
-            rn = sdf.parse(sdf.format( rightNow.getTime() ) );
-            nightFall.setTime(sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE,
-                    Integer.parseInt(sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
-
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage(UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::loadMainActivityWeather [line: " +
-                            e.getStackTrace()[1].getLineNumber() + "]");
-        }// end of catch block
-
-        String currentConditionIcon;
-
-        if( rn != null )
-        {
-            if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
-            {
-                if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() );
-                }// end of if block
-                else
-                {
-                    // Yahoo has a habit of having sunny nights
-                    if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
-                    {
-                        currentCondition.setLength( 0 );
-                        currentCondition.append( "Clear" );
-                    }// end of if block
-
-                    if ( UtilityMethod.weatherImages.containsKey(
-                            currentCondition.toString().toLowerCase() + " (night)" ) )
-                    {
-                        currentConditionIcon =
-                                UtilityMethod.weatherImages.get(
-                                        currentCondition.toString().toLowerCase() + " (night)" );
-                    }// end of if block
-                    else {
-                        currentConditionIcon = UtilityMethod.weatherImages.get(
-                                currentCondition.toString().toLowerCase() );
-                    }// end of else block
-                }// end of else block
-            }// end of if block
-            else
-            {
-                currentConditionIcon =
-                        UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-            }// end of else block
-        }// end of if block
-        else
-        {
-            currentConditionIcon =
-                    UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-        }// end of else block
-
-        currentConditionIcon =  UtilityMethod.weatherImages.get(
-                currentCondition.toString().toLowerCase() ) == null ?
-                "na.png" :
-                currentConditionIcon;
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
         "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -2368,7 +1974,7 @@ public class WidgetUpdateService extends JobIntentService
             largeWidgetRemoteViews.setTextViewText( fDay, new SimpleDateFormat( "E d", Locale.ENGLISH ).format( forecastDate ) );
 
             // Load current forecast condition weather image
-            String fCondition = wxDayForecast.getCondition();
+            String fCondition = validateCondition( wxDayForecast.getCondition() );
 
             if( fCondition.toLowerCase().contains( "(day)" ) )
             {
@@ -2382,6 +1988,7 @@ public class WidgetUpdateService extends JobIntentService
             String fConditionIcon
                     = UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
                     ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
+            String wxIcon = "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon;
 
             loadWeatherIcon( largeWidgetRemoteViews, fIcon,
         "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
@@ -2499,104 +2106,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format(
-                rightNow.getTime() ) + " " + UtilityMethod.get24HourTime( sunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format(
-                rightNow.getTime() ) + " " + UtilityMethod.get24HourTime( sunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null;
-        Date nf = null;
-        Date su = null;
-
-        try
-        {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE, Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
-
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadWeatherBitWeather [line: " +
-                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-        }// end of catch block
-
-        String currentConditionIcon = null;
-
-        if ( Objects.requireNonNull( rn ).equals( nf ) || rn.after( nf ) || rn.before( su ) )
-        {
-            if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get(
-                        currentCondition.toString().toLowerCase() );
-            }// end of if block
-            else
-            {
-                if( UtilityMethod.weatherImages.containsKey( currentCondition.toString().toLowerCase() + " (night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() + " (night)" );
-                }// end of if block
-                else
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() );
-                }// end of else block
-            }// end of else block
-
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-        }// end of if block
-        else
-        {
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        currentCondition.setLength( 0 ); // reset
-                        currentCondition.append( e.getKey() );
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-            else
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-            }// end of else block
-        }// end of else block
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
         "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -2606,7 +2116,17 @@ public class WidgetUpdateService extends JobIntentService
 
         // Five Hour Forecast
         float fTemp;    // forecasted hour temperature
-        LocalDateTime currentHour = LocalDateTime.now();
+
+        if( ZoneId.systemDefault().getId().toLowerCase().equals(
+                WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+        {
+            checkTime = LocalDateTime.now();
+        }// end of if block
+        else
+        {
+            checkTime = WeatherLionApplication.localDateTime;
+        }// end of else block
+
         LocalDateTime currentForecastHour;
         DateTimeFormatter hourFormat = DateTimeFormatter.ofPattern( "h:mm a" );
         DateTimeFormatter localDateFormat = DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm:ss" );
@@ -2620,16 +2140,16 @@ public class WidgetUpdateService extends JobIntentService
             String forecastTime = currentForecastHour.format( hourFormat );
 
 
-            if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
-                    currentForecastHour.getYear() == currentHour.getYear() )
+            if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() &&
+                    currentForecastHour.getYear() == checkTime.getYear() )
             {
-                if( currentForecastHour.getHour() == currentHour.getHour() ||
-                        currentForecastHour.getHour() < currentHour.getHour())
+                if( currentForecastHour.getHour() == checkTime.getHour() ||
+                        currentForecastHour.getHour() < checkTime.getHour())
                 {
                     continue;
                 }// end of if block
-                else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                else if( currentForecastHour.getHour() == ( checkTime.getHour() + x ) )
                 {
                     currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(
@@ -2638,9 +2158,9 @@ public class WidgetUpdateService extends JobIntentService
                     x++;
                 }// end of else if block
             }// end of if block
-            else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
-                    currentForecastHour.getYear() == currentHour.getYear() )
+            else if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() + 1 &&
+                    currentForecastHour.getYear() == checkTime.getYear() )
             {
                 currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(
@@ -2682,7 +2202,7 @@ public class WidgetUpdateService extends JobIntentService
 
             if ( Objects.requireNonNull( fxDate ).after( new Date() ) )
             {
-                String fCondition = wxForecast.getWeather().getDescription();
+                String fCondition = validateCondition( wxForecast.getWeather().getDescription() );
 
                 if ( fxDate.after( new Date() ) )
                 {
@@ -2697,31 +2217,8 @@ public class WidgetUpdateService extends JobIntentService
                         "E d", Locale.ENGLISH ).format( fxDate ) );
 
                     // Load current forecast condition weather image
-                    String fConditionIcon = null;
-
-                    if( UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null )
-                    {
-                        // sometimes the JSON data received is incomplete so this has to be taken into account
-                        for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                        {
-                            if ( e.getKey() .startsWith( fCondition.toLowerCase() ) )
-                            {
-                                fConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                                fCondition = e.getKey();
-                                break; // exit the loop
-                            }// end of if block
-                        }// end of for block
-
-                        // if a match still could not be found, use the not available icon
-                        if( fConditionIcon == null )
-                        {
-                            fConditionIcon = "na.png";
-                        }// end of if block
-                    }// end of if block
-                    else
-                    {
-                        fConditionIcon = UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
-                    }// end of if block
+                    String fConditionIcon = UtilityMethod.getForecastConditionIcon(
+                            fCondition );
 
                     loadWeatherIcon( largeWidgetRemoteViews, fIcon,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
@@ -2848,105 +2345,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format(
-                rightNow.getTime() ) + " " + UtilityMethod.get24HourTime( sunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format(
-                rightNow.getTime() ) + " " + UtilityMethod.get24HourTime( sunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null;
-        Date nf = null;
-        Date su = null;
-
-        try
-        {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE, Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
-
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::loadYahooYdnWeather" );
-        }// end of catch block
-
-        String currentConditionIcon = null;
-
-        if ( Objects.requireNonNull( rn ).equals( nf ) || rn.after( nf ) || rn.before( su ) )
-        {
-            if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get(
-                        currentCondition.toString().toLowerCase() );
-            }// end of if block
-            else
-            {
-                if( UtilityMethod.weatherImages.containsKey(
-                        currentCondition.toString().toLowerCase() + " (night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() + " (night)");
-                }// end of if block
-                else
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() );
-                }// end of else block
-            }// end of else block
-
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-        }// end of if block
-        else
-        {
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        currentCondition.setLength( 0 ); // reset
-                        currentCondition.append( e.getKey() );
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-            else
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get(
-                        currentCondition.toString().toLowerCase() );
-            }// end of else block
-        }// end of else block
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
     "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -2962,7 +2361,7 @@ public class WidgetUpdateService extends JobIntentService
             Date fDate = UtilityMethod.getDateTime( fdf.get( i ).getDate() );
 
             // Load current forecast condition weather image
-            String fCondition =    UtilityMethod.toProperCase(
+            String fCondition = UtilityMethod.toProperCase(
                     validateCondition( UtilityMethod.yahooWeatherCodes[
                     fdf.get( i ).getCode() ] ) );
             int  fDay = this.getResources().getIdentifier( "txvDay" +  (i + 1),
@@ -2972,31 +2371,8 @@ public class WidgetUpdateService extends JobIntentService
 
             largeWidgetRemoteViews.setTextViewText(fDay, new SimpleDateFormat( "E d", Locale.ENGLISH ).format( fDate ));
 
-            String fConditionIcon = null;
-
-            if( UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey().startsWith( fCondition.toLowerCase() ) )
-                    {
-                        fConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        fCondition = e.getKey();
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( fConditionIcon == null )
-                {
-                    fConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-            else
-            {
-                fConditionIcon = UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
-            }// end of if block
+            String fConditionIcon = UtilityMethod.getForecastConditionIcon(
+                    fCondition );
 
             loadWeatherIcon( largeWidgetRemoteViews, fIcon,
         "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
@@ -3113,102 +2489,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( sunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd", Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( sunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null;
-        Date nf = null;
-        Date su = null;
-
-        try
-        {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE, Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
-
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadHereMapsWeather [line: " +
-                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-        }// end of catch block
-
-        String currentConditionIcon = null;
-
-        if ( Objects.requireNonNull( rn ).equals( nf ) || rn.after( nf ) || rn.before( su ) )
-        {
-            if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-            }// end of if block
-            else
-            {
-                if( UtilityMethod.weatherImages.containsKey( currentCondition.toString().toLowerCase() + " (night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(currentCondition.toString().toLowerCase() + " (night)");
-                }// end of if block
-                else
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-                }// end of else block
-            }// end of else block
-
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-        }// end of if block
-        else
-        {
-            if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-            {
-                // sometimes the JSON data received is incomplete so this has to be taken into account
-                for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                {
-                    if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                    {
-                        currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                        currentCondition.setLength( 0 ); // reset
-                        currentCondition.append( e.getKey() );
-                        break; // exit the loop
-                    }// end of if block
-                }// end of for block
-
-                // if a match still could not be found, use the not available icon
-                if( currentConditionIcon == null )
-                {
-                    currentConditionIcon = "na.png";
-                }// end of if block
-            }// end of if block
-            else
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get(
-                        currentCondition.toString().toLowerCase() );
-            }// end of else block
-        }// end of else block
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
     "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -3224,7 +2505,17 @@ public class WidgetUpdateService extends JobIntentService
         currentFiveHourForecast.clear(); // ensure that this list is clean
 
         float fTemp;    // forecasted hour temperature
-        LocalDateTime currentHour = LocalDateTime.now();
+
+        if( ZoneId.systemDefault().getId().toLowerCase().equals(
+                WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+        {
+            checkTime = LocalDateTime.now();
+        }// end of if block
+        else
+        {
+            checkTime = WeatherLionApplication.localDateTime;
+        }// end of else block
+
         LocalDateTime currentForecastHour;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "h:mm a" );
 
@@ -3237,16 +2528,16 @@ public class WidgetUpdateService extends JobIntentService
                     ZoneId.systemDefault() ).toLocalDateTime();
             String forecastTime = currentForecastHour.format( formatter );
 
-            if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
-                    currentForecastHour.getYear() == currentHour.getYear() )
+            if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() &&
+                    currentForecastHour.getYear() == checkTime.getYear() )
             {
-                if( currentForecastHour.getHour() == currentHour.getHour() ||
-                        currentForecastHour.getHour() < currentHour.getHour())
+                if( currentForecastHour.getHour() == checkTime.getHour() ||
+                        currentForecastHour.getHour() < checkTime.getHour())
                 {
                     continue;
                 }// end of if block
-                else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                else if( currentForecastHour.getHour() == ( checkTime.getHour() + x ) )
                 {
                     currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(
@@ -3255,9 +2546,9 @@ public class WidgetUpdateService extends JobIntentService
                     x++;
                 }// end of else if block
             }// end of if block
-            else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                    currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
-                    currentForecastHour.getYear() == currentHour.getYear() )
+            else if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                    currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() + 1 &&
+                    currentForecastHour.getYear() == checkTime.getYear() )
             {
                 currentFiveHourForecast.add(
                     new FiveHourForecast( currentForecastHour, String.valueOf(
@@ -3300,31 +2591,8 @@ public class WidgetUpdateService extends JobIntentService
                 largeWidgetRemoteViews.setTextViewText( fDay, new SimpleDateFormat(
                         "E d", Locale.ENGLISH ).format( forecastDate ) );
 
-                String fConditionIcon = null;
-
-                if( UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null )
-                {
-                    // sometimes the JSON data received is incomplete so this has to be taken into account
-                    for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                    {
-                        if ( e.getKey() .startsWith( fCondition.toLowerCase() ) )
-                        {
-                            fConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                            fCondition = e.getKey();
-                            break; // exit the loop
-                        }// end of if block
-                    }// end of for block
-
-                    // if a match still could not be found, use the not available icon
-                    if( fConditionIcon == null )
-                    {
-                        fConditionIcon = "na.png";
-                    }// end of if block
-                }// end of if block
-                else
-                {
-                    fConditionIcon = UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
-                }// end of if block
+                String fConditionIcon = UtilityMethod.getForecastConditionIcon(
+                        fCondition );
 
                 loadWeatherIcon( largeWidgetRemoteViews, fIcon,
                         "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
@@ -3470,62 +2738,8 @@ public class WidgetUpdateService extends JobIntentService
         loadLocalWeatherData();
 
         // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
-        Calendar nightFall = Calendar.getInstance();
-        String twenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( sunsetTime.toString() );
-
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null;
-        Date nf = null;
-
-        try
-        {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( twenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE, Integer.parseInt( twenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadWeatherIconSet [line: " + e.getStackTrace()[1].getLineNumber()+ "]" );
-        }// end of catch block
-
-        String currentConditionIcon;
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
         String weatherCondition = WeatherLionApplication.storedData.getCurrent().getCondition();
-
-        if ( Objects.requireNonNull( rn ).equals( nf ) || rn.after( nf ) )
-        {
-            if ( weatherCondition.toLowerCase().contains( "(night)" ) )
-            {
-                currentConditionIcon = UtilityMethod.weatherImages.get( weatherCondition.toLowerCase() );
-            }// end of if block
-            else
-            {
-                if( UtilityMethod.weatherImages.containsKey( currentCondition.toString().toLowerCase() + " (night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            weatherCondition.toLowerCase() + " (night)" );
-                }// end of if block
-                else
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            weatherCondition.toLowerCase() );
-                }// end of else block
-            }// end of else block
-        }// end of if block
-        else
-        {
-            currentConditionIcon = UtilityMethod.weatherImages.get(
-                    weatherCondition.toLowerCase() );
-        }// end of else block
-
-        currentConditionIcon =  UtilityMethod.weatherImages.get(
-                weatherCondition.toLowerCase() ) == null ?
-                "na.png" :
-                currentConditionIcon;
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -3698,7 +2912,17 @@ public class WidgetUpdateService extends JobIntentService
 
                     // Five Hour Forecast
                     int x = 1;
-                    LocalDateTime currentHour = LocalDateTime.now();
+
+                    if( ZoneId.systemDefault().getId().toLowerCase().equals(
+                            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+                    {
+                        checkTime = LocalDateTime.now();
+                    }// end of if block
+                    else
+                    {
+                        checkTime = WeatherLionApplication.localDateTime;
+                    }// end of else block
+
                     LocalDateTime currentForecastHour;
                     hourlyReading = new Hashtable<>();
                     DateTimeFormatter hourlyFormat = DateTimeFormatter.ofPattern( "h:mm a" );
@@ -3713,24 +2937,24 @@ public class WidgetUpdateService extends JobIntentService
                         float fTemp = wxHourlyForecast.getTemperature();
                         String forecastTime = currentForecastHour.format( hourlyFormat );
 
-                        if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
-                                currentForecastHour.getYear() == currentHour.getYear() )
+                        if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() &&
+                                currentForecastHour.getYear() == checkTime.getYear() )
                         {
-                            if( currentForecastHour.getHour() == currentHour.getHour() ||
-                                    currentForecastHour.getHour() < currentHour.getHour())
+                            if( currentForecastHour.getHour() == checkTime.getHour() ||
+                                    currentForecastHour.getHour() < checkTime.getHour())
                             {
                                 continue;
                             }// end of if block
-                            else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                            else if( currentForecastHour.getHour() == ( checkTime.getHour() + x ) )
                             {
                                 hourlyReading.put( forecastTime, fTemp );
                                 x++;
                             }// end of else if block
                         }// end of if block
-                        else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
-                                currentForecastHour.getYear() == currentHour.getYear() )
+                        else if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() + 1 &&
+                                currentForecastHour.getYear() == checkTime.getYear() )
                         {
                             hourlyReading.put( forecastTime, fTemp );
                             x++;
@@ -4126,7 +3350,17 @@ public class WidgetUpdateService extends JobIntentService
 
                     hourlyReading = new Hashtable<>();
                     float fTemp;    // forecasted hour temperature
-                    currentHour = LocalDateTime.now();
+
+                    if( ZoneId.systemDefault().getId().toLowerCase().equals(
+                            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+                    {
+                        checkTime = LocalDateTime.now();
+                    }// end of if block
+                    else
+                    {
+                        checkTime = WeatherLionApplication.localDateTime;
+                    }// end of else block
+
                     DateTimeFormatter hourFormat = DateTimeFormatter.ofPattern( "h:mm a" );
                     DateTimeFormatter localDateFormat = DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm:ss" );
                     List< WeatherBitWeatherDataItem.FortyEightHourForecastData.Data > wFhf = weatherBitHx.getData();
@@ -4140,25 +3374,25 @@ public class WidgetUpdateService extends JobIntentService
 
                         fTemp = Math.round( wxHourlyForecast.getTemp() );
 
-                        if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
-                                currentForecastHour.getYear() == currentHour.getYear() )
+                        if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() &&
+                                currentForecastHour.getYear() == checkTime.getYear() )
                         {
                             // we don't need the current hour's forecast data or any before
-                            if( currentForecastHour.getHour() == currentHour.getHour() ||
-                                currentForecastHour.getHour() < currentHour.getHour())
+                            if( currentForecastHour.getHour() == checkTime.getHour() ||
+                                currentForecastHour.getHour() < checkTime.getHour())
                             {
                                 continue;
                             }// end of if block
-                            else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                            else if( currentForecastHour.getHour() == ( checkTime.getHour() + x ) )
                             {
                                 hourlyReading.put( forecastTime, fTemp );
                                 x++;
                             }// end of else if block
                         }// end of if block
-                        else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
-                                currentForecastHour.getYear() == currentHour.getYear() )
+                        else if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() + 1 &&
+                                currentForecastHour.getYear() == checkTime.getYear() )
                         {
                             hourlyReading.put( forecastTime, fTemp );
                             x++;
@@ -4421,17 +3655,22 @@ public class WidgetUpdateService extends JobIntentService
                             " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric()
                             ? " km/h" : " mph" ) );
 
-                    // Display weather data on the small widget
-                    smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
-                    smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
-                    smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
-
                     List< YrWeatherDataItem.Forecast > fdf = yr.getForecast();
                     List< YrWeatherDataItem.HourByHourForecast > fhf = yr.getHourlyForecast();
 
                     float lowestTempToday = 0;
-                    float highestTempToday = Float.parseFloat(currentLow.toString() );
-                    currentHour = LocalDateTime.now();
+                    float highestTempToday = 0;
+
+                    if( ZoneId.systemDefault().getId().toLowerCase().equals(
+                            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+                    {
+                        checkTime = LocalDateTime.now();
+                    }// end of if block
+                    else
+                    {
+                        checkTime = WeatherLionApplication.localDateTime;
+                    }// end of else block
+
                     hourlyReading = new Hashtable<>();
                     hourlyFormat = DateTimeFormatter.ofPattern( "h:mm a" );
 
@@ -4459,24 +3698,24 @@ public class WidgetUpdateService extends JobIntentService
 
                         String forecastTime = currentForecastHour.format( hourlyFormat );
 
-                        if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                                currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() &&
-                                currentForecastHour.getYear() == currentHour.getYear() )
+                        if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                                currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() &&
+                                currentForecastHour.getYear() == checkTime.getYear() )
                         {
-                            if( currentForecastHour.getHour() == currentHour.getHour() ||
-                                    currentForecastHour.getHour() < currentHour.getHour())
+                            if( currentForecastHour.getHour() == checkTime.getHour() ||
+                                    currentForecastHour.getHour() < checkTime.getHour())
                             {
                                 continue;
                             }// end of if block
-                            else if( currentForecastHour.getHour() == ( currentHour.getHour() + x ) )
+                            else if( currentForecastHour.getHour() == ( checkTime.getHour() + x ) )
                             {
                                 hourlyReading.put( forecastTime, fTemp );
                                 x++;
                             }// end of else if block
                         }// end of if block
-                        else if ( currentForecastHour.getMonth() == currentHour.getMonth() &&
-                            currentForecastHour.getDayOfMonth() == currentHour.getDayOfMonth() + 1 &&
-                            currentForecastHour.getYear() == currentHour.getYear() )
+                        else if ( currentForecastHour.getMonth() == checkTime.getMonth() &&
+                            currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() + 1 &&
+                            currentForecastHour.getYear() == checkTime.getYear() )
                         {
                            hourlyReading.put( forecastTime, fTemp );
                             x++;
@@ -4488,6 +3727,22 @@ public class WidgetUpdateService extends JobIntentService
                         }// end of if block
                     }// end of first for each loop
 
+                    currentHigh.setLength( 0 );
+                    currentHigh.append( Math.round( highestTempToday ) );
+
+                    currentLow.setLength( 0 );
+                    currentLow.append( Math.round( lowestTempToday ) );
+
+                    // Display weather data on the large widget
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
+
+                    // Display weather data on the small widget
+                    smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
+                    smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
+                    smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
+
                     // Five Day Forecast
                     i = 1;
                     float fHigh = 0;    // forecasted high
@@ -4498,7 +3753,6 @@ public class WidgetUpdateService extends JobIntentService
 
                     df = new SimpleDateFormat( "MMMM dd, yyyy", Locale.ENGLISH );
                     String temps;
-
                     x = 0;
 
                     // get the highs and lows from the forecast first
@@ -4538,7 +3792,7 @@ public class WidgetUpdateService extends JobIntentService
                                     fHigh = cr;
                                 }// end of if block
 
-                                if (cr < fLow)
+                                if ( cr < fLow )
                                 {
                                     fLow = cr;
                                 }// end of if block

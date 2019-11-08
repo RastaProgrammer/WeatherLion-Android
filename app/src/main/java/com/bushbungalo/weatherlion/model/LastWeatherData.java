@@ -140,6 +140,7 @@ public class LastWeatherData
         {
             private String city;
             private String country;
+            private String timezone;
 
             public String getCity()
             {
@@ -159,6 +160,14 @@ public class LastWeatherData
             public void setCountry( String country )
             {
                 this.country = country;
+            }
+
+            public String getTimezone() {
+                return timezone;
+            }
+
+            public void setTimezone(String timezone) {
+                this.timezone = timezone;
             }
         }// end of class Location
 

@@ -57,6 +57,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -238,13 +240,13 @@ public class WeatherLionApplication extends Application
     public static TimeZoneInfo currentLocationTimeZone;
     public static String timeOfDayToUse;
 
+    public static LocalDateTime localDateTime;
+
     /**
      * Checks to see if the program is being run for the first time.
      */
     private void checkFirstRun()
     {
-        checkForStoredWeatherData();
-
         if ( spf.getBoolean( FIRST_RUN, Preference.DEFAULT_FIRST_RUN ) )
         {
             firstRun = true;
@@ -285,7 +287,6 @@ public class WeatherLionApplication extends Application
             {
                 DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy",
                         Locale.ENGLISH );
-
                 try
                 {
                     UtilityMethod.lastUpdated = df.parse( storedData.getProvider().getDate() );
@@ -300,7 +301,16 @@ public class WeatherLionApplication extends Application
                 currentSunriseTime = new StringBuilder( storedData.getAstronomy().getSunrise() );
                 currentSunsetTime = new StringBuilder( storedData.getAstronomy().getSunset() );
 
-                return true;
+                // weather data might not have been saved as intended as change
+                if( !wxLocation.equals( storedData.getLocation().getCity() ) )
+                {
+                    refreshWeather( "checkForStoredWeatherData" );
+                    return true;
+                }// end of if block
+                else
+                {
+                    return true;
+                }// end of else block
             }// end of if block
         }// end of if block
 
@@ -1190,6 +1200,77 @@ public class WeatherLionApplication extends Application
             // been completed.
             storedPreferences.setFirstRun( false );
         }// end of if block
+        else
+        {
+            checkForStoredWeatherData();
+
+            // if this location has already been used there is no need to query the
+            // web service as the location data has been stored locally
+            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( wxLocation );
+            String json;
+            float lat;
+            float lng;
+
+            if( CityData.currentCityData == null )
+            {
+                json =
+                        UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                                wxLocation );
+                CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
+
+                lat = CityData.currentCityData.getLatitude();
+                lng = CityData.currentCityData.getLongitude();
+
+                if( currentLocationTimeZone == null)
+                {
+                    currentLocationTimeZone =
+                            UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                }// end of if block
+
+                CityData.currentCityData.setTimeZone(
+                        currentLocationTimeZone.getTimezoneId() );
+            }// end of if block
+            else
+            {
+                String today = new SimpleDateFormat( "MM/dd/yyyy",
+                        Locale.ENGLISH ).format( new Date() );
+
+                String sst = String.format( "%s %s", today, currentSunsetTime.toString() );
+                String srt = String.format( "%s %s", today, currentSunriseTime.toString() );
+
+                Date schedSunriseTime = null;
+                Date schedSunsetTime = null;
+
+                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
+                        Locale.ENGLISH );
+
+                try
+                {
+                    schedSunsetTime = sdf.parse( sst );
+                    schedSunriseTime = sdf.parse( srt );
+                } // end of try block
+                catch ( ParseException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                            TAG + "::scheduleAstronomyUpdate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                }// end of catch block
+
+                localDateTime = new Date().toInstant().atZone(
+                        ZoneId.of( CityData.currentCityData.getTimeZone()
+                        ) ).toLocalDateTime();
+
+                // Load the time zone info for the current city
+                currentLocationTimeZone = new TimeZoneInfo(
+                        CityData.currentCityData.getCountryCode(),
+                        CityData.currentCityData.getCountryName(),
+                        CityData.currentCityData.getLatitude(),
+                        CityData.currentCityData.getLongitude(),
+                        CityData.currentCityData.getTimeZone(),
+                        UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ),
+                        schedSunriseTime,
+                        schedSunsetTime );
+            }// end of else block
+        }// end of else block
 
         // load any available access providers
         loadAccessProviders();

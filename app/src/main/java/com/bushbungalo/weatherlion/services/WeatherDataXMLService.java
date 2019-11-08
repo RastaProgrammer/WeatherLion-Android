@@ -122,6 +122,8 @@ public class WeatherDataXMLService extends JobIntentService
 			// Location Readings
 			location.addContent( new Element( "City" ).setText( xmlData.getCityName() ) );
 			location.addContent( new Element( "Country" ).setText( String.valueOf( xmlData.getCountryName() ) ) );
+			location.addContent( new Element( "TimeZone" ).setText(
+				WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) );
 			doc.getRootElement().addContent( location );
 
 			// Atmospheric Readings

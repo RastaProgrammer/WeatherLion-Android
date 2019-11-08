@@ -15,12 +15,49 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class TimeZoneInfo
 {
+    public static final Map<String, String> timeZoneCodes;
+    static
+    {
+        timeZoneCodes = new HashMap<>(64);
+        timeZoneCodes.put("Australia/Darwin", "ACT");
+        timeZoneCodes.put("Australia/Sydney", "AET");
+        timeZoneCodes.put("America/Argentina/Buenos_Aires", "AGT");
+        timeZoneCodes.put("Africa/Cairo", "ART");
+        timeZoneCodes.put("America/Anchorage", "AST");
+        timeZoneCodes.put("America/Sao_Paulo", "BET");
+        timeZoneCodes.put("Asia/Dhaka", "BST");
+        timeZoneCodes.put("Africa/Harare", "CAT");
+        timeZoneCodes.put("America/St_Johns", "CNT");
+        timeZoneCodes.put("America/Chicago", "CST");
+        timeZoneCodes.put("Asia/Shanghai", "CTT");
+        timeZoneCodes.put("Africa/Addis_Ababa", "EAT");
+        timeZoneCodes.put("Europe/Paris", "ECT");
+        timeZoneCodes.put("America/Indiana/Indianapolis", "IET");
+        timeZoneCodes.put("Asia/Kolkata", "IST");
+        timeZoneCodes.put("Asia/Tokyo", "JST");
+        timeZoneCodes.put("Pacific/Apia", "MIT");
+        timeZoneCodes.put("Asia/Yerevan", "NET");
+        timeZoneCodes.put("Pacific/Auckland", "NST");
+        timeZoneCodes.put("Asia/Karachi", "PLT");
+        timeZoneCodes.put("America/Phoenix", "PNT");
+        timeZoneCodes.put("America/Puerto_Rico", "PRT");
+        timeZoneCodes.put("America/Los_Angeles", "PST");
+        timeZoneCodes.put("America/New_York", "EST");
+        timeZoneCodes.put("Pacific/Guadalcanal", "SST");
+        timeZoneCodes.put("Asia/Ho_Chi_Minh", "VST");
+        timeZoneCodes.put("-05:00", "EST");
+        timeZoneCodes.put("-07:00", "MST");
+        timeZoneCodes.put("-10:00", "HST");
+    }
+
     private String countryCode;
     private String countryName;
     private float longitude;
@@ -32,6 +69,70 @@ public class TimeZoneInfo
     private Date time;
     private Date sunrise;
     private Date sunset;
+
+    public TimeZoneInfo(){}
+
+    public TimeZoneInfo( String countryCode, String countryName, float latitude,
+                         float longitude, String timezoneId, float dstOffset,
+                         float gmtOffset, float rawOffset, Date time,
+                         Date sunrise, Date sunset )
+    {
+        this.countryCode = countryCode;
+        this.countryName = countryName;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.timezoneId = timezoneId;
+        this.gmtOffset = gmtOffset;
+        this.rawOffset = rawOffset;
+        this.time = time;
+        this.sunrise = sunrise;
+        this.sunset = sunset;
+    }
+
+    public TimeZoneInfo( String countryCode, String countryName, float latitude,
+                         float longitude, String timezoneId, Date time,
+                         Date sunrise, Date sunset )
+    {
+        this.countryCode = countryCode;
+        this.countryName = countryName;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.timezoneId = timezoneId;
+        this.gmtOffset = 0.0f;
+        this.rawOffset = 0.0f;
+        this.time = time;
+        this.sunrise = sunrise;
+        this.sunset = sunset;
+    }
+
+    public TimeZoneInfo( String countryCode, String countryName, float latitude,
+                         float longitude, String timezoneId )
+    {
+        this.countryCode = countryCode;
+        this.countryName = countryName;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.timezoneId = timezoneId;
+        this.gmtOffset = 0.0f;
+        this.rawOffset = 0.0f;
+        this.time = null;
+        this.sunrise = null;
+        this.sunset = null;
+    }
+
+    public TimeZoneInfo( String countryCode, String countryName,String timezoneId )
+    {
+        this.countryCode = countryCode;
+        this.countryName = countryName;
+        this.latitude = 0.0f;
+        this.longitude = 0.0f;
+        this.timezoneId = timezoneId;
+        this.gmtOffset = 0.0f;
+        this.rawOffset = 0.0f;
+        this.time = null;
+        this.sunrise = null;
+        this.sunset = null;
+    }
 
     public String getCountryCode()
     {

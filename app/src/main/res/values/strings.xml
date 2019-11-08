@@ -285,4 +285,6 @@
     <string name="tap_configure">Tap to configure</string>
     <string name="lion_animation">Lion Animation</string>
     <string name="refreshing_widget">Refreshing widget...</string>
+    <string name="default_timezone">EST</string>
+    <string name="timezone">TZ:</string>
 </resources>

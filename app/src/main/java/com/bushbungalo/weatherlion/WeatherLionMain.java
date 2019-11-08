@@ -25,6 +25,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextPaint;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
 import android.text.method.ScrollingMovementMethod;
@@ -60,6 +61,7 @@ import com.bushbungalo.weatherlion.database.DBHelper;
 import com.bushbungalo.weatherlion.database.WeatherAccess;
 import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
+import com.bushbungalo.weatherlion.model.TimeZoneInfo;
 import com.bushbungalo.weatherlion.services.WeatherDataXMLService;
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.DividerItemDecoration;
@@ -77,7 +79,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -533,6 +534,19 @@ public class WeatherLionMain extends AppCompatActivity
     private void loadMainActivityWeather()
     {
         ViewGroup rootView = findViewById( R.id.weather_main_container );
+        TextView txvTimezone = findViewById( R.id.txvTimezone );
+        String shortTZ = TimeZoneInfo.timeZoneCodes.get(
+            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+
+        if( shortTZ != null )
+        {
+            txvTimezone.setText( shortTZ );
+        }// end of if block
+        else
+        {
+            txvTimezone.setText(
+                WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+        }// end of else block
 
         // load the applicable typeface in use
         UtilityMethod.loadCustomFont( rootView );
@@ -578,21 +592,8 @@ public class WeatherLionMain extends AppCompatActivity
                 txvHour.setText( wxHourForecast.getTime() );
 
                 // Load current forecast condition weather image
-                String fCondition = wxHourForecast.getCondition();
-
-                if( fCondition.toLowerCase().contains( "(day)" ) )
-                {
-                    fCondition = fCondition.replace( "(day)", "" ).trim();
-                }// end of if block
-                else if( fCondition.toLowerCase().contains( "(night)" ) )
-                {
-                    fCondition = fCondition.replace( "(night)", "" ).trim();
-                }// end of if block
-
-                String fConditionIcon
-                        = UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
-                        ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
-
+                StringBuilder fCondition = new StringBuilder( wxHourForecast.getCondition());
+                String fConditionIcon = UtilityMethod.getConditionIcon( fCondition );
 
                 loadWeatherIcon( imvHour, String.format(
                     "weather_images/%s/weather_%s", WeatherLionApplication.iconSet, fConditionIcon ) );
@@ -746,93 +747,18 @@ public class WeatherLionMain extends AppCompatActivity
         loadPreviousSearches();
 
         // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null; // date time right now (rn)
-        Date nf = null; // date time night fall (nf)
-        Date su = null; // date time sun up (su)
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
 
-        try
-        {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE,
-                    Integer.parseInt(sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
+        ImageView imvCurrentConditionImage = findViewById( R.id.imvCurrentCondition );
+        String imageFile = "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon;
 
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::loadMainActivityWeather [line: " +
-                            e.getStackTrace()[1].getLineNumber() + "]" );
-        }// end of catch block
+        loadWeatherIcon( imvCurrentConditionImage, imageFile );
 
-        String currentConditionIcon;
+        //RelativeLayout rlBackdrop = findViewById( R.id.weather_main_container);
+        String backdropFile = "weather_backgrounds/background_" +
+            Objects.requireNonNull( currentConditionIcon ).replace(".png", ".jpg" );
 
-        if( rn != null )
-        {
-            if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
-            {
-                if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() );
-                }// end of if block
-                else
-                {
-                    // Yahoo has a habit of having sunny nights
-                    if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
-                    {
-                        currentCondition.setLength( 0 );
-                        currentCondition.append( "Clear" );
-                    }// end of if block
-
-                    if ( UtilityMethod.weatherImages.containsKey(
-                            currentCondition.toString().toLowerCase() + " (night)" ) )
-                    {
-                        currentConditionIcon =
-                                UtilityMethod.weatherImages.get(
-                                        currentCondition.toString().toLowerCase() + " (night)" );
-                    }// end of if block
-                    else {
-                        currentConditionIcon = UtilityMethod.weatherImages.get(
-                                currentCondition.toString().toLowerCase() );
-                    }// end of else block
-                }// end of else block
-            }// end of if block
-            else
-            {
-                currentConditionIcon =
-                        UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() );
-            }// end of else block
-
-            currentConditionIcon =  UtilityMethod.weatherImages.get(
-                    currentCondition.toString().toLowerCase() ) == null ?
-                    "na.png" :
-                    currentConditionIcon;
-
-            ImageView imvCurrentConditionImage = findViewById( R.id.imvCurrentCondition );
-            String imageFile = "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon;
-
-            loadWeatherIcon( imvCurrentConditionImage, imageFile );
-
-            //RelativeLayout rlBackdrop = findViewById( R.id.weather_main_container);
-            String backdropFile = "weather_backgrounds/background_" +
-                    Objects.requireNonNull( currentConditionIcon ).replace(".png", ".jpg" );
-
-            loadWeatherBackdrop( rootView, backdropFile );
-        }// end of if block
+        loadWeatherBackdrop( rootView, backdropFile );
 
         // Update the weather provider
         ImageView imvWeatherProviderLogo = findViewById( R.id.imvWeatherProviderLogo );
@@ -1524,10 +1450,28 @@ public class WeatherLionMain extends AppCompatActivity
     private void showPreviousSearches( View anchor )
     {
         popupWindow = new ListPopupWindow( this );
-
         popupWindow.setAnchorView( anchor );
-        popupWindow.setAdapter( new ArrayAdapter<>( this, R.layout.wl_popup_list_item_light_bg, listItems ) );
-        popupWindow.setWidth( anchor.getWidth() + imvShowPreviousSearches.getWidth() );
+        popupWindow.setAdapter( new ArrayAdapter<>( this,
+                R.layout.wl_popup_list_item_light_bg, listItems ) );
+        StringBuilder longestString = new StringBuilder();
+
+        for( String s : listItems )
+        {
+            if( longestString.length() == 0 )
+            {
+                longestString.append( s );
+            }// end of if block
+            else if( longestString.toString().length() < s.length() )
+            {
+                longestString.setLength( 0 );
+                longestString.append( s );
+            }// end of else if block
+        }// end of for each loop
+
+        TextPaint paint = new TextPaint();
+        float width = paint.measureText( longestString.toString() ) * 6; // six is just a random number
+
+        popupWindow.setWidth( (int) width ); // hack
         popupWindow.setVerticalOffset( 6 );
         popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_white ) );
 
@@ -1583,10 +1527,11 @@ public class WeatherLionMain extends AppCompatActivity
                             currentLocation.toString() ).apply();
 
                     WeatherLionApplication.storedPreferences.setLocation( currentLocation.toString() );
+                    WeatherLionApplication.wxLocation = currentCity.toString();
 
                     // send out a broadcast to the widget service that the location preference has been modified
-                    UtilityMethod.refreshRequestedBySystem = true;
-                    UtilityMethod.refreshRequestedByUser = false;
+                    UtilityMethod.refreshRequestedBySystem = false;
+                    UtilityMethod.refreshRequestedByUser = true;
 
                     String invoker = this.getClass().getSimpleName() + "::showPreviousSearches";
                     WeatherLionApplication.callMethodByName( null,

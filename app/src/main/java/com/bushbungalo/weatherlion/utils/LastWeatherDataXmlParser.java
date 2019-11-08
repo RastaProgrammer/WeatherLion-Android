@@ -178,6 +178,9 @@ public class LastWeatherDataXmlParser
                                 case "Country":
                                     lastLocation.setCountry( tagText );
                                     break;
+                                case "TimeZone":
+                                    lastLocation.setTimezone( tagText );
+                                    break;
                             }// end of switch block
                         }// end of else if block
                         else if( inAtmosphereTag && currentTagName != null )
