@@ -15,6 +15,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -82,27 +83,27 @@ public abstract class UtilityMethod
     private static final String TAG = "UtilityMethod";
 
     public static String[] yahooWeatherCodes =
-            {
-                    "tornado", "tropical storm", "hurricane", "severe thunderstorms",
-                    "thunderstorms", "mixed rain and snow", "mixed rain and sleet",
-                    "mixed snow and sleet", "freezing drizzle", "drizzle", "freezing rain",
-                    "showers", "showers", "snow flurries", "light snow showers", "blowing snow",
-                    "snow", "hail", "sleet", "dust", "foggy", "haze", "smoky", "blustery", "windy",
-                    "cold", "cloudy", "mostly cloudy (night)", "mostly cloudy (day)",
-                    "partly cloudy (night)", "partly cloudy (day)", "clear (night)", "sunny",
-                    "fair (night)", "fair (day)", "mixed rain and hail", "hot",
-                    "isolated thunderstorms", "scattered thunderstorms", "scattered thunderstorms",
-                    "scattered showers", "heavy snow", "scattered snow showers", "heavy snow",
-                    "partly cloudy", "thundershowers", "snow showers", "isolated thundershowers"
-            };
+    {
+        "tornado", "tropical storm", "hurricane", "severe thunderstorms",
+        "thunderstorms", "mixed rain and snow", "mixed rain and sleet",
+        "mixed snow and sleet", "freezing drizzle", "drizzle", "freezing rain",
+        "showers", "showers", "snow flurries", "light snow showers", "blowing snow",
+        "snow", "hail", "sleet", "dust", "foggy", "haze", "smoky", "blustery", "windy",
+        "cold", "cloudy", "mostly cloudy (night)", "mostly cloudy (day)",
+        "partly cloudy (night)", "partly cloudy (day)", "clear (night)", "sunny",
+        "fair (night)", "fair (day)", "mixed rain and hail", "hot",
+        "isolated thunderstorms", "scattered thunderstorms", "scattered thunderstorms",
+        "scattered showers", "heavy snow", "scattered snow showers", "heavy snow",
+        "partly cloudy", "thundershowers", "snow showers", "isolated thundershowers"
+    };
 
     // Array of compass sectors
     public static String[] compassSectors =
-            {
-                    "N", "NNE", "NE", "ENE", "E", "ESE",
-                    "SE", "SSE", "S", "SSW", "SW", "WSW",
-                    "W", "WNW", "NW", "NNW"
-            };
+    {
+        "N", "NNE", "NE", "ENE", "E", "ESE",
+        "SE", "SSE", "S", "SSW", "SW", "WSW",
+        "W", "WNW", "NW", "NNW"
+    };
 
     // Maps a cardinal point to its name
     public static LinkedHashMap<String, String> cardinalPoints;
@@ -1128,6 +1129,7 @@ public abstract class UtilityMethod
         weatherImages.put("scattered showers (night)", "19.png");
         weatherImages.put("isolated showers (night)", "19.png");
         weatherImages.put("chance of rain (night)", "19.png");
+        weatherImages.put("light rain (night)", "19.png");
         weatherImages.put("light rain showers (night)", "19.png");
         weatherImages.put("light shower rain (night)", "19.png");
         weatherImages.put("dust (night)", "20.png");
@@ -2401,119 +2403,20 @@ public abstract class UtilityMethod
      * @param currentCondition  The current weather condition
      * @return  A {@code String} indicating the applicable weather condition icon
      */
-    public static String getConditionIcon( StringBuilder currentCondition )
+    public static String getConditionIcon( StringBuilder currentCondition, Date forecast )
     {
-        // Load current condition weather image
-        Calendar rightNow = Calendar.getInstance();
+         String currentConditionIcon;
 
-        if ( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
+        if ( forecast != null )
         {
-            if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
-                    WeatherLionApplication.storedData.getLocation().getTimezone() ) )
-            {
-                rightNow.setTime( UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ) );
-            }// end of if block
+            currentConditionIcon = verifyAstronomyData( currentCondition, forecast );
         }// end of if block
-
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null; // date time right now (rn)
-        Date nf = null; // date time night fall (nf)
-        Date su = null; // date time sun up (su)
-
-        try
+        else
         {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE,
-                    Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
+            currentConditionIcon = verifyAstronomyData( currentCondition, null );
+        }// end of else block
 
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-        TAG + "::getConditionIcon [line: " +
-                    e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-        }// end of catch block
-
-        String currentConditionIcon;
-
-        if ( rn != null )
-        {
-            if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
-            {
-                if ( currentCondition.toString().toLowerCase().contains( "(night)") )
-                {
-                    currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() );
-                }// end of if block
-                else
-                {
-                    // Yahoo has a habit of having sunny nights
-                    if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
-                    {
-                        currentCondition.setLength( 0 );
-                        currentCondition.append( "Clear" );
-                    }// end of if block
-
-                    if ( UtilityMethod.weatherImages.containsKey(
-                            currentCondition.toString().toLowerCase() + " (night)") )
-                    {
-                        currentConditionIcon =
-                            UtilityMethod.weatherImages.get(
-                                currentCondition.toString().toLowerCase() + " (night)" );
-                    }// end of if block
-                    else
-                    {
-                        currentConditionIcon = UtilityMethod.weatherImages.get(
-                            currentCondition.toString().toLowerCase() );
-                    }// end of else block
-                }// end of else block
-
-                if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-                {
-                    // sometimes the JSON data received is incomplete so this has to be taken into account
-                    for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
-                    {
-                        if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
-                        {
-                            currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
-                            break; // exit the loop
-                        }// end of if block
-                    }// end of for block
-
-                    // if a match still could not be found, use the not available icon
-                    if( currentConditionIcon == null )
-                    {
-                        currentConditionIcon = "na.png";
-                    }// end of if block
-                }// end of if block
-            }// end of if block
-            else
-            {
-                currentConditionIcon =
-                    UtilityMethod.weatherImages.get(
-                        currentCondition.toString().toLowerCase() );
-            }// end of else block
-
-            currentConditionIcon = UtilityMethod.weatherImages.get(
-                currentCondition.toString().toLowerCase() ) == null ?
-                "na.png" : currentConditionIcon;
-
-            return currentConditionIcon;
-        }// end of if block
-
-        return null;
+        return currentConditionIcon;
     }// end of method getConditionIcon
 
     /**
@@ -3223,7 +3126,7 @@ public abstract class UtilityMethod
      * @param lat   The latitude coordinate.
      * @param lng   The longitude coordinate.
      */
-    private static void retrieveGpsLocation( String lat, String lng )
+    public static void retrieveGpsLocation( String lat, String lng )
     {
         Intent intent = new Intent( getAppContext(), CityDataService.class );
 
@@ -3722,7 +3625,7 @@ public abstract class UtilityMethod
      * @param pastDate The date in the past to be compared to.
      * @return  A {@code String} representing the time frame that has passed.
      */
-    public static String getTimeSince( Date pastDate )
+    public static String getTimeSince( @NonNull Date pastDate )
     {
         //milliseconds
         long difference = Math.abs( new Date().getTime() - pastDate.getTime() );
@@ -3787,7 +3690,7 @@ public abstract class UtilityMethod
      * Loads a custom font to all applicable child {@code Object}s of a {@code ViewGroup}
      * @param view The {@code ViewGroup} containing children with font attributes
      */
-    public static void loadCustomFont( ViewGroup view )
+    public static void loadCustomFont( @NonNull ViewGroup view )
     {
         for ( int i = 0; i < view.getChildCount(); i++ )
         {
@@ -3842,4 +3745,184 @@ public abstract class UtilityMethod
 
         return ready;
     }// end of method timeForConnectivityCheck
+
+    /**
+     * Support method for method  {@link #getConditionIcon(StringBuilder, Date) getConditionIcon}
+     *
+     * @param currentCondition  The current weather condition
+     * @param onTime  A {@code Date} representing an exact time occurrence
+     * @return  A {@code String representing} am associated weather icon
+     */
+    private static String verifyAstronomyData( StringBuilder currentCondition, Date onTime )
+    {
+        boolean nightIcon = currentCondition.toString().toLowerCase().contains( "(night)" );
+        String currentConditionIcon = null;
+
+        Calendar rightNow = Calendar.getInstance();
+
+        if ( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
+        {
+            if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
+                    WeatherLionApplication.storedData.getLocation().getTimezone() ) )
+            {
+                rightNow.setTime( UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ) );
+            }// end of if block
+        }// end of if block
+
+        Calendar nightFall = Calendar.getInstance();
+        Calendar sunUp = Calendar.getInstance();
+        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                Locale.ENGLISH ).format( rightNow.getTime() )
+                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
+        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                Locale.ENGLISH ).format( rightNow.getTime() )
+                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
+        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
+        Date rn = null; // date time right now (rn)
+        Date nf = null; // date time night fall (nf)
+        Date su = null; // date time sun up (su)
+
+        try
+        {
+            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
+            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
+            nightFall.set( Calendar.MINUTE,
+                    Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
+            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
+
+            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
+            su = sdf.parse( sdf.format( sunUp.getTime() ) );
+        } // end of try block
+        catch ( ParseException e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                    TAG + "::getConditionIcon [line: " +
+                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+        }// end of catch block
+
+        if( onTime == null )
+        {
+            if( rn != null )
+            {
+                if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
+                {
+                    if( nightIcon )
+                    {
+                        currentConditionIcon = UtilityMethod.weatherImages.get(
+                                currentCondition.toString().toLowerCase() );
+                    }// end of if block
+                    else
+                    {
+                        // Yahoo has a habit of having sunny nights
+                        if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                        {
+                            currentCondition.setLength( 0 );
+                            currentCondition.append( "Clear" );
+                        }// end of if block
+
+                        if ( UtilityMethod.weatherImages.containsKey(
+                                currentCondition.toString().toLowerCase() + " (night)") )
+                        {
+                            currentConditionIcon =
+                                    UtilityMethod.weatherImages.get(
+                                            currentCondition.toString().toLowerCase() + " (night)" );
+                        }// end of if block
+                        else
+                        {
+                            currentConditionIcon = UtilityMethod.weatherImages.get(
+                                    currentCondition.toString().toLowerCase() );
+                        }// end of else block
+                    }// end of else block
+
+                    if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
+                    {
+                        // sometimes the JSON data received is incomplete so this has to be taken into account
+                        for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
+                        {
+                            if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
+                            {
+                                currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
+                                break; // exit the loop
+                            }// end of if block
+                        }// end of for block
+
+                        // if a match still could not be found, use the not available icon
+                        if( currentConditionIcon == null )
+                        {
+                            currentConditionIcon = "na.png";
+                        }// end of if block
+                    }// end of if block
+                }// end of if block
+                else
+                {
+                    currentConditionIcon =
+                            UtilityMethod.weatherImages.get(
+                                    currentCondition.toString().toLowerCase() );
+                }// end of else block
+            }// end of if block
+        }// end of if block
+        else
+        {
+            if( rn != null )
+            {
+                if ( onTime.equals( rn ) || onTime.after( rn ) || onTime.before( su ) )
+                {
+                    if( nightIcon )
+                    {
+                        currentConditionIcon = UtilityMethod.weatherImages.get(
+                                currentCondition.toString().toLowerCase() );
+                    }// end of if block
+                    else
+                    {
+                        // Yahoo has a habit of having sunny nights
+                        if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                        {
+                            currentCondition.setLength( 0 );
+                            currentCondition.append( "Clear" );
+                        }// end of if block
+
+                        if ( UtilityMethod.weatherImages.containsKey(
+                                currentCondition.toString().toLowerCase() + " (night)") )
+                        {
+                            currentConditionIcon =
+                                    UtilityMethod.weatherImages.get(
+                                            currentCondition.toString().toLowerCase() + " (night)" );
+                        }// end of if block
+                        else
+                        {
+                            currentConditionIcon = UtilityMethod.weatherImages.get(
+                                    currentCondition.toString().toLowerCase() );
+                        }// end of else block
+                    }// end of else block
+
+                    if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
+                    {
+                        // sometimes the JSON data received is incomplete so this has to be taken into account
+                        for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
+                        {
+                            if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
+                            {
+                                currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
+                                break; // exit the loop
+                            }// end of if block
+                        }// end of for block
+
+                        // if a match still could not be found, use the not available icon
+                        if( currentConditionIcon == null )
+                        {
+                            currentConditionIcon = "na.png";
+                        }// end of if block
+                    }// end of if block
+                }// end of if block
+                else
+                {
+                    currentConditionIcon =
+                            UtilityMethod.weatherImages.get(
+                                    currentCondition.toString().toLowerCase() );
+                }// end of else block
+            }// end of if block
+        }// end of else block
+
+        return currentConditionIcon;
+    }// end of method verifyAstronomyData
 }// end of class UtilityMethod

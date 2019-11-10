@@ -1,13 +1,17 @@
 package com.bushbungalo.weatherlion.custom;
 
-import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
@@ -15,7 +19,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -23,6 +26,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -45,6 +49,7 @@ import com.google.gson.JsonArray;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Created by Paul O. Patterson on 11/30/17.
@@ -73,29 +78,27 @@ public class CityFinderPreference extends DialogPreference
     private static String[] listItems;
 
     private int selectedIndex;
+    private int layoutId = R.layout.wl_location_preference_dialog;
 
     public CityFinderPreference( Context context, AttributeSet attrs )
     {
         super( context, attrs );
 
         setPersistent( false );
-        setDialogLayoutResource( R.layout.wl_location_preference_dialog );
+        setDialogLayoutResource( layoutId );
         setDialogIcon( null );
         setDialogTitle( null );
         setPersistent( true );
-        setPositiveButtonText( "Save" );
     }// end of two-argument constructor
 
     /**
      * {@inheritDoc}
      */
-    @SuppressLint("InflateParams")
     @Override
     protected View onCreateDialogView()
     {
-        LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
-                Context.LAYOUT_INFLATER_SERVICE );
-        dialogView = inflater.inflate( R.layout.wl_location_preference_dialog, null );
+       dialogView = View.inflate( WeatherLionApplication.getAppContext(),
+               layoutId, null );
         TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
         TextView txvDialogMessage = dialogView.findViewById( R.id.txvDialogMessage );
         edtCityName = dialogView.findViewById( R.id.edtSearchCity );
@@ -107,7 +110,8 @@ public class CityFinderPreference extends DialogPreference
 
         if( WeatherLionApplication.systemColor != null )
         {
-            rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+            GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
+            bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
         }// end of if block
 
         LocalBroadcastManager.getInstance( getContext() )
@@ -232,128 +236,163 @@ public class CityFinderPreference extends DialogPreference
         SharedPreferences sharedPreferences = getSharedPreferences();
         edtCityName.setText ( sharedPreferences.getString( "pref_location", null ) );
         edtCityName.setSelection( edtCityName.getText().length() );
+
     }// end of method onBindDialogView
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected void onDialogClosed( boolean positiveResult )
+    protected void showDialog( Bundle state )
     {
-        LocalBroadcastManager.getInstance( getContext() ).unregisterReceiver( mBroadcastReceiver );
-        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences(
-                WeatherLionApplication.getAppContext() );
-        String savedLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
-                Preference.DEFAULT_WEATHER_LOCATION );
+        super.showDialog( state );
 
-        super.onDialogClosed( positiveResult );
-
-        if ( positiveResult )
+        if( getDialog() != null )
         {
-            SharedPreferences.Editor editor = getEditor();
+            Objects.requireNonNull( getDialog().getWindow() ).setBackgroundDrawable(
+                    new ColorDrawable( Color.TRANSPARENT ) );
 
-            // combine the city and the state as the current location
-            String currentLocation;
-            final String[] location = edtCityName.getText().toString().split( "," );
+            // Remove the default system dialog buttons from the view
+            ( (AlertDialog) getDialog() ).getButton(
+                    AlertDialog.BUTTON_POSITIVE ).setVisibility( View.GONE );
+            ( (AlertDialog) getDialog() ).getButton(
+                    AlertDialog.BUTTON_NEGATIVE ).setVisibility( View.GONE );
 
-            if( location.length > 0 )
+            // use custom buttons to track user interaction
+            Button btnCancel = dialogView.findViewById( R.id.btnCancel );
+            btnCancel.setBackground( WeatherLionApplication.systemButtonDrawable );
+            btnCancel.setTypeface( WeatherLionApplication.currentTypeface );
+
+            Button btnOk = dialogView.findViewById( R.id.btnOk );
+            btnOk.setBackground( WeatherLionApplication.systemButtonDrawable );
+            btnOk.setTypeface( WeatherLionApplication.currentTypeface );
+
+            btnCancel.setOnClickListener( new View.OnClickListener()
             {
-                if( location.length > 2 )
+                @Override
+                public void onClick( View v )
                 {
-                    if( location[ 2 ].trim().equalsIgnoreCase( "US") ||
-                            location[ 2 ].trim().equalsIgnoreCase( "United States") )
+                    getDialog().dismiss();
+                }// end of method onClick
+            });
+
+            btnOk.setOnClickListener( new View.OnClickListener()
+            {
+                @Override
+                public void onClick( View v )
+                {
+                    LocalBroadcastManager.getInstance( getContext() ).unregisterReceiver( mBroadcastReceiver );
+                    SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences(
+                            WeatherLionApplication.getAppContext() );
+                    String savedLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+                            Preference.DEFAULT_WEATHER_LOCATION );
+
+                    SharedPreferences.Editor editor = getEditor();
+
+                    // combine the city and the state as the current location
+                    String currentLocation;
+                    final String[] location = edtCityName.getText().toString().split( "," );
+
+                    if( location.length > 0 )
                     {
-                        // if the state name has a length of 2 then nothing needs to be done
-                        if( location[ 1 ].trim().length() > 2 )
+                        if( location.length > 2 )
                         {
-                            currentLocation = location[ 0 ].trim() + ", " +
-                                    UtilityMethod.usStatesByName.get( location[ 0 ].trim() );
+                            if( location[ 2 ].trim().equalsIgnoreCase( "US") ||
+                                    location[ 2 ].trim().equalsIgnoreCase( "United States") )
+                            {
+                                // if the state name has a length of 2 then nothing needs to be done
+                                if( location[ 1 ].trim().length() > 2 )
+                                {
+                                    currentLocation = location[ 0 ].trim() + ", " +
+                                            UtilityMethod.usStatesByName.get( location[ 0 ].trim() );
+                                }// end of if block
+                                else
+                                {
+                                    currentLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                                }// end of else block
+                            }// end of if block
+                            else
+                            {
+                                currentLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                            }// end of else block
+                        }// end of if block
+                        else if( location.length > 1 )
+                        {
+                            if( location[ 1 ].trim().equalsIgnoreCase( "US" ) ||
+                                    location[ 1 ].trim().equalsIgnoreCase( "United States" ) )
+                            {
+                                // if the state name has a length of 2 then nothing needs to be done
+                                if( location[ 1 ].trim().length() > 2 )
+                                {
+                                    currentLocation = location[ 0 ].trim() + ", " +
+                                            UtilityMethod.usStatesByName.get( location[ 0 ].trim() );
+                                }// end of if block
+                                else
+                                {
+                                    currentLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                                }// end of else block
+                            }// end of if block
+                            else
+                            {
+                                currentLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                            }// end of else block
+                        }// end of else if block
+                        else
+                        {
+                            currentLocation = edtCityName.getText().toString();
+                        }// end of else block
+
+                        // a location without a comma indicating a specific place is invalid and will be ignored
+                        if( currentLocation.contains( "," ) )
+                        {
+                            if( !currentLocation.equalsIgnoreCase( savedLocation ) )
+                            {
+                                WidgetUpdateService.widgetRefreshRequired = true;
+                                editor.putString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+                                        currentLocation );
+                                editor.commit();
+
+                                WeatherLionApplication.storedPreferences.setLocation( currentLocation );
+
+                                // send out a broadcast to the preferences activity that the location preference has been modified
+                                Intent messageIntent = new Intent( CITY_LOCATION_SERVICE_MESSAGE );
+                                messageIntent.putExtra( CITY_LOCATION_SERVICE_PAYLOAD,
+                                        WeatherLionApplication.CURRENT_LOCATION_PREFERENCE );
+                                LocalBroadcastManager manager =
+                                        LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );
+                                manager.sendBroadcast( messageIntent );
+
+                                // send out a broadcast to the widget service that the location preference has been modified
+                                UtilityMethod.refreshRequestedBySystem = true;
+                                UtilityMethod.refreshRequestedByUser = false;
+
+                                String invoker = this.getClass().getSimpleName() + "::onDialogClosed";
+                                WeatherLionApplication.callMethodByName( null,
+                                        "refreshWeather",
+                                        new Class[]{ String.class }, new Object[]{ invoker } );
+
+                                // send out a broadcast to the city storage service to store the city name if it has not already been stored
+                                Intent storeCityIntent = new Intent( WeatherLionApplication.getAppContext(),
+                                        CityStorageService.class );
+                                storeCityIntent.setData( Uri.parse( selectedIndex + ":" + PreferenceManager.getDefaultSharedPreferences(
+                                        getContext() ).getString(  WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+                                        Preference.DEFAULT_WEATHER_LOCATION ) ) );
+                                WeatherLionApplication.getAppContext().startService( storeCityIntent );
+                            }// end of if block
+
                         }// end of if block
                         else
                         {
-                            currentLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                            WidgetUpdateService.widgetRefreshRequired = false;
+                            UtilityMethod.butteredToast( getContext(),
+                                    "Incomplete city name. Perform a search an select one from the list.",
+                                    2, Toast.LENGTH_LONG );
                         }// end of else block
                     }// end of if block
-                    else
-                    {
-                        currentLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
-                    }// end of else block
-                }// end of if block
-                else if( location.length > 1 )
-                {
-                    if( location[ 1 ].trim().equalsIgnoreCase( "US" ) ||
-                            location[ 1 ].trim().equalsIgnoreCase( "United States" ) )
-                    {
-                        // if the state name has a length of 2 then nothing needs to be done
-                        if( location[ 1 ].trim().length() > 2 )
-                        {
-                            currentLocation = location[ 0 ].trim() + ", " +
-                                UtilityMethod.usStatesByName.get( location[ 0 ].trim() );
-                        }// end of if block
-                        else
-                        {
-                            currentLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
-                        }// end of else block
-                    }// end of if block
-                    else
-                    {
-                        currentLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
-                    }// end of else block
-                }// end of else if block
-                else
-                {
-                    currentLocation = edtCityName.getText().toString();
-                }// end of else block
-
-                // a location without a comma indicating a specific place is invalid and will be ignored
-                if( currentLocation.contains( "," ) )
-                {
-                    if( !currentLocation.equalsIgnoreCase( savedLocation ) )
-                    {
-                        WidgetUpdateService.widgetRefreshRequired = true;
-                        editor.putString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
-                                currentLocation );
-                        editor.commit();
-
-                        WeatherLionApplication.storedPreferences.setLocation( currentLocation );
-
-                        // send out a broadcast to the preferences activity that the location preference has been modified
-                        Intent messageIntent = new Intent( CITY_LOCATION_SERVICE_MESSAGE );
-                        messageIntent.putExtra( CITY_LOCATION_SERVICE_PAYLOAD,
-                                WeatherLionApplication.CURRENT_LOCATION_PREFERENCE );
-                        LocalBroadcastManager manager =
-                                LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );
-                        manager.sendBroadcast( messageIntent );
-
-                        // send out a broadcast to the widget service that the location preference has been modified
-                        UtilityMethod.refreshRequestedBySystem = true;
-                        UtilityMethod.refreshRequestedByUser = false;
-
-                        String invoker = this.getClass().getSimpleName() + "::onDialogClosed";
-                        WeatherLionApplication.callMethodByName( null,
-                                "refreshWeather",
-                                new Class[]{ String.class }, new Object[]{ invoker } );
-
-                        // send out a broadcast to the city storage service to store the city name if it has not already been stored
-                        Intent storeCityIntent = new Intent( WeatherLionApplication.getAppContext(),
-                                CityStorageService.class );
-                        storeCityIntent.setData( Uri.parse( selectedIndex + ":" + PreferenceManager.getDefaultSharedPreferences(
-                                getContext() ).getString(  WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
-                                Preference.DEFAULT_WEATHER_LOCATION ) ) );
-                        WeatherLionApplication.getAppContext().startService( storeCityIntent );
-                    }// end of if block
-
-                }// end of if block
-                else
-                {
-                    WidgetUpdateService.widgetRefreshRequired = false;
-                    UtilityMethod.butteredToast( getContext(),
-                        "Incomplete city name. Perform a search an select one from the list.",
-                        2, Toast.LENGTH_LONG );
-                }// end of else block
-            }// end of if block
+                }// end of method onClick
+            });
         }// end of if block
-    }// end of method onDialogClosed
+    }// end of method showDialog
 
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver()
     {

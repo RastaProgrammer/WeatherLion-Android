@@ -304,7 +304,11 @@ public class WeatherLionApplication extends Application
                 // weather data might not have been saved as intended as change
                 if( !wxLocation.equals( storedData.getLocation().getCity() ) )
                 {
-                    refreshWeather( "checkForStoredWeatherData" );
+                    String invoker = this.getClass().getSimpleName() + "::" +
+                        Objects.requireNonNull(
+                            new Object() {}.getClass().getEnclosingMethod() ).getName();
+
+                    refreshWeather( invoker );
                     return true;
                 }// end of if block
                 else
@@ -326,7 +330,9 @@ public class WeatherLionApplication extends Application
      */
     private void actionWeatherService( String uriData, String methodName )
     {
-        String invoker = this.getClass().getSimpleName() + "::actionWeatherService";
+        String invoker = this.getClass().getSimpleName() + "::" +
+            Objects.requireNonNull(
+                new Object() {}.getClass().getEnclosingMethod() ).getName();
         Bundle extras = new Bundle();
 
         extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
@@ -1152,6 +1158,10 @@ public class WeatherLionApplication extends Application
         connectedToInternet = UtilityMethod.hasInternetConnection( getAppContext() );
         createServiceCallLog();
 
+        String invoker = this.getClass().getSimpleName() + "::" +
+            Objects.requireNonNull(
+                new Object() {}.getClass().getEnclosingMethod() ).getName();
+
         // setup a broadcast receiver that will listen for gps data
         IntentFilter appFilter = new IntentFilter();
         appFilter.addAction( GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE );
@@ -1338,7 +1348,6 @@ public class WeatherLionApplication extends Application
 
                 if( largeWidgetIds.length > 0 || smallWidgetIds.length > 0 )
                 {
-                    String invoker = this.getClass().getSimpleName() + "::onCreate";
                     Bundle extras = new Bundle();
                     extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
                     extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
@@ -1363,7 +1372,6 @@ public class WeatherLionApplication extends Application
 
             if( UtilityMethod.updateRequired( this ) )
             {
-                String invoker = this.getClass().getSimpleName() + "::onCreate";
                 Bundle extras = new Bundle();
                 extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
                 extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
@@ -1830,7 +1838,9 @@ public class WeatherLionApplication extends Application
                         UtilityMethod.refreshRequestedBySystem = true;
                         UtilityMethod.refreshRequestedByUser = false;
 
-                        String invoker = TAG + "::" + this.getClass().getSimpleName() + "::onReceive";
+                        String invoker = this.getClass().getSimpleName() + "::" +
+                            Objects.requireNonNull(
+                                new Object() {}.getClass().getEnclosingMethod() ).getName();
                         callMethodByName( WeatherLionApplication.class,
                                 "refreshWeather",
                                 new Class[]{ String.class }, new Object[]{ invoker } );

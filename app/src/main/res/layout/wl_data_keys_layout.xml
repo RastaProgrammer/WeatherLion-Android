@@ -48,7 +48,7 @@
     </RelativeLayout>
 
     <RelativeLayout
-        android:id="@+id/layDialogBody"
+        android:id="@+id/rlDialogBody"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/rlDialogTitleBar"
@@ -267,6 +267,6 @@
         android:id="@+id/rlDialogFooter"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/layDialogBody"
+        android:layout_below="@+id/rlDialogBody"
         android:background="@drawable/wl_custom_dialog_footer" />
 </RelativeLayout>

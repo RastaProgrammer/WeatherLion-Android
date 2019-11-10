@@ -1397,7 +1397,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -1600,7 +1600,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -1754,7 +1754,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
                 "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -1941,7 +1941,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
         "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -2106,7 +2106,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
         "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -2345,7 +2345,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
     "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -2489,7 +2489,7 @@ public class WidgetUpdateService extends JobIntentService
         WeatherLionApplication.currentSunsetTime = sunsetTime;
 
         // Load current condition weather image
-        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
     "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
@@ -2738,7 +2738,7 @@ public class WidgetUpdateService extends JobIntentService
         loadLocalWeatherData();
 
         // Load current condition weather image
-        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
         String weatherCondition = WeatherLionApplication.storedData.getCurrent().getCondition();
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,

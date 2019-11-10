@@ -3,19 +3,106 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/iconGrid"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:padding="10dp">
+    android:layout_height="wrap_content">
 
-    <GridView
-        android:id="@+id/grid"
-        android:numColumns="2"
-        android:gravity="center"
-        android:columnWidth="320dp"
-        android:clipToPadding="true"
-        android:fitsSystemWindows="true"
-        android:stretchMode="columnWidth"
-        android:horizontalSpacing="10dp"
+    <RelativeLayout
+        android:id="@+id/rlDialogTitleBar"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:background="@drawable/wl_custom_dialog_title">
+
+        <ImageView
+            android:id="@+id/diaIcon"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentStart="true"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="10dip"
+            android:src="@drawable/icon"
+            android:contentDescription="@string/dialog_icon" />
+
+        <TextView
+            android:id="@+id/txvDialogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="40dip"
+            android:layout_gravity="center_vertical"
+            android:layout_toEndOf="@+id/diaIcon"
+            android:layout_toStartOf="@+id/imvCloseDialog"
+            android:gravity="start|center_vertical"
+            android:layout_marginStart="8dip"
+            android:text="@string/icon_set_title"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/imvCloseDialog"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentEnd="true"
+            android:layout_centerInParent="true"
+            android:layout_marginEnd="10dip"
+            android:src="@drawable/wl_close_dialog"
+            android:contentDescription="@string/close_dialog" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rlDialogBody"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rlDialogTitleBar"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="10dp"
+        android:background="#FFFFFF">
+
+        <GridView
+            android:id="@+id/grdIconSet"
+            android:numColumns="2"
+            android:gravity="center"
+            android:columnWidth="120dp"
+            android:clipToPadding="true"
+            android:fitsSystemWindows="true"
+            android:stretchMode="columnWidth"
+            android:horizontalSpacing="10dp"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="100dip"
+            android:layout_height="30dip"
+            android:layout_below="@+id/grdIconSet"
+            android:layout_toStartOf="@+id/btnOk"
+            android:layout_marginTop="10dip"
+            android:layout_marginEnd="8dip"
+            android:background="@drawable/wl_aqua_rounded_btn_bg"
+            android:gravity="center"
+            android:text="@string/cancel"
+            android:textColor="#FFFFFF"
+            android:stateListAnimator="@null" />
+
+        <Button
+            android:id="@+id/btnOk"
+            android:layout_width="100dip"
+            android:layout_height="30dip"
+            android:layout_below="@+id/grdIconSet"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="10dip"
+            android:background="@drawable/wl_aqua_rounded_btn_bg"
+            android:gravity="center"
+            android:text="@string/Ok"
+            android:textColor="#FFFFFF"
+            android:stateListAnimator="@null" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rlDialogFooter"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rlDialogBody"
+        android:background="@drawable/wl_custom_dialog_footer" />
 </RelativeLayout>
 

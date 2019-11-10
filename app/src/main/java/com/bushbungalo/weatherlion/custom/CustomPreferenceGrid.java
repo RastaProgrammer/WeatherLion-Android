@@ -7,6 +7,7 @@ import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -61,8 +62,8 @@ public class CustomPreferenceGrid extends BaseAdapter
         {
             grid = View.inflate( WeatherLionApplication.getAppContext(),
                     R.layout.wl_grid_item, null );
-            TextView textView = grid.findViewById( R.id.grid_text );
-            ImageView imageView = grid.findViewById( R.id.grid_image );
+            TextView previewText = grid.findViewById( R.id.grid_text );
+            ImageView previewImage = grid.findViewById( R.id.grid_image );
 
             try
             {
@@ -72,14 +73,15 @@ public class CustomPreferenceGrid extends BaseAdapter
                 Drawable d = Drawable.createFromStream( is, null );
                 String selectItem;
 
-                imageView.setImageDrawable( d );
+                previewImage.setImageDrawable( d );
 
                 switch( requester )
                 {
                     case "icons":
                         selectItem = spf.getString( WeatherLionApplication.ICON_SET_PREFERENCE,
                                 Preference.DEFAULT_ICON_SET );
-                        textView.setText( displayImages[ position ] );
+                        previewText.setText( displayImages[ position ] );
+                        previewText.setTypeface( WeatherLionApplication.currentTypeface );
 
                         if ( displayImages[ position ].equalsIgnoreCase( selectItem ) )
                         {
@@ -89,8 +91,9 @@ public class CustomPreferenceGrid extends BaseAdapter
                     case "background":
                         selectItem = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
                                 "Lion" );
-                        textView.setText( UtilityMethod.toProperCase(
+                        previewText.setText( UtilityMethod.toProperCase(
                                 displayImages[ position ].replace( ".png", "" )  ) );
+                        previewText.setTypeface( WeatherLionApplication.currentTypeface );
 
                         if ( displayImages[ position ].equalsIgnoreCase( selectItem + ".png" ) )
                         {
@@ -100,15 +103,18 @@ public class CustomPreferenceGrid extends BaseAdapter
                     default:
                         break;
                 }// end of switch block
-
-
             }// end of try block
             catch ( IOException e )
             {
-                UtilityMethod.logMessage(UtilityMethod.LogLevel.SEVERE,
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
                     e.getMessage(),TAG + "::getView [line: " +
                         e.getStackTrace()[1].getLineNumber()+ "]" );
             }// end of catch block
+
+            GridView gridItem = (GridView) parent;
+            int size = gridItem.getRequestedColumnWidth();
+
+            grid.setLayoutParams( new GridView.LayoutParams( size, size ) );
         }// end of if block
         else
         {

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -80,38 +81,26 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, final int position)
+    public void onBindViewHolder( @NonNull ViewHolder holder, final int position )
     {
         String TAG = "WeeklyForecastAdapter";
 
         final LastWeatherData.WeatherData.DailyForecast.DayForecast forecast =
-                mWeeklyForecast.get( position );
+            mWeeklyForecast.get( position );
 
         try
         {
-            String fCondition = forecast.getCondition();
-
-            if( fCondition.toLowerCase().contains( "(day)" ) )
-            {
-                fCondition = fCondition.replace( "(day)", "" ).trim();
-            }// end of if block
-            else if( fCondition.toLowerCase().contains( "(night)" ) )
-            {
-                fCondition = fCondition.replace( "(night)", "" ).trim();
-            }// end of if block
-
-            String fConditionIcon
-                    = UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
-                    ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
-            String wxIcon = "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon;
-
-            InputStream is = WeatherLionApplication.getAppContext().getAssets().open( wxIcon );
-            Drawable d = Drawable.createFromStream( is, null );
-
             Date forecastDate = null;
             SimpleDateFormat dayFormat = new SimpleDateFormat( "EEEE, MMM d",
                     Locale.ENGLISH );
             String today = dayFormat.format( new Date() );
+            Calendar cal = Calendar.getInstance();
+            cal.add( Calendar.DAY_OF_MONTH, 1 );
+            String tomorrow = dayFormat.format( cal.getTime() );
+            String fCondition = forecast.getCondition();
+            String fConditionIcon
+                = UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
+                    ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
 
             try
             {
@@ -129,14 +118,32 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
             {
                 holder.txvDayDate.setText( String.format( "Today, %s",
                     dayFormat.format( forecastDate ) ) );
+
+                 fConditionIcon = UtilityMethod.getConditionIcon( new StringBuilder( fCondition ), new Date() );
             }// end of if block
+            else if( tomorrow.equals( dayFormat.format( forecastDate ) ) )
+            {
+                holder.txvDayDate.setText( String.format( "Tomorrow, %s",
+                        dayFormat.format( forecastDate ) ) );
+            }// end of else if block
             else
             {
                 holder.txvDayDate.setText( dayFormat.format( forecastDate ) );
             }// end of else block
 
+            String wxIcon = String.format( "weather_images/%s/weather_%s",
+                WeatherLionApplication.iconSet, fConditionIcon );
+            InputStream is = WeatherLionApplication.getAppContext().getAssets().open( wxIcon );
+            Drawable d = Drawable.createFromStream( is, null );
+
             holder.txvDayConditions.setText( fCondition );
             holder.imvDayConditionImage.setImageDrawable( d );
+
+//            if( position % 2 == 0 )
+//            {
+//                holder.itemView.setBackgroundColor( Color.parseColor( "#1AFFFFFF" ) );
+//            }// end of if block
+
         }// end of try block
         catch ( IOException e )
         {

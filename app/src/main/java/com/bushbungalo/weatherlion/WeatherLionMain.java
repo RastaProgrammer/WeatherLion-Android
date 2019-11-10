@@ -591,9 +591,28 @@ public class WeatherLionMain extends AppCompatActivity
 
                 txvHour.setText( wxHourForecast.getTime() );
 
+                String today = new SimpleDateFormat( "MM/dd/yyyy",
+                        Locale.ENGLISH ).format( new Date() );
+
+                String hourForecast = String.format( "%s %s", today,
+                        wxHourForecast.getTime() );
+
+                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a", Locale.ENGLISH );
+                Date onTime = null;
+
+                try
+                {
+                    onTime = sdf.parse( hourForecast );
+                } // end of try block
+                catch ( ParseException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                            TAG + "::loadMainActivity [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                }// end of catch block
+
                 // Load current forecast condition weather image
                 StringBuilder fCondition = new StringBuilder( wxHourForecast.getCondition());
-                String fConditionIcon = UtilityMethod.getConditionIcon( fCondition );
+                String fConditionIcon = UtilityMethod.getConditionIcon( fCondition, onTime );
 
                 loadWeatherIcon( imvHour, String.format(
                     "weather_images/%s/weather_%s", WeatherLionApplication.iconSet, fConditionIcon ) );
@@ -747,7 +766,7 @@ public class WeatherLionMain extends AppCompatActivity
         loadPreviousSearches();
 
         // Load current condition weather image
-        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition );
+        String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         ImageView imvCurrentConditionImage = findViewById( R.id.imvCurrentCondition );
         String imageFile = "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon;
@@ -1569,7 +1588,7 @@ public class WeatherLionMain extends AppCompatActivity
         bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
         ImageView imvClose = keyDialogView.findViewById( R.id.imvCloseDialog );
-        Spinner spnAccessProvider = keyDialogView.findViewById(R.id.spnAccessProvider);
+        Spinner spnAccessProvider = keyDialogView.findViewById( R.id.spnAccessProvider );
         rlKeyNameParent = keyDialogView.findViewById( R.id.spnKeyNameParent );
         spnProviderKeys = keyDialogView.findViewById( R.id.spnKeyName );
         edtKeyName = keyDialogView.findViewById( R.id.edtKeyName );
