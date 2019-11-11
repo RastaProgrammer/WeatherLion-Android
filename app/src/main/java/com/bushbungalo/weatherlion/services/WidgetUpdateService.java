@@ -15,6 +15,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,6 +26,7 @@ import android.support.v4.app.JobIntentService;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -91,8 +93,11 @@ public class WidgetUpdateService extends JobIntentService
     public static final String WEATHER_DATA_UNIT_CHANGED = "WeatherDataUnitChanged";
     public static final String WEATHER_UPDATE_SERVICE_MESSAGE = "WidgetUpdateServiceMessage";
     public static final String WEATHER_XML_SERVICE_MESSAGE = "WeatherXmlServiceMessage";
-    public static final String  WEATHER_XML_SERVICE_PAYLOAD = "WeatherXmlServicePayload";
+    public static final String WEATHER_XML_SERVICE_PAYLOAD = "WeatherXmlServicePayload";
     public static final String WEATHER_LOADING_ERROR_MESSAGE = "WidgetLoadingErrorMessage";
+    
+    public static final String WEATHER_IMAGES_ROOT = "weather_images/";
+    public static final String WIDGET_BACKGROUNDS_PREVIEW_ROOT = "backgrounds/";
 
     private static DarkSkyWeatherDataItem darkSky;
     private static HereMapsWeatherDataItem.WeatherData hereWeatherWx;
@@ -690,7 +695,7 @@ public class WidgetUpdateService extends JobIntentService
         }// end of switch block
 
         // Load applicable icon based on the time of day
-        String imageFile = String.format( "weather_images/%s/weather_%s", WeatherLionApplication.iconSet
+        String imageFile = String.format( "WEATHER_IMAGES_ROOT%s/weather_%s", WeatherLionApplication.iconSet
                 , currentConditionIcon );
 
         largeWidgetRemoteViews = new RemoteViews(
@@ -1072,6 +1077,9 @@ public class WidgetUpdateService extends JobIntentService
         smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
                 currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
 
+        String widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
+                com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
+
         // schedule the weather update only if weather was just updated
         if( weatherUpdate && strJSON != null && !strJSON.isEmpty() )
         {
@@ -1083,6 +1091,53 @@ public class WidgetUpdateService extends JobIntentService
                         String.format( Locale.ENGLISH,
                             "Updating weather data on widget %d...", largeWidgetId ),
                             TAG + "::updateAllAppWidgets" );
+
+                    if( widBackgroundColor != null )
+                    {
+                        View widgetView = View.inflate( this,
+                                R.layout.wl_large_weather_widget_activity, null );
+                        ViewGroup root = widgetView.findViewById( R.id.flWidgetParent );
+
+                        UtilityMethod.widgetTextViews.clear();
+                        UtilityMethod.widgetImageViews.clear();
+                        UtilityMethod.getViewIds( root );
+
+                        if( widBackgroundColor.toLowerCase().equals(
+                                WeatherLionApplication.FROSTY_THEME ) )
+                        {
+                            for( int viewId : UtilityMethod.widgetTextViews )
+                            {
+                                largeWidgetRemoteViews.setTextColor( viewId,
+                                        Color.parseColor("#000000" ) );
+                            }// end of for each loop
+
+                            for( int viewId : UtilityMethod.widgetImageViews )
+                            {
+                                largeWidgetRemoteViews.setInt( viewId, "setColorFilter",
+                                        Color.parseColor("#000000") );
+                            }// end of for each loop
+
+                            largeWidgetRemoteViews.setImageViewBitmap( R.id.txvDayLow,
+                                    getBitmap( R.drawable.wl_dark_top_border ) );
+                        }// end of if block
+                        else
+                        {
+                            for( int viewId : UtilityMethod.widgetTextViews )
+                            {
+                                largeWidgetRemoteViews.setTextColor( viewId,
+                                        Color.parseColor("#FFFFFF" ) );
+                            }// end of for each loop
+
+                            for( int viewId : UtilityMethod.widgetImageViews )
+                            {
+                                largeWidgetRemoteViews.setInt( viewId, "setColorFilter",
+                                        Color.parseColor("#FFFFFF") );
+                            }// end of for each loop
+
+//                            largeWidgetRemoteViews.setImageViewBitmap( R.id.txvDayLow,
+//                                    getBitmap( R.drawable.wl_light_top_border ) );
+                        }// end of else block
+                    }// end of if block
 
                     largeWidgetRemoteViews.setString( R.id.tcCurrentTime, "setTimeZone",
                         CityData.currentCityData.getTimeZone() );
@@ -1103,6 +1158,47 @@ public class WidgetUpdateService extends JobIntentService
                             String.format( Locale.ENGLISH,
                                     "Updating weather data on widget %d...", smallWidgetId ),
                             TAG + "::updateAllAppWidgets" );
+
+                    if( widBackgroundColor != null )
+                    {
+                        View widgetView = View.inflate( this,
+                                R.layout.wl_small_weather_widget_activity, null );
+                        ViewGroup root = widgetView.findViewById( R.id.flWidgetParent );
+
+                        UtilityMethod.widgetTextViews.clear();
+                        UtilityMethod.widgetImageViews.clear();
+                        UtilityMethod.getViewIds( root );
+
+                        if( widBackgroundColor.toLowerCase().equals(
+                                WeatherLionApplication.FROSTY_THEME ) )
+                        {
+                            for( int viewId : UtilityMethod.widgetTextViews )
+                            {
+                                smallWidgetRemoteViews.setTextColor( viewId,
+                                        Color.parseColor("#000000" ) );
+                            }// end of for each loop
+
+                            for( int viewId : UtilityMethod.widgetImageViews )
+                            {
+                                smallWidgetRemoteViews.setInt( viewId, "setColorFilter",
+                                        Color.parseColor("#000000") );
+                            }// end of for each loop
+                        }// end of if block
+                        else
+                        {
+                            for( int viewId : UtilityMethod.widgetTextViews )
+                            {
+                                smallWidgetRemoteViews.setTextColor( viewId,
+                                        Color.parseColor("#FFFFFF" ) );
+                            }// end of for each loop
+
+                            for( int viewId : UtilityMethod.widgetImageViews )
+                            {
+                                smallWidgetRemoteViews.setInt( viewId, "setColorFilter",
+                                        Color.parseColor("#FFFFFF") );
+                            }// end of for each loop
+                        }// end of else block
+                    }// end of if block
 
                     appWidgetManager.updateAppWidget( smallWidgetId,
                             smallWidgetRemoteViews );
@@ -1140,6 +1236,58 @@ public class WidgetUpdateService extends JobIntentService
             {
                 for ( int largeWidgetId : WeatherLionApplication.largeWidgetIds )
                 {
+                    if( widBackgroundColor != null )
+                    {
+                        View widgetView = View.inflate( this,
+                                R.layout.wl_large_weather_widget_activity, null );
+                        ViewGroup root = widgetView.findViewById( R.id.flWidgetParent );
+
+                        UtilityMethod.widgetTextViews.clear();
+                        UtilityMethod.widgetImageViews.clear();
+                        UtilityMethod.getViewIds( root );
+
+                        if( widBackgroundColor.toLowerCase().equals(
+                                WeatherLionApplication.FROSTY_THEME ) )
+                        {
+                            for( int viewId : UtilityMethod.widgetTextViews )
+                            {
+                                largeWidgetRemoteViews.setTextColor( viewId,
+                                        Color.parseColor("#000000" ) );
+                            }// end of for each loop
+
+                            for( int viewId : UtilityMethod.widgetImageViews )
+                            {
+                                largeWidgetRemoteViews.setInt( viewId, "setColorFilter",
+                                        Color.parseColor("#000000") );
+                            }// end of for each loop
+
+//                            largeWidgetRemoteViews.setImageViewBitmap( R.id.txvDayLow,
+//                                    getBitmap( R.drawable.wl_dark_top_border ) );
+                        }// end of if block
+                        else
+                        {
+                            for( int viewId : UtilityMethod.widgetTextViews )
+                            {
+                                largeWidgetRemoteViews.setTextColor( viewId,
+                                        Color.parseColor("#FFFFFF" ) );
+                            }// end of for each loop
+
+                            for( int viewId : UtilityMethod.widgetImageViews )
+                            {
+                                largeWidgetRemoteViews.setInt( viewId, "setColorFilter",
+                                        Color.parseColor("#FFFFFF") );
+                            }// end of for each loop
+                        }// end of else block
+
+//                        largeWidgetRemoteViews.setImageViewBitmap( R.id.txvDayLow,
+//                                getBitmap( R.drawable.wl_light_top_border ) );
+                    }// end of if block
+
+                    largeWidgetRemoteViews.setString( R.id.tcCurrentTime, "setTimeZone",
+                            CityData.currentCityData.getTimeZone() );
+                    largeWidgetRemoteViews.setString( R.id.tcAMPM, "setTimeZone",
+                            CityData.currentCityData.getTimeZone() );
+
                     appWidgetManager.updateAppWidget( largeWidgetId,
                             largeWidgetRemoteViews );
                 }// end of for each loop
@@ -1150,6 +1298,47 @@ public class WidgetUpdateService extends JobIntentService
                 // update all the small widgets
                 for ( int smallWidgetId : WeatherLionApplication.smallWidgetIds )
                 {
+                    if( widBackgroundColor != null )
+                    {
+                        View widgetView = View.inflate( this,
+                                R.layout.wl_small_weather_widget_activity, null );
+                        ViewGroup root = widgetView.findViewById( R.id.flWidgetParent );
+
+                        UtilityMethod.widgetTextViews.clear();
+                        UtilityMethod.widgetImageViews.clear();
+                        UtilityMethod.getViewIds( root );
+
+                        if( widBackgroundColor.toLowerCase().equals(
+                                WeatherLionApplication.FROSTY_THEME ) )
+                        {
+                            for( int viewId : UtilityMethod.widgetTextViews )
+                            {
+                                smallWidgetRemoteViews.setTextColor( viewId,
+                                        Color.parseColor("#000000" ) );
+                            }// end of for each loop
+
+                            for( int viewId : UtilityMethod.widgetImageViews )
+                            {
+                                smallWidgetRemoteViews.setInt( viewId, "setColorFilter",
+                                        Color.parseColor("#000000") );
+                            }// end of for each loop
+                        }// end of if block
+                        else
+                        {
+                            for( int viewId : UtilityMethod.widgetTextViews )
+                            {
+                                smallWidgetRemoteViews.setTextColor( viewId,
+                                        Color.parseColor("#FFFFFF" ) );
+                            }// end of for each loop
+
+                            for( int viewId : UtilityMethod.widgetImageViews )
+                            {
+                                smallWidgetRemoteViews.setInt( viewId, "setColorFilter",
+                                        Color.parseColor("#FFFFFF") );
+                            }// end of for each loop
+                        }// end of else block
+                    }// end of if block
+
                     appWidgetManager.updateAppWidget( smallWidgetId,
                             smallWidgetRemoteViews );
                 }// end of for each loop
@@ -1400,10 +1589,10 @@ public class WidgetUpdateService extends JobIntentService
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         // Five Hour Forecast
         int x = 1;
@@ -1491,7 +1680,7 @@ public class WidgetUpdateService extends JobIntentService
                     fCondition );
 
             loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-            "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+            WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
             currentFiveDayForecast.add(
                     new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
@@ -1603,10 +1792,10 @@ public class WidgetUpdateService extends JobIntentService
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         // Five Day Forecast
         int i = 1;
@@ -1653,7 +1842,7 @@ public class WidgetUpdateService extends JobIntentService
                         fCondition );
 
                 loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-                        "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+                        WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
                 currentFiveDayForecast.add(
                         new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
@@ -1757,10 +1946,10 @@ public class WidgetUpdateService extends JobIntentService
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         // Five Day Forecast
         int i = 1;
@@ -1792,7 +1981,7 @@ public class WidgetUpdateService extends JobIntentService
                         fCondition );
 
                 loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-            "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+            WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
                 currentFiveDayForecast.add(
                         new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
@@ -1907,7 +2096,6 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
                 Math.round( Float.parseFloat( currentHumidity.toString() ) )
                         + ( !currentHumidity.toString().contains( "%" ) ? "%" : "" ) );
-
         Date timeUpdated = null;
 
         try
@@ -1944,10 +2132,10 @@ public class WidgetUpdateService extends JobIntentService
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-        "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         for ( int i = 0; i < WeatherLionApplication.storedData.getDailyForecast().size(); i++ )
         {
@@ -1988,10 +2176,10 @@ public class WidgetUpdateService extends JobIntentService
             String fConditionIcon
                     = UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
                     ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
-            String wxIcon = "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon;
+            String wxIcon = WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon;
 
             loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-        "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+        WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
             currentFiveDayForecast.add(
                     new FiveDayForecast( forecastDate,
@@ -2109,10 +2297,10 @@ public class WidgetUpdateService extends JobIntentService
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-        "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         // Five Hour Forecast
         float fTemp;    // forecasted hour temperature
@@ -2221,7 +2409,7 @@ public class WidgetUpdateService extends JobIntentService
                             fCondition );
 
                     loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
                     currentFiveDayForecast.add(
                             new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
@@ -2348,10 +2536,10 @@ public class WidgetUpdateService extends JobIntentService
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-    "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+    WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-    "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+    WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         List< YahooWeatherYdnDataItem.Forecast > fdf = yahoo19.getForecast();
         currentFiveDayForecast.clear(); // ensure that this list is clean
@@ -2375,7 +2563,7 @@ public class WidgetUpdateService extends JobIntentService
                     fCondition );
 
             loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-        "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+        WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
             Date forecastDate = UtilityMethod.getDateTime( fdf.get( i ).getDate() );
 
@@ -2492,10 +2680,10 @@ public class WidgetUpdateService extends JobIntentService
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-    "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+    WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-    "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+    WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         List< YrWeatherDataItem.HourByHourForecast > fhf = yr.getHourlyForecast();
         SimpleDateFormat df = new SimpleDateFormat( "MMMM dd, yyyy", Locale.ENGLISH );
@@ -2595,7 +2783,7 @@ public class WidgetUpdateService extends JobIntentService
                         fCondition );
 
                 loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-                        "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+                        WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
                 currentFiveDayForecast.add(
                         new FiveDayForecast( forecastDate, String.valueOf(
@@ -2742,10 +2930,10 @@ public class WidgetUpdateService extends JobIntentService
         String weatherCondition = WeatherLionApplication.storedData.getCurrent().getCondition();
 
         loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+                WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
         for ( int i = 0; i < WeatherLionApplication.storedData.getDailyForecast().size(); i++ )
         {
@@ -2772,7 +2960,7 @@ public class WidgetUpdateService extends JobIntentService
                     ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
 
             loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-                    "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+                    WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
             if( i == 4 )
             {
@@ -2796,13 +2984,18 @@ public class WidgetUpdateService extends JobIntentService
             switch ( widBackgroundColor.toLowerCase() )
             {
                 case WeatherLionApplication.AQUA_THEME:
-                    largeDrawableId = R.drawable.wl_aqua_bg_large;
+                    largeDrawableId =R.drawable.wl_aqua_bg_large;
                     smallDrawableId = R.drawable.wl_aqua_bg_small;
 
                     break;
                 case WeatherLionApplication.RABALAC_THEME:
                     largeDrawableId = R.drawable.wl_rabalac_bg_large;
                     smallDrawableId = R.drawable.wl_rabalac_bg_small;
+
+                    break;
+                case WeatherLionApplication.FROSTY_THEME:
+                    largeDrawableId = R.drawable.wl_frosty_bg_large;
+                    smallDrawableId = R.drawable.wl_frosty_bg_small;
 
                     break;
                 case WeatherLionApplication.LION_THEME:
@@ -3658,8 +3851,10 @@ public class WidgetUpdateService extends JobIntentService
                     List< YrWeatherDataItem.Forecast > fdf = yr.getForecast();
                     List< YrWeatherDataItem.HourByHourForecast > fhf = yr.getHourlyForecast();
 
-                    float lowestTempToday = 0;
-                    float highestTempToday = 0;
+                    // current temperature
+                    int ct = Math.round( Float.parseFloat( currentTemp.toString() ) );
+                    float lowestTempToday = ct;
+                    float highestTempToday = ct;
 
                     if( ZoneId.systemDefault().getId().toLowerCase().equals(
                             WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
@@ -3686,12 +3881,12 @@ public class WidgetUpdateService extends JobIntentService
                                 UtilityMethod.celsiusToFahrenheit(
                                         wxTempReading.getTemperatureValue() ) );
 
-                        if( highestTempToday == 0 || fTemp > highestTempToday )
+                        if( fTemp > highestTempToday )
                         {
                             highestTempToday = Math.round( fTemp );
                         }// end of if block
 
-                        if( lowestTempToday == 0 || fTemp < lowestTempToday )
+                        if( fTemp < lowestTempToday )
                         {
                             lowestTempToday = Math.round( fTemp );
                         }// end of if block

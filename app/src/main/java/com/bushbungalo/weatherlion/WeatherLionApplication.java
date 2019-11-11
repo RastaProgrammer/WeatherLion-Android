@@ -123,6 +123,7 @@ public class WeatherLionApplication extends Application
     // theme constants
     public static final String AQUA_THEME = "aqua";
     public static final String RABALAC_THEME = "rabalac";
+    public static final String FROSTY_THEME = "frosty";
     public static final String LION_THEME = "lion";
 
     // weather provider and web API constants
@@ -1321,6 +1322,13 @@ public class WeatherLionApplication extends Application
                     systemButtonDrawable = getDrawable( R.drawable.wl_aqua_rounded_btn_bg );
                     widgetBackgroundDrawable = getDrawable( R.drawable.wl_aqua_bg_large );
                     setTheme( R.style.AquaTheme );
+
+                    break;
+                case FROSTY_THEME:
+                    systemColor = Color.valueOf( getColor( R.color.frosty ) );
+                    systemButtonDrawable = getDrawable( R.drawable.wl_frosty_rounded_btn_bg );
+                    widgetBackgroundDrawable = getDrawable( R.drawable.wl_frosty_bg_large );
+                    setTheme( R.style.FrostyTheme );
 
                     break;
                 case RABALAC_THEME:

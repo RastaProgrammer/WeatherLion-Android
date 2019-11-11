@@ -22,6 +22,7 @@ import android.widget.TextView;
 
 import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
+import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
 import java.io.IOException;
@@ -35,6 +36,9 @@ public class IconSetPreference extends DialogPreference
     public static final String ICON_SET_SERVICE_MESSAGE = "iconSetServiceMessage";
     public static final String ICON_SET_SERVICE_PAYLOAD = "iconSetServicePayload";
 
+    public static final String CALLER_NAME = "icons";
+
+    private Context mContext;
     protected View dialogView;
 
     private String[] iconSetNames = null;
@@ -46,6 +50,7 @@ public class IconSetPreference extends DialogPreference
     public IconSetPreference( Context context, AttributeSet attrs )
     {
         super( context, attrs );
+        this.mContext = context;
 
         setPersistent( false );
         setDialogLayoutResource( layoutId );
@@ -66,7 +71,7 @@ public class IconSetPreference extends DialogPreference
     protected View onCreateDialogView()
     {
         //LayoutInflater inflater = (LayoutInflater) getContext().getSystemService( Context.LAYOUT_INFLATER_SERVICE );
-        dialogView = View.inflate( WeatherLionApplication.getAppContext(),
+        dialogView = View.inflate( mContext,
                 layoutId, null );
 
         RelativeLayout rlTitleBar = dialogView.findViewById( R.id.rlDialogTitleBar );
@@ -93,36 +98,35 @@ public class IconSetPreference extends DialogPreference
 
         try
         {
-            iconSetNames = WeatherLionApplication.getAppContext().getAssets().list( "weather_images" );
+            iconSetNames = mContext.getAssets().list( "weather_images" );
             List packs = new ArrayList();
 
             for( String iconSet : iconSetNames )
             {
                 boolean previewExists = iconSet.equalsIgnoreCase( "mono" );
 
-                String displayIcon = "weather_images/" + iconSet +
+                String displayIcon = WidgetUpdateService.WEATHER_IMAGES_ROOT + iconSet +
                         ( previewExists ? "/preview_image.png" : "/weather_10.png" );
 
-                packs.add(displayIcon);
+                packs.add( displayIcon );
             }// end of for each loop
 
             iconSetDefaultImage = (String[]) packs.toArray( new String[0] );
         }// end of try block
         catch ( IOException e )
         {
-            UtilityMethod.logMessage(UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
                     this.getClass().getSimpleName() + "::onCreateDialogView [line: " +
                         UtilityMethod.getExceptionLineNumber( e )  + "]" );
         }// end of catch block
 
         final CustomPreferenceGrid adapter = new CustomPreferenceGrid(
-            WeatherLionApplication.getAppContext(), iconSetNames, iconSetDefaultImage, "icons" );
+                mContext, iconSetNames, iconSetDefaultImage, CALLER_NAME );
         iconGrid = dialogView.findViewById( R.id.grdIconSet );
         iconGrid.setAdapter( adapter );
 
         iconGrid.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
-
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id)
@@ -140,6 +144,7 @@ public class IconSetPreference extends DialogPreference
                 selectedIconSet.append( iconSetNames[ + position ] );
             }
         });
+
 
         dialogView.setClickable( true );
 
@@ -163,7 +168,6 @@ public class IconSetPreference extends DialogPreference
     {
         super.onDialogClosed( positiveResult );
     }// end of method onDialogClosed
-
     /**
      * {@inheritDoc}
      */
@@ -175,7 +179,7 @@ public class IconSetPreference extends DialogPreference
         if( getDialog() != null )
         {
             Objects.requireNonNull( getDialog().getWindow() ).setBackgroundDrawable(
-                    new ColorDrawable( Color.TRANSPARENT ) );
+                new ColorDrawable( Color.TRANSPARENT ) );
 
             // Remove the default system dialog buttons from the view
             ( (AlertDialog) getDialog() ).getButton(
@@ -218,11 +222,16 @@ public class IconSetPreference extends DialogPreference
                         messageIntent.putExtra( ICON_SET_SERVICE_PAYLOAD,
                                 WeatherLionApplication.ICON_SET_PREFERENCE );
                         LocalBroadcastManager manager =
-                                LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );
+                                LocalBroadcastManager.getInstance( mContext );
                         manager.sendBroadcast( messageIntent );
                     }// end of if block
                 }// end of method onClick
             });
+
+            // Controlling width and height with random values
+            getDialog().getWindow().setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                CustomPreferenceGrid.DEFAULT_GRID_DIALOG_HEIGHT );
         }// end of if block
     }// end of method showDialog
+
 }// end of class IconSetPreference

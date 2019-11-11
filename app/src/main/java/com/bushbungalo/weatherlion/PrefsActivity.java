@@ -120,6 +120,9 @@ public class PrefsActivity extends AppCompatActivity
                 case WeatherLionApplication.AQUA_THEME:
                     setTheme( R.style.AquaTheme );
                     break;
+                case WeatherLionApplication.FROSTY_THEME:
+                    setTheme( R.style.FrostyTheme );
+                    break;
                 case WeatherLionApplication.RABALAC_THEME:
                     setTheme( R.style.RabalacTheme );
                     break;
@@ -348,6 +351,11 @@ public class PrefsActivity extends AppCompatActivity
                         case WeatherLionApplication.RABALAC_THEME:
                             WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.rabalac ) );
                             WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_rabalac_rounded_btn_bg );
+
+                            break;
+                        case WeatherLionApplication.FROSTY_THEME:
+                            WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.frosty ) );
+                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_frosty_rounded_btn_bg );
 
                             break;
                         case WeatherLionApplication.LION_THEME:

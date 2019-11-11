@@ -19,12 +19,16 @@ import com.bushbungalo.weatherlion.utils.UtilityMethod;
 import java.io.IOException;
 import java.io.InputStream;
 
+@SuppressWarnings({"WeakerAccess"})
 public class CustomPreferenceGrid extends BaseAdapter
 {
     private Context mContext;
     private final String[] displayImages;
     private final String[] displayPaths;
     private String requester;
+    public static final int DEFAULT_DIALOG_WIDTH = 920;
+    public static final int DEFAULT_DIALOG_HEIGHT = 940;
+    public static final int DEFAULT_GRID_DIALOG_HEIGHT = 1080;
 
     CustomPreferenceGrid( Context c, String[] imageName, String[] imagePath, String caller )
     {
@@ -77,7 +81,7 @@ public class CustomPreferenceGrid extends BaseAdapter
 
                 switch( requester )
                 {
-                    case "icons":
+                    case IconSetPreference.CALLER_NAME:
                         selectItem = spf.getString( WeatherLionApplication.ICON_SET_PREFERENCE,
                                 Preference.DEFAULT_ICON_SET );
                         previewText.setText( displayImages[ position ] );
@@ -88,9 +92,9 @@ public class CustomPreferenceGrid extends BaseAdapter
                             grid.setBackgroundColor( 0xFFC2E9F8 ); // Opaque Blue
                         }// end of if block
                         break;
-                    case "background":
+                    case WidgetBackgroundPreference.CALLER_NAME:
                         selectItem = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
-                                "Lion" );
+                                Preference.DEFAULT_WIDGET_BACKGROUND );
                         previewText.setText( UtilityMethod.toProperCase(
                                 displayImages[ position ].replace( ".png", "" )  ) );
                         previewText.setTypeface( WeatherLionApplication.currentTypeface );

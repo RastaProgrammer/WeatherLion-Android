@@ -267,6 +267,10 @@ public class CityFinderPreference extends DialogPreference
             btnOk.setBackground( WeatherLionApplication.systemButtonDrawable );
             btnOk.setTypeface( WeatherLionApplication.currentTypeface );
 
+            // Controlling width and height with random values
+            getDialog().getWindow().setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                CustomPreferenceGrid.DEFAULT_DIALOG_HEIGHT );
+
             btnCancel.setOnClickListener( new View.OnClickListener()
             {
                 @Override

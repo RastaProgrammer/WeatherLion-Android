@@ -2,12 +2,12 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/iconGrid"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:id="@+id/rlDialogTitleBar"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/wl_custom_dialog_title">
 
@@ -66,7 +66,7 @@
             android:fitsSystemWindows="true"
             android:stretchMode="columnWidth"
             android:horizontalSpacing="10dp"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
         <Button
@@ -100,7 +100,7 @@
 
     <RelativeLayout
         android:id="@+id/rlDialogFooter"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/rlDialogBody"
         android:background="@drawable/wl_custom_dialog_footer" />

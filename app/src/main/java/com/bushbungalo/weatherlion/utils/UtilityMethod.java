@@ -22,7 +22,9 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -1065,11 +1067,6 @@ public abstract class UtilityMethod
         weatherImages.put("hail", "5.png");
         weatherImages.put("dust", "6.png");
         weatherImages.put("smoky", "6.png");
-        weatherImages.put("fog", "7.png");
-        weatherImages.put("foggy", "7.png");
-        weatherImages.put("haze", "7.png");
-        weatherImages.put("mist", "7.png");
-        weatherImages.put("misty", "7.png");
         weatherImages.put("clouds", "8.png");
         weatherImages.put("cloudy", "8.png");
         weatherImages.put("overcast", "8.png");
@@ -1137,6 +1134,11 @@ public abstract class UtilityMethod
         weatherImages.put("blustery (night)", "20.png");
         weatherImages.put("breezy (night)", "20.png");
         weatherImages.put("blustery", "20.png");
+        weatherImages.put("fog", "20.png");
+        weatherImages.put("foggy", "20.png");
+        weatherImages.put("haze", "20.png");
+        weatherImages.put("mist", "20.png");
+        weatherImages.put("misty", "20.png");
         weatherImages.put("windy (night)", "21.png");
         weatherImages.put("breez", "21.png");
         weatherImages.put("breeze", "21.png");
@@ -1169,6 +1171,37 @@ public abstract class UtilityMethod
     private static CityData cd = null;
     public static boolean listRequested; // Should the method return a list or single data
 
+    public static List<Integer> widgetTextViews = new ArrayList<>();
+    public static List<Integer> widgetImageViews = new ArrayList<>();
+
+    public static void getViewIds(@NonNull ViewGroup view )
+    {
+        for ( int i = 0; i < view.getChildCount(); i++ )
+        {
+            View v = view.getChildAt( i );
+
+            if ( v instanceof TextView )
+            {
+                if( !( v instanceof TextClock ) &&
+                    !getResourceEntryName( v.getId() ).equals( "txvCurrentTemperature" ) )
+                {
+                   widgetTextViews.add( v.getId() );
+                }// end of if block
+            }// end of if block
+            else if ( v instanceof ImageView )
+            {
+                if( ( (ImageView) v).getDrawable().toString().contains( "VectorDrawable" ) )
+                {
+                    widgetImageViews.add(  v.getId() );
+                }// end of if block
+            }// end of if block
+            else if ( v instanceof ViewGroup )
+            {
+                getViewIds( (ViewGroup) v );
+            }// end of else if block
+        }// end of for loop
+    }// end of method getViewIds
+
     /**
      *
      * @return The application context
@@ -1177,6 +1210,17 @@ public abstract class UtilityMethod
     {
         return WeatherLionApplication.getAppContext();
     }// end of method getAppContext
+
+    /**
+     * Get the {@code String} equivalent of a {@code View}'s id
+     *
+     * @param resourceId The id of the @code View}
+     * @return  A {@code String} representation of a {@code View}'s id
+     */
+    public static String getResourceEntryName( int resourceId )
+    {
+        return getAppContext().getResources().getResourceEntryName( resourceId );
+    }// end of method getResourceEntryName
 
     /**
      * Displays a custom Toast message to the user.
@@ -1886,7 +1930,7 @@ public abstract class UtilityMethod
                         //localCityName = place.getString( "toponymName" );
                         regionCode = place.getString( "adminCode1" );
                         regionName = countryCode.equalsIgnoreCase( "US" ) ?
-                                UtilityMethod.usStatesByCode.get( regionCode ) :
+                                usStatesByCode.get( regionCode ) :
                                 null;
                         Latitude = Float.parseFloat( place.getString( "lat" ) );
                         Longitude = Float.parseFloat( place.getString( "lng" ) );
@@ -1958,14 +2002,14 @@ public abstract class UtilityMethod
                         JSONObject address = location.getJSONObject( "Address" );
                         JSONArray additionalData = address.getJSONArray( "AdditionalData" );
 
-                        countryName = UtilityMethod.toProperCase(
+                        countryName = toProperCase(
                                 additionalData.getJSONObject( 0 ).getString( "value" ) );
                         countryCode = Objects.requireNonNull( worldCountryCodes.get( countryName ) ).toUpperCase();
                         regionName = additionalData.getJSONObject( 1 ).getString( "value" ); // "key": "StateName"
 
                         localCityName = countryName.equalsIgnoreCase( "USA" ) ?
-                                UtilityMethod.toProperCase( address.getString( "District" ) ) :
-                                UtilityMethod.toProperCase( address.getString( "City" ) );
+                                toProperCase( address.getString( "District" ) ) :
+                                toProperCase( address.getString( "City" ) );
                         Latitude = (float) navigationPosition.getDouble( "Latitude" );
                         Longitude = (float) navigationPosition.getDouble( "Longitude" );
 
@@ -1994,8 +2038,8 @@ public abstract class UtilityMethod
                                 .getView()
                                 .getResult().get( 0 );
 
-                        localCityName = UtilityMethod.toProperCase( place.getLocation().getAddress().getDistrict() );
-                        countryName = UtilityMethod.toProperCase( place.getLocation().getAddress().getCountry() );
+                        localCityName = toProperCase( place.getLocation().getAddress().getDistrict() );
+                        countryName = toProperCase( place.getLocation().getAddress().getCountry() );
                         countryCode = Objects.requireNonNull( worldCountryCodes.get( place.getLocation().getAddress().getCountry() ) ).toUpperCase();
                         regionName = place.getLocation().getAddress().getAdditionalData().get( 1 ).getValue(); // "key": "StateName"
                         Latitude = place.getLocation().getNavigationPosition().getLatitude();
@@ -2128,9 +2172,9 @@ public abstract class UtilityMethod
         }// end of try block
         catch( Exception e )
         {
-            UtilityMethod.logMessage( LogLevel.SEVERE, e.getMessage(),
+            logMessage( LogLevel.SEVERE, e.getMessage(),
                     TAG + "::getCityDataFromDatabase [line: " +
-                            UtilityMethod.getExceptionLineNumber( e )  + "]" );
+                            getExceptionLineNumber( e )  + "]" );
 
             return null;
         }// end of catch block
@@ -2436,8 +2480,8 @@ public abstract class UtilityMethod
             fCondition = fCondition.replace( "(night)", "" ).trim();
         }// end of if block
 
-        return UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
-                ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
+        return weatherImages.get( fCondition.toLowerCase() ) == null
+                ? "na.png" : weatherImages.get( fCondition.toLowerCase() );
     }// end of method getForecastConditionIcon
 
     /***
@@ -3226,7 +3270,7 @@ public abstract class UtilityMethod
         } // end of try block
         catch ( ParseException e )
         {
-            logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+            logMessage( LogLevel.SEVERE , e.getMessage(),
                     TAG + "::okToUseService [line: " +
                             e.getStackTrace()[ 1 ].getLineNumber() + "]" );
         }// end of catch block
@@ -3278,7 +3322,7 @@ public abstract class UtilityMethod
         } // end of try block
         catch ( ParseException e )
         {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+            logMessage( LogLevel.SEVERE , e.getMessage(),
                     TAG + "::serviceCall [line: " +
                             e.getStackTrace()[ 1 ].getLineNumber() + "]" );
         }// end of catch block
@@ -3604,7 +3648,7 @@ public abstract class UtilityMethod
             {
                 logMessage( LogLevel.SEVERE, e.getMessage(),
                         TAG + "::readAll [line: " +
-                                UtilityMethod.getExceptionLineNumber( e )  + "]" );
+                                getExceptionLineNumber( e )  + "]" );
             }// end of catch block
 
         }// end of the try with resources block
@@ -3613,7 +3657,7 @@ public abstract class UtilityMethod
         {
             logMessage( LogLevel.SEVERE, e.getMessage(),
                     TAG + "::readAll [line: " +
-                            UtilityMethod.getExceptionLineNumber( e )  + "]" );
+                            getExceptionLineNumber( e )  + "]" );
         }// end of catch block
 
         return fileContents.toString().trim();
@@ -3765,7 +3809,7 @@ public abstract class UtilityMethod
             if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
                     WeatherLionApplication.storedData.getLocation().getTimezone() ) )
             {
-                rightNow.setTime( UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ) );
+                rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
             }// end of if block
         }// end of if block
 
@@ -3773,10 +3817,10 @@ public abstract class UtilityMethod
         Calendar sunUp = Calendar.getInstance();
         String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
                 Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
+                + " " + get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
         String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
                 Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + UtilityMethod.get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
+                + " " + get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
         SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
         Date rn = null; // date time right now (rn)
         Date nf = null; // date time night fall (nf)
@@ -3795,7 +3839,7 @@ public abstract class UtilityMethod
         } // end of try block
         catch ( ParseException e )
         {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+            logMessage( LogLevel.SEVERE, e.getMessage(),
                     TAG + "::getConditionIcon [line: " +
                             e.getStackTrace()[ 1 ].getLineNumber() + "]" );
         }// end of catch block
@@ -3808,7 +3852,7 @@ public abstract class UtilityMethod
                 {
                     if( nightIcon )
                     {
-                        currentConditionIcon = UtilityMethod.weatherImages.get(
+                        currentConditionIcon = weatherImages.get(
                                 currentCondition.toString().toLowerCase() );
                     }// end of if block
                     else
@@ -3820,28 +3864,28 @@ public abstract class UtilityMethod
                             currentCondition.append( "Clear" );
                         }// end of if block
 
-                        if ( UtilityMethod.weatherImages.containsKey(
+                        if ( weatherImages.containsKey(
                                 currentCondition.toString().toLowerCase() + " (night)") )
                         {
                             currentConditionIcon =
-                                    UtilityMethod.weatherImages.get(
+                                    weatherImages.get(
                                             currentCondition.toString().toLowerCase() + " (night)" );
                         }// end of if block
                         else
                         {
-                            currentConditionIcon = UtilityMethod.weatherImages.get(
+                            currentConditionIcon = weatherImages.get(
                                     currentCondition.toString().toLowerCase() );
                         }// end of else block
                     }// end of else block
 
-                    if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
+                    if( weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
                     {
                         // sometimes the JSON data received is incomplete so this has to be taken into account
-                        for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
+                        for ( Map.Entry<String, String> e : weatherImages.entrySet() )
                         {
                             if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
                             {
-                                currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
+                                currentConditionIcon =  weatherImages.get( e.getKey() ); // use the closest match
                                 break; // exit the loop
                             }// end of if block
                         }// end of for block
@@ -3856,7 +3900,7 @@ public abstract class UtilityMethod
                 else
                 {
                     currentConditionIcon =
-                            UtilityMethod.weatherImages.get(
+                            weatherImages.get(
                                     currentCondition.toString().toLowerCase() );
                 }// end of else block
             }// end of if block
@@ -3865,11 +3909,12 @@ public abstract class UtilityMethod
         {
             if( rn != null )
             {
-                if ( onTime.equals( rn ) || onTime.after( rn ) || onTime.before( su ) )
+                // Daytime icons should be used
+                if ( ( onTime.equals( su ) || onTime.after( su ) ) && onTime.before( nf ) )
                 {
                     if( nightIcon )
                     {
-                        currentConditionIcon = UtilityMethod.weatherImages.get(
+                        currentConditionIcon = weatherImages.get(
                                 currentCondition.toString().toLowerCase() );
                     }// end of if block
                     else
@@ -3881,28 +3926,19 @@ public abstract class UtilityMethod
                             currentCondition.append( "Clear" );
                         }// end of if block
 
-                        if ( UtilityMethod.weatherImages.containsKey(
-                                currentCondition.toString().toLowerCase() + " (night)") )
-                        {
-                            currentConditionIcon =
-                                    UtilityMethod.weatherImages.get(
-                                            currentCondition.toString().toLowerCase() + " (night)" );
-                        }// end of if block
-                        else
-                        {
-                            currentConditionIcon = UtilityMethod.weatherImages.get(
-                                    currentCondition.toString().toLowerCase() );
-                        }// end of else block
+                        currentConditionIcon = weatherImages.get(
+                            currentCondition.toString().toLowerCase() );
+
                     }// end of else block
 
-                    if( UtilityMethod.weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
+                    if( weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
                     {
                         // sometimes the JSON data received is incomplete so this has to be taken into account
-                        for ( Map.Entry<String, String> e : UtilityMethod.weatherImages.entrySet() )
+                        for ( Map.Entry<String, String> e : weatherImages.entrySet() )
                         {
                             if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
                             {
-                                currentConditionIcon =  UtilityMethod.weatherImages.get( e.getKey() ); // use the closest match
+                                currentConditionIcon =  weatherImages.get( e.getKey() ); // use the closest match
                                 break; // exit the loop
                             }// end of if block
                         }// end of for block
@@ -3916,9 +3952,18 @@ public abstract class UtilityMethod
                 }// end of if block
                 else
                 {
-                    currentConditionIcon =
-                            UtilityMethod.weatherImages.get(
-                                    currentCondition.toString().toLowerCase() );
+                    if ( weatherImages.containsKey(
+                            currentCondition.toString().toLowerCase() + " (night)") )
+                    {
+                        currentConditionIcon =
+                                weatherImages.get(
+                                        currentCondition.toString().toLowerCase() + " (night)" );
+                    }// end of if block
+                    else
+                    {
+                        currentConditionIcon = weatherImages.get(
+                                currentCondition.toString().toLowerCase() );
+                    }// end of else block
                 }// end of else block
             }// end of if block
         }// end of else block

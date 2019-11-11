@@ -9,7 +9,7 @@
         android:id="@+id/imvWidgetBackground"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:src="@drawable/wl_lion_bg_large"
+        android:src="@drawable/wl_frosty_bg_large"
         android:contentDescription="@string/widget_background_image"
         android:adjustViewBounds="true"
         android:scaleType="fitXY"/>
@@ -143,7 +143,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="16dp"
                 android:layout_below="@+id/txvDayHigh"
-                android:background="@drawable/wl_top_border"
+                android:background="@drawable/wl_light_top_border"
                 android:text="@string/no_reading_u"
                 android:textColor="#C0C0C0"
                 android:textSize="13sp" />

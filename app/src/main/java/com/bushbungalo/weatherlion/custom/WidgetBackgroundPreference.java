@@ -35,9 +35,11 @@ public class WidgetBackgroundPreference extends DialogPreference
     public static final String WIDGET_BACKGROUND_SERVICE_MESSAGE = "widgetBackgroundServiceMessage";
     public static final String WIDGET_BACKGROUND_SERVICE_PAYLOAD = "widgetBackgroundServicePayload";
 
+    public static final String CALLER_NAME = "background";
+
     final String TAG = "WidgetBackgroundPreference";
     private Context mContext;
-    View dialogView;
+    protected View dialogView;
 
     private String[] backgroundNames = null;
     private String[] backgroundDefaultImage = null;
@@ -70,7 +72,7 @@ public class WidgetBackgroundPreference extends DialogPreference
     {
         //LayoutInflater inflater = (LayoutInflater) getContext().getSystemService( Context.LAYOUT_INFLATER_SERVICE );
         dialogView = View.inflate( getContext(), layoutId, null );
-        mContext = getContext().getApplicationContext();
+
 
         RelativeLayout rlTitleBar = dialogView.findViewById( R.id.rlDialogTitleBar );
 
@@ -116,7 +118,7 @@ public class WidgetBackgroundPreference extends DialogPreference
         }// end of catch block
 
         final CustomPreferenceGrid adapter = new CustomPreferenceGrid( mContext, backgroundNames,
-                backgroundDefaultImage, "background" );
+                backgroundDefaultImage, CALLER_NAME );
         backgroundGrid = dialogView.findViewById( R.id.grdWidgetBackground );
         backgroundGrid.setAdapter( adapter );
 
@@ -222,6 +224,10 @@ public class WidgetBackgroundPreference extends DialogPreference
                     }// end of if block
                 }// end of method onClick
             });
+
+            // Controlling width and height with random values
+            getDialog().getWindow().setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                CustomPreferenceGrid.DEFAULT_GRID_DIALOG_HEIGHT );
         }// end of if block
     }// end of method showDialog
 }// end of class WidgetBackgroundPreference

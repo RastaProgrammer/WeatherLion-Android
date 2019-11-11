@@ -11,14 +11,22 @@
     <!-- Weather application theme. -->
     <style name="AquaTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">#3362B2</item>
+        <item name="colorPrimary">@color/aqua</item>
         <item name="colorPrimaryDark">#0288D1</item>
         <item name="colorAccent">#448AFF</item>
     </style>
 
+    <!-- Weather application theme. -->
+    <style name="FrostyTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/frosty</item>
+        <item name="colorPrimaryDark">#E46B1B</item>
+        <item name="colorAccent">#FD9425</item>
+    </style>
+
     <style name="RabalacTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">#57855E</item>
+        <item name="colorPrimary">@color/rabalac</item>
         <item name="colorPrimaryDark">#36503D</item>
         <item name="colorAccent">#72AF75</item>
     </style>
@@ -33,7 +41,7 @@
 
     <style name="LionTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">#545252</item>
+        <item name="colorPrimary">@color/lion</item>
         <item name="colorPrimaryDark">#292929</item>
         <item name="colorAccent">#515558</item>
     </style>

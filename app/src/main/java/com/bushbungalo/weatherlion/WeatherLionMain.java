@@ -597,7 +597,7 @@ public class WeatherLionMain extends AppCompatActivity
                 String hourForecast = String.format( "%s %s", today,
                         wxHourForecast.getTime() );
 
-                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a", Locale.ENGLISH );
+                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h a", Locale.ENGLISH );
                 Date onTime = null;
 
                 try
@@ -933,6 +933,7 @@ public class WeatherLionMain extends AppCompatActivity
         mContext = this;
         requestWindowFeature( Window.FEATURE_NO_TITLE ); //will hide the title
         Objects.requireNonNull( getSupportActionBar() ).hide(); // hide the title bar
+        this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
 
         //this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
         // WindowManager.LayoutParams.FLAG_FULLSCREEN); //enable full screen
@@ -1192,6 +1193,8 @@ public class WeatherLionMain extends AppCompatActivity
     protected void onResume()
     {
         super.onResume();
+
+        this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
 
         // recheck to see if some weather data has been obtained
         if( new File( this.getFileStreamPath(
