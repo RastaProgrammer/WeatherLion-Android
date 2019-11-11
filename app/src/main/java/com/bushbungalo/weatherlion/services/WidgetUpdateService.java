@@ -1133,9 +1133,6 @@ public class WidgetUpdateService extends JobIntentService
                                 largeWidgetRemoteViews.setInt( viewId, "setColorFilter",
                                         Color.parseColor("#FFFFFF") );
                             }// end of for each loop
-
-//                            largeWidgetRemoteViews.setImageViewBitmap( R.id.txvDayLow,
-//                                    getBitmap( R.drawable.wl_light_top_border ) );
                         }// end of else block
                     }// end of if block
 
@@ -1260,9 +1257,6 @@ public class WidgetUpdateService extends JobIntentService
                                 largeWidgetRemoteViews.setInt( viewId, "setColorFilter",
                                         Color.parseColor("#000000") );
                             }// end of for each loop
-
-//                            largeWidgetRemoteViews.setImageViewBitmap( R.id.txvDayLow,
-//                                    getBitmap( R.drawable.wl_dark_top_border ) );
                         }// end of if block
                         else
                         {
@@ -1278,9 +1272,6 @@ public class WidgetUpdateService extends JobIntentService
                                         Color.parseColor("#FFFFFF") );
                             }// end of for each loop
                         }// end of else block
-
-//                        largeWidgetRemoteViews.setImageViewBitmap( R.id.txvDayLow,
-//                                getBitmap( R.drawable.wl_light_top_border ) );
                     }// end of if block
 
                     largeWidgetRemoteViews.setString( R.id.tcCurrentTime, "setTimeZone",
