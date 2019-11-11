@@ -55,7 +55,7 @@
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
         android:paddingTop="10dp"
-        android:background="#FFFFFF">
+        android:background="@color/off_white">
 
         <GridView
             android:id="@+id/grdWidgetBackground"

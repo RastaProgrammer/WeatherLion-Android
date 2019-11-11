@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -14,6 +15,7 @@ import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -21,6 +23,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.text.HtmlCompat;
+import android.support.v4.widget.CompoundButtonCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -149,7 +152,7 @@ public class WeatherLionMain extends AppCompatActivity
     private static String selectedCity;
     private StringBuilder currentLocation;
 
-    private Snackbar internetCafe;
+    private View internetCafeView;
 
     private AlertDialog loadingDialog;
     private AnimationDrawable loadingAnimation;
@@ -157,37 +160,61 @@ public class WeatherLionMain extends AppCompatActivity
     /**
      * Update the time since the last update
      */
-    private BroadcastReceiver clockTickBroadcastReceiver = new BroadcastReceiver()
+    private BroadcastReceiver systemEventsBroadcastReceiver = new BroadcastReceiver()
     {
         @Override
         public void onReceive( Context context, Intent intent )
         {
-            if( txvLastUpdated != null && UtilityMethod.lastUpdated != null )
-            {
-                txvLastUpdated.setTypeface( WeatherLionApplication.currentTypeface );
+            final String action = Objects.requireNonNull( intent.getAction() );
 
-                if( WeatherLionApplication.currentLocationTimeZone != null )
+            if( action.equals( ConnectivityManager.CONNECTIVITY_ACTION ) )
+            {
+                if( UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
                 {
-                    txcLocalTime.setTimeZone(
-                            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+                    if( internetCafeView != null )
+                    {
+                        if( internetCafeView.getVisibility() == View.VISIBLE )
+                        {
+                            removeInternetAlert();
+                        }// end of if block
+                    }// end of if block
+                }// end of if block
+                else
+                {
+                    View rootView = getWindow().getDecorView().findViewById(
+                            android.R.id.content );
+                    noInternetAlert( rootView );
+                }// end of else block
+            }// end of if block
+            else if( action.equals( Intent.ACTION_TIME_TICK ) )
+            {
+                if( txvLastUpdated != null && UtilityMethod.lastUpdated != null )
+                {
+                    txvLastUpdated.setTypeface( WeatherLionApplication.currentTypeface );
+
+                    if( WeatherLionApplication.currentLocationTimeZone != null )
+                    {
+                        txcLocalTime.setTimeZone(
+                                WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+                    }// end of if block
+
+                    txvLastUpdated.setText( String.format( "%s%s", "Updated ",
+                            UtilityMethod.getTimeSince( UtilityMethod.lastUpdated ) ) );
                 }// end of if block
 
-                txvLastUpdated.setText( String.format( "%s%s", "Updated ",
-                        UtilityMethod.getTimeSince( UtilityMethod.lastUpdated ) ) );
-            }// end of if block
+                // if an update is required but was not performed
+                if( UtilityMethod.updateRequired( WeatherLionMain.this ) )
+                {
+                    UtilityMethod.refreshRequestedBySystem = true;
+                    UtilityMethod.refreshRequestedByUser = false;
 
-            // if an update is required but was not performed
-            if( UtilityMethod.updateRequired( WeatherLionMain.this ) )
-            {
-                UtilityMethod.refreshRequestedBySystem = true;
-                UtilityMethod.refreshRequestedByUser = false;
-
-                String invoker = WeatherLionMain.this.getClass().getSimpleName() +
-                        "::clockTickBroadcastReceiver::onReceive";
-                WeatherLionApplication.callMethodByName( null,
-                        "refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker } );
-            }// end of if block
+                    String invoker = WeatherLionMain.this.getClass().getSimpleName() +
+                            "::systemEventsBroadcastReceiver::onReceive";
+                    WeatherLionApplication.callMethodByName( null,
+                            "refreshWeather",
+                            new Class[]{ String.class }, new Object[]{ invoker } );
+                }// end of if block
+            }// end of else if block
         }// end of method onReceive
     };
 
@@ -230,11 +257,15 @@ public class WeatherLionMain extends AppCompatActivity
 
                 if( !UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
                 {
-                    internetCafe.show();
+                    View mainActivity = findViewById( R.id.weather_main_container );
+                    noInternetAlert( mainActivity );
                 }// end of if block
-                else if( internetCafe != null )
+                else if( internetCafeView != null )
                 {
-                    internetCafe.dismiss();
+                    if( internetCafeView.getVisibility() == View.VISIBLE )
+                    {
+                        removeInternetAlert();
+                    }// end of if block
                 }// end of else if block
 
                 WeatherLionApplication.restoringWeatherData = false;
@@ -836,6 +867,11 @@ public class WeatherLionMain extends AppCompatActivity
                     forecastScroll.fullScroll( View.FOCUS_DOWN );
                 }
             });
+
+        if( !UtilityMethod.hasInternetConnection( this ) )
+        {
+           noInternetAlert( rootView );
+        }// end of if block
     }// end of method loadMainActivityWeather
 
     /**
@@ -926,6 +962,30 @@ public class WeatherLionMain extends AppCompatActivity
                 null, null, null );
     }// end of method noGpsAlert
 
+    /**
+     * Displays a SnackBar alerting the user to activate the device's Wifi radio.
+     */
+    private void noInternetAlert( View activityView )
+    {
+        Snackbar internetCafe = Snackbar.make( activityView,
+                "No Internet Connection", Snackbar.LENGTH_INDEFINITE ).setAction("OPEN SETTINGS",
+                new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        showPreferenceActivity( false );
+                    }// end of method onClick
+                });
+        internetCafeView = internetCafe.getView();
+        internetCafeView.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+        TextView infoText = internetCafeView.findViewById(
+                android.support.design.R.id.snackbar_text );
+        infoText.setTextColor( Color.YELLOW );
+        internetCafe.setActionTextColor( Color.RED );
+        internetCafe.show();
+    }// end of method noInternetAlert
+
     @Override
     protected void onCreate( Bundle savedInstanceState )
     {
@@ -939,11 +999,11 @@ public class WeatherLionMain extends AppCompatActivity
         // WindowManager.LayoutParams.FLAG_FULLSCREEN); //enable full screen
 
         TextView txvMessage;
-        Snackbar quickSnack;
 
         IntentFilter systemFilter = new IntentFilter();
         systemFilter.addAction( Intent.ACTION_TIME_TICK );
-        this.registerReceiver( clockTickBroadcastReceiver, systemFilter );
+        systemFilter.addAction( ConnectivityManager.CONNECTIVITY_ACTION );
+        this.registerReceiver(systemEventsBroadcastReceiver, systemFilter );
 
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
                 .registerReceiver( xmlStorageBroadcastReceiver, new IntentFilter(
@@ -964,22 +1024,12 @@ public class WeatherLionMain extends AppCompatActivity
 
             txvMessage = findViewById( R.id.txvMessage );
             txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
-            View welcomeActivity = findViewById( R.id.weather_main_container);
+            View welcomeActivity = findViewById( R.id.weather_main_container );
 
-            quickSnack = Snackbar.make( welcomeActivity ,
-                    "", Snackbar.LENGTH_INDEFINITE ).setAction("OPEN SETTINGS",
-                    new View.OnClickListener()
-                    {
-                        @Override
-                        public void onClick(View v)
-                        {
-                            showPreferenceActivity( false );
-                        }// end of method onClick
-                    });
-            View quickSnackView = quickSnack.getView();
-            quickSnackView.setBackgroundColor( Color.parseColor("#CC3F85E1" ) );
-            quickSnack.setActionTextColor( Color.WHITE );
-            quickSnack.show();
+            if( !UtilityMethod.hasInternetConnection( this ) )
+            {
+                noInternetAlert( welcomeActivity );
+            }// end of if block
 
             if( checkGeoAccess() )
             {
@@ -1030,21 +1080,12 @@ public class WeatherLionMain extends AppCompatActivity
                     else
                     {
                         setContentView( R.layout.wl_main_activity );
-
                         View mainActivity = findViewById( R.id.main_window );
 
-                        // to be displayed if there is no active internet connection
-                        internetCafe = Snackbar.make( mainActivity, "Connect to the Internet",
-                                Snackbar.LENGTH_INDEFINITE )
-                                .setAction("Wifi Settings", new View.OnClickListener()
-                                        {
-                                            @Override
-                                            public void onClick( View view )
-                                            {
-                                                startActivity( new Intent(Settings.ACTION_WIFI_SETTINGS ) );
-                                            }// end of method onClick
-                                        }// end of method setAction
-                                );
+                        if( !UtilityMethod.hasInternetConnection( this ) )
+                        {
+                            noInternetAlert( mainActivity );
+                        }// end of if block
 
                         forecastRecyclerView = findViewById( R.id.lstDayForecast );
                         forecastRecyclerView.setHasFixedSize( true );
@@ -1066,11 +1107,6 @@ public class WeatherLionMain extends AppCompatActivity
                     if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
                     {
                         noGpsAlert();
-                    }// end of if block
-
-                    if( !UtilityMethod.hasInternetConnection( this ) )
-                    {
-                        internetCafe.show();
                     }// end of if block
 
                     doGlimpseRotation( findViewById( R.id.imvBlade ) );
@@ -1112,20 +1148,10 @@ public class WeatherLionMain extends AppCompatActivity
                     txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
                     View welcomeActivity = findViewById( R.id.weather_main_container);
 
-                    quickSnack = Snackbar.make( welcomeActivity ,
-                            "", Snackbar.LENGTH_INDEFINITE ).setAction("OPEN SETTINGS",
-                            new View.OnClickListener()
-                            {
-                                @Override
-                                public void onClick(View v)
-                                {
-                                    showPreferenceActivity( false );
-                                }// end of method onClick
-                            });
-                    View quickSnackView = quickSnack.getView();
-                    quickSnackView.setBackgroundColor( Color.parseColor("#CC3F85E1" ) );
-                    quickSnack.setActionTextColor( Color.WHITE );
-                    quickSnack.show();
+                    if( !UtilityMethod.hasInternetConnection( this ) )
+                    {
+                        noInternetAlert( welcomeActivity );
+                    }// end of if block
                 }//end of else block
 
             }// end of else if block
@@ -1139,21 +1165,10 @@ public class WeatherLionMain extends AppCompatActivity
                 txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
                 View welcomeActivity = findViewById( R.id.weather_main_container);
 
-                quickSnack = Snackbar.make( welcomeActivity ,
-                        "", Snackbar.LENGTH_INDEFINITE ).setAction("OPEN SETTINGS",
-                        new View.OnClickListener()
-                        {
-                            @Override
-                            public void onClick(View v)
-                            {
-                                showPreferenceActivity( false );
-                            }// end of method onClick
-                        });
-
-                View quickSnackView = quickSnack.getView();
-                quickSnackView.setBackgroundColor( Color.parseColor("#CC3F85E1" ) );
-                quickSnack.setActionTextColor( Color.WHITE );
-                quickSnack.show();
+                if( !UtilityMethod.hasInternetConnection( this ) )
+                {
+                    noInternetAlert( welcomeActivity );
+                }// end of if block
             }//end of else block
         }// end of else block
     }// end of method onCreate
@@ -1177,7 +1192,7 @@ public class WeatherLionMain extends AppCompatActivity
     {
         super.onDestroy();
 
-        this.unregisterReceiver( clockTickBroadcastReceiver );
+        this.unregisterReceiver( systemEventsBroadcastReceiver );
 
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
                 .unregisterReceiver( xmlStorageBroadcastReceiver );
@@ -1242,6 +1257,33 @@ public class WeatherLionMain extends AppCompatActivity
                     loadMainActivityWeather();
                 }// end of if block
             }// end of if block
+        }// end of if block
+
+        if( txvLastUpdated != null && UtilityMethod.lastUpdated != null )
+        {
+            txvLastUpdated.setTypeface( WeatherLionApplication.currentTypeface );
+
+            if( WeatherLionApplication.currentLocationTimeZone != null )
+            {
+                txcLocalTime.setTimeZone(
+                        WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+            }// end of if block
+
+            txvLastUpdated.setText( String.format( "%s%s", "Updated ",
+                    UtilityMethod.getTimeSince( UtilityMethod.lastUpdated ) ) );
+        }// end of if block
+
+        // if an update is required but was not performed
+        if( UtilityMethod.updateRequired( WeatherLionMain.this ) )
+        {
+            UtilityMethod.refreshRequestedBySystem = true;
+            UtilityMethod.refreshRequestedByUser = false;
+
+            String invoker = WeatherLionMain.this.getClass().getSimpleName() +
+                    "::onResume";
+            WeatherLionApplication.callMethodByName( null,
+                    "refreshWeather",
+                    new Class[]{ String.class }, new Object[]{ invoker } );
         }// end of if block
     }// end of method onResume
 
@@ -1308,6 +1350,30 @@ public class WeatherLionMain extends AppCompatActivity
             }// end of if block
         }// end of if block
     }// end of method refreshWeather
+
+    /**
+     * Remove the no internet connection {@code Snackbar}
+     */
+    private void removeInternetAlert()
+    {
+        if( internetCafeView.getVisibility() == View.VISIBLE )
+        {
+            // animate the view downward before removing it from the layout
+            internetCafeView.animate()
+                .translationY( 200 )
+                .setDuration( 500 )
+                .withEndAction(
+                    new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            ( (ViewGroup) internetCafeView.getParent() )
+                                .removeView( internetCafeView );
+                        }// end of method run
+                    });
+        }// end of if block
+    }// end of method removeInternetAlert
 
     /**
      * Display a dialog eliciting a response from the user
@@ -1491,11 +1557,12 @@ public class WeatherLionMain extends AppCompatActivity
         }// end of for each loop
 
         TextPaint paint = new TextPaint();
-        float width = paint.measureText( longestString.toString() ) * 6; // six is just a random number
+        float width = paint.measureText( longestString.toString() ) * 10; // ten is just a random number
 
         popupWindow.setWidth( (int) width ); // hack
         popupWindow.setVerticalOffset( 6 );
-        popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_white ) );
+        popupWindow.setBackgroundDrawable( this.getDrawable(
+                R.drawable.wl_round_list_popup_white ) );
 
         // if the list has more than 9 elements we will set the height if the window manually
         if( listItems.length > 9 )
@@ -1598,6 +1665,15 @@ public class WeatherLionMain extends AppCompatActivity
         pwdKeyValue = keyDialogView.findViewById( R.id.edtKeyValue );
         CheckBox chkShowPwd = keyDialogView.findViewById( R.id.cbShowPwd );
 
+        int[][] states = { { android.R.attr.state_checked }, {} };
+        int[] colors = { WeatherLionApplication.systemColor.toArgb(),
+                WeatherLionApplication.systemColor.toArgb() };
+        CompoundButtonCompat.setButtonTintList( chkShowPwd, new ColorStateList( states, colors ) );
+
+        ImageView imvAccessProviderDropArrow = keyDialogView.findViewById(
+                R.id.imvAccessProviderDropArrow );
+
+        imvAccessProviderDropArrow.setColorFilter( WeatherLionApplication.systemColor.toArgb() );
         Button btnAddKey = keyDialogView.findViewById( R.id.btnAddKey );
         btnAddKey.setBackground( WeatherLionApplication.systemButtonDrawable );
 

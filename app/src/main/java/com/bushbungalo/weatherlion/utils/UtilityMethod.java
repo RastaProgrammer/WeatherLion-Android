@@ -1192,7 +1192,7 @@ public abstract class UtilityMethod
             {
                 if( ( (ImageView) v).getDrawable().toString().contains( "VectorDrawable" ) )
                 {
-                    widgetImageViews.add(  v.getId() );
+                    widgetImageViews.add( v.getId() );
                 }// end of if block
             }// end of if block
             else if ( v instanceof ViewGroup )

@@ -1117,8 +1117,14 @@ public class WidgetUpdateService extends JobIntentService
                                         Color.parseColor("#000000") );
                             }// end of for each loop
 
-                            largeWidgetRemoteViews.setImageViewBitmap( R.id.txvDayLow,
-                                    getBitmap( R.drawable.wl_dark_top_border ) );
+                            largeWidgetRemoteViews.setTextColor( R.id.txvDayLow,
+                                    Color.parseColor("#3C3F41" ) );
+
+                            largeWidgetRemoteViews.setTextColor( R.id.tcCurrentTime,
+                                    Color.parseColor("#F26E1B" ) );
+
+                            largeWidgetRemoteViews.setTextColor( R.id.tcAMPM,
+                                    Color.parseColor("#F26E1B" ) );
                         }// end of if block
                         else
                         {
@@ -1133,6 +1139,15 @@ public class WidgetUpdateService extends JobIntentService
                                 largeWidgetRemoteViews.setInt( viewId, "setColorFilter",
                                         Color.parseColor("#FFFFFF") );
                             }// end of for each loop
+
+                            largeWidgetRemoteViews.setTextColor( R.id.txvDayLow,
+                                    Color.parseColor("#C0C0C0" ) );
+
+                            largeWidgetRemoteViews.setTextColor( R.id.tcCurrentTime,
+                                    Color.parseColor("#F39530" ) );
+
+                            largeWidgetRemoteViews.setTextColor( R.id.tcAMPM,
+                                    Color.parseColor("#F39530" ) );
                         }// end of else block
                     }// end of if block
 
@@ -1180,6 +1195,9 @@ public class WidgetUpdateService extends JobIntentService
                                 smallWidgetRemoteViews.setInt( viewId, "setColorFilter",
                                         Color.parseColor("#000000") );
                             }// end of for each loop
+
+                            smallWidgetRemoteViews.setTextColor( R.id.txvDayLow,
+                                    Color.parseColor("#3C3F41" ) );
                         }// end of if block
                         else
                         {
@@ -1194,6 +1212,9 @@ public class WidgetUpdateService extends JobIntentService
                                 smallWidgetRemoteViews.setInt( viewId, "setColorFilter",
                                         Color.parseColor("#FFFFFF") );
                             }// end of for each loop
+
+                            smallWidgetRemoteViews.setTextColor( R.id.txvDayLow,
+                                    Color.parseColor("#C0C0C0" ) );
                         }// end of else block
                     }// end of if block
 
@@ -1257,6 +1278,15 @@ public class WidgetUpdateService extends JobIntentService
                                 largeWidgetRemoteViews.setInt( viewId, "setColorFilter",
                                         Color.parseColor("#000000") );
                             }// end of for each loop
+
+                            largeWidgetRemoteViews.setTextColor( R.id.txvDayLow,
+                                    Color.parseColor("#3C3F41" ) );
+
+                            largeWidgetRemoteViews.setTextColor( R.id.tcCurrentTime,
+                                    Color.parseColor("#F26E1B" ) );
+
+                            largeWidgetRemoteViews.setTextColor( R.id.tcAMPM,
+                                    Color.parseColor("#F26E1B" ) );
                         }// end of if block
                         else
                         {
@@ -1271,6 +1301,15 @@ public class WidgetUpdateService extends JobIntentService
                                 largeWidgetRemoteViews.setInt( viewId, "setColorFilter",
                                         Color.parseColor("#FFFFFF") );
                             }// end of for each loop
+
+                            largeWidgetRemoteViews.setTextColor( R.id.txvDayLow,
+                                    Color.parseColor("#C0C0C0" ) );
+
+                            largeWidgetRemoteViews.setTextColor( R.id.tcCurrentTime,
+                                    Color.parseColor("#F39530" ) );
+
+                            largeWidgetRemoteViews.setTextColor( R.id.tcAMPM,
+                                    Color.parseColor("#F39530" ) );
                         }// end of else block
                     }// end of if block
 
@@ -1313,6 +1352,9 @@ public class WidgetUpdateService extends JobIntentService
                                 smallWidgetRemoteViews.setInt( viewId, "setColorFilter",
                                         Color.parseColor("#000000") );
                             }// end of for each loop
+
+                            smallWidgetRemoteViews.setTextColor( R.id.txvDayLow,
+                                    Color.parseColor("#3C3F41" ) );
                         }// end of if block
                         else
                         {
@@ -1327,6 +1369,9 @@ public class WidgetUpdateService extends JobIntentService
                                 smallWidgetRemoteViews.setInt( viewId, "setColorFilter",
                                         Color.parseColor("#FFFFFF") );
                             }// end of for each loop
+
+                            smallWidgetRemoteViews.setTextColor( R.id.txvDayLow,
+                                    Color.parseColor("#C0C0C0" ) );
                         }// end of else block
                     }// end of if block
 
