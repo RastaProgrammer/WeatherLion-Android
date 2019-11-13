@@ -28,7 +28,7 @@ public class CustomPreferenceGrid extends BaseAdapter
     private String requester;
     public static final int DEFAULT_DIALOG_WIDTH = 940;
     public static final int DEFAULT_DIALOG_HEIGHT = 940;
-    public static final int DEFAULT_GRID_DIALOG_HEIGHT = 1080;
+    public static final int DEFAULT_GRID_DIALOG_HEIGHT = 1180;
 
     CustomPreferenceGrid( Context c, String[] imageName, String[] imagePath, String caller )
     {

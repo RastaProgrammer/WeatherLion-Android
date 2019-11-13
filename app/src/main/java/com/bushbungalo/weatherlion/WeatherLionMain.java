@@ -1562,7 +1562,7 @@ public class WeatherLionMain extends AppCompatActivity
         popupWindow.setWidth( (int) width ); // hack
         popupWindow.setVerticalOffset( 6 );
         popupWindow.setBackgroundDrawable( this.getDrawable(
-                R.drawable.wl_round_list_popup_white ) );
+                R.drawable.wl_round_list_popup_frosty) );
 
         // if the list has more than 9 elements we will set the height if the window manually
         if( listItems.length > 9 )

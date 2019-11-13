@@ -38,7 +38,6 @@ import com.bushbungalo.weatherlion.WeatherLionMain;
 import com.bushbungalo.weatherlion.alarms.SunriseAlarmBroadcastReceiver;
 import com.bushbungalo.weatherlion.alarms.SunsetAlarmBroadcastReceiver;
 import com.bushbungalo.weatherlion.alarms.UpdateAlarmBroadcastReceiver;
-import com.bushbungalo.weatherlion.custom.CityFinderPreference;
 import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.DarkSkyWeatherDataItem;
 import com.bushbungalo.weatherlion.model.FiveDayForecast;
@@ -802,14 +801,6 @@ public class WidgetUpdateService extends JobIntentService
                 WeatherLionApplication.getAppContext() );
         settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
                 WeatherLionApplication.previousWeatherProvider.toString() ).apply();
-
-        // send out a broadcast to the preferences activity that the location preference has been modified
-        Intent messageIntent = new Intent( CityFinderPreference.CITY_LOCATION_SERVICE_MESSAGE );
-        messageIntent.putExtra( CityFinderPreference.CITY_LOCATION_SERVICE_PAYLOAD,
-                WeatherLionApplication.CURRENT_LOCATION_PREFERENCE );
-        LocalBroadcastManager manager =
-                LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );
-        manager.sendBroadcast( messageIntent );
 
         UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
                 provider + " returned: " + e.getMessage(), TAG + "::dataRetrievalError" );
@@ -3876,14 +3867,6 @@ public class WidgetUpdateService extends JobIntentService
                         currentFeelsLikeTemp.append( feelsLike );
                     }// end of else block
 
-                    // Display weather data on the large widget
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + tempUnits );
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, String.format(
-                            "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
-                            " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric()
-                            ? " km/h" : " mph" ) );
-
                     List< YrWeatherDataItem.Forecast > fdf = yr.getForecast();
                     List< YrWeatherDataItem.HourByHourForecast > fhf = yr.getHourlyForecast();
 
@@ -3965,9 +3948,14 @@ public class WidgetUpdateService extends JobIntentService
                     currentLow.append( Math.round( lowestTempToday ) );
 
                     // Display weather data on the large widget
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + tempUnits );
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, String.format(
+                            "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
+                            " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric()
+                            ? " km/h" : " mph" ) );
 
                     // Display weather data on the small widget
                     smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );

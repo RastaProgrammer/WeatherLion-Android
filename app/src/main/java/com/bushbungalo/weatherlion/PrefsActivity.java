@@ -26,8 +26,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.bushbungalo.weatherlion.custom.CityFinderPreference;
-import com.bushbungalo.weatherlion.custom.IconSetPreference;
-import com.bushbungalo.weatherlion.custom.WidgetBackgroundPreference;
+import com.bushbungalo.weatherlion.custom.LionListPreference;
 import com.bushbungalo.weatherlion.services.GeoLocationService;
 import com.bushbungalo.weatherlion.services.LocationTrackerService;
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
@@ -52,7 +51,6 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 public class PrefsActivity extends AppCompatActivity
 {
     private static final String TAG = "PrefsActivity";
-    //private static IconSetPreference iconSetPref;
 
     private static double mLatitude;
     private static double mLongitude;
@@ -68,13 +66,16 @@ public class PrefsActivity extends AppCompatActivity
 
     private static boolean userClickedPreference;
 
+    SharedPreferences spf;
+    private static SharedPreferences.OnSharedPreferenceChangeListener listener;
+
     /**
      * {@inheritDoc}
      */
     @Override
     protected void onCreate( Bundle savedInstanceState )
     {
-        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
+        spf = PreferenceManager.getDefaultSharedPreferences( this );
         String widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
                 com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
         String wxDataProvider = spf.getString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
@@ -158,6 +159,17 @@ public class PrefsActivity extends AppCompatActivity
                 .add( R.id.prefs_content, new SettingsFragment() ).commit();
 
     }// end of method onCreate
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+
+        spf.unregisterOnSharedPreferenceChangeListener( listener );
+    }
 
     /**
      * Check if there are any permissions for which a request was not made.
@@ -267,7 +279,6 @@ public class PrefsActivity extends AppCompatActivity
         private boolean okToUse = false;
         PrefsActivity outer = new PrefsActivity();
         private CityFinderPreference locationPref;
-        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( WeatherLionApplication.getAppContext() );
 
         // GPS Broadcast Receiver
         private BroadcastReceiver gpsBroadcastReceiver = new BroadcastReceiver()
@@ -278,116 +289,6 @@ public class PrefsActivity extends AppCompatActivity
                 String geoMessage = intent.getStringExtra(
                         GeoLocationService.GEO_LOCATION_SERVICE_PAYLOAD ) ;
                 setGpsLocation( geoMessage );
-            }// end of method onReceive
-        };
-
-        // Location Broadcast Receiver
-        private BroadcastReceiver locationPreferenceBR = new BroadcastReceiver()
-        {
-            @Override
-            public void onReceive( Context context, Intent intent )
-            {
-                String prefMessage = intent.getStringExtra( CityFinderPreference.CITY_LOCATION_SERVICE_PAYLOAD );
-                spf = PreferenceManager.getDefaultSharedPreferences( getContext() );
-                String selectedLocation = spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
-                        com.bushbungalo.weatherlion.Preference.DEFAULT_WEATHER_LOCATION );
-
-                // update global value
-                WeatherLionApplication.storedPreferences.setLocation( selectedLocation );
-
-                refreshPreference( prefMessage );
-            }// end of method onReceive
-        };
-
-        // Icon Set Broadcast Receiver
-        private BroadcastReceiver iconSetPreferenceBR = new BroadcastReceiver()
-        {
-            @Override
-            public void onReceive( Context context, Intent intent )
-            {
-                String prefMessage = intent.getStringExtra( IconSetPreference.ICON_SET_SERVICE_PAYLOAD );
-                refreshPreference( prefMessage );
-                spf = PreferenceManager.getDefaultSharedPreferences( getContext() );
-                WeatherLionApplication.iconSet = spf.getString( WeatherLionApplication.ICON_SET_PREFERENCE,
-                        com.bushbungalo.weatherlion.Preference.DEFAULT_ICON_SET );
-
-                // update global value
-                WeatherLionApplication.storedPreferences.setIconSet( WeatherLionApplication.iconSet );
-
-                String invoker = this.getClass().getSimpleName() + "::iconSetPreferenceBR";
-                Bundle extras = new Bundle();
-                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
-                        WidgetUpdateService.LOAD_WIDGET_ICON_SET );
-                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                        WeatherLionApplication.UNIT_NOT_CHANGED );
-
-                Intent methodIntent = new Intent( getContext(), WidgetUpdateService.class );
-                methodIntent.putExtras( extras );
-                WidgetUpdateService.enqueueWork( context, methodIntent );
-            }// end of method onReceive
-        };
-
-        // Widget Background Broadcast Receiver
-        private BroadcastReceiver widgetBackgroundPreferenceBR = new BroadcastReceiver()
-        {
-            @Override
-            public void onReceive(Context context, Intent intent)
-            {
-                String prefMessage = intent.getStringExtra( WidgetBackgroundPreference.WIDGET_BACKGROUND_SERVICE_PAYLOAD );
-                SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( getContext() );
-                String widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
-                        com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
-
-                if( widBackgroundColor != null )
-                {
-                    switch( widBackgroundColor.toLowerCase() )
-                    {
-                        case WeatherLionApplication.AQUA_THEME:
-                            WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.aqua ) );
-                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_aqua_rounded_btn_bg );
-
-                            break;
-                        case WeatherLionApplication.RABALAC_THEME:
-                            WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.rabalac ) );
-                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_rabalac_rounded_btn_bg );
-
-                            break;
-                        case WeatherLionApplication.FROSTY_THEME:
-                            WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.frosty ) );
-                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_frosty_rounded_btn_bg );
-
-                            break;
-                        case WeatherLionApplication.LION_THEME:
-                            WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.lion ) );
-                            WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_lion_rounded_btn_bg );
-
-                            break;
-                    }// end of switch block
-
-                    // update global value
-                    WeatherLionApplication.storedPreferences.setWidgetBackground( widBackgroundColor );
-
-                    String invoker = this.getClass().getSimpleName() + "::onReceive";
-                    Bundle extras = new Bundle();
-                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                    extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
-                            WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
-                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                            WeatherLionApplication.UNIT_NOT_CHANGED );
-
-                    Intent methodIntent = new Intent( getContext(), WidgetUpdateService.class );
-                    methodIntent.putExtras( extras );
-                    WidgetUpdateService.enqueueWork( context, methodIntent );
-
-                    // reload all activities in the stack with the updated theme
-                    TaskStackBuilder.create( getActivity() )
-                            .addNextIntent( new Intent( getActivity(), WeatherLionMain.class ) )
-                            .addNextIntent( getActivity().getIntent() )
-                            .startActivities();
-
-                    refreshPreference( prefMessage );
-                }// end of if block
             }// end of method onReceive
         };
 
@@ -405,45 +306,232 @@ public class PrefsActivity extends AppCompatActivity
             SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( getContext() );
             WeatherLionApplication.previousWeatherProvider.setLength( 0 );
             WeatherLionApplication.previousWeatherProvider.append( spf.getString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
-                    com.bushbungalo.weatherlion.Preference.DEFAULT_WEATHER_SOURCE) ); // capture the saved value
+                    com.bushbungalo.weatherlion.Preference.DEFAULT_WEATHER_SOURCE ) ); // capture the saved value
 
             // Bind the each setting to their values so that when the values are changed,
             // the settings activity will be updated to reflect the changes.
+            bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_location ) ) );
             bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_wx_source ) ) );
             bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_update_interval ) ) );
-            bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_location ) ) );
             bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_icon_set ) ) );
             bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_widget_background ) ) );
             bindPreferenceSummaryToValue( findPreference( getString( R.string.pref_ui_fonts ) ) );
 
+            listener = new SharedPreferences.OnSharedPreferenceChangeListener()
+            {
+                public void onSharedPreferenceChanged( SharedPreferences pref, String key )
+                {
+                    Preference preference = findPreference( key );
+                    String stringValue = UtilityMethod.getPrefValues( key );
+                    String preferenceTitle;
+                    String summary = null;
+
+                    if ( preference instanceof ListPreference )
+                    {
+                        // For list preferences, look up the correct display value in
+                        // the preference's 'entries' list (since they have separate labels/values).
+                        ListPreference listPreference = (ListPreference) preference;
+                        int prefIndex = listPreference.findIndexOfValue( stringValue );
+
+                        if ( prefIndex >= 0 )
+                        {
+                            String entry = (String) listPreference.getEntries()[ prefIndex ];
+                            String entryValue = (String) listPreference.getEntryValues()[ prefIndex ];
+                            preferenceTitle = (String) preference.getTitle();
+                            preference.setSummary( entry );
+
+                            if( preferenceTitle.equals( getString( R.string.update_interval ) ) )
+                            {
+                                WeatherLionApplication.storedPreferences.setInterval( entryValue );
+                            }// end of else if block
+                            else if( preferenceTitle.equals( getString( R.string.optional_fonts ) ) )
+                            {
+                                WeatherLionApplication.storedPreferences.setFont( entry );
+                                updateUIFont( entry );
+                            }// end of else if block
+                        }// end of if block
+                    }// end of if block
+                    else if( preference instanceof LionListPreference )
+                    {
+                        switch( preference.getKey() )
+                        {
+                            case WeatherLionApplication.WEATHER_SOURCE_PREFERENCE:
+                                summary = WeatherLionApplication.storedPreferences.getProvider();
+                                break;
+                            case WeatherLionApplication.UPDATE_INTERVAL:
+                                WeatherLionApplication.storedPreferences.setInterval( stringValue );
+                                summary =
+                                        WeatherLionApplication.updateIntervalValues.get(
+                                                WeatherLionApplication.storedPreferences.getInterval() );
+                                break;
+                            case WeatherLionApplication.UI_FONT:
+                                WeatherLionApplication.storedPreferences.setFont( stringValue );
+                                summary = WeatherLionApplication.storedPreferences.getFont();
+                                break;
+                            default:
+                                break;
+                        }// end of switch block
+
+                        preference.setSummary( summary );
+                    }// end of else if block
+                    else
+                    {
+                        switch( preference.getKey() )
+                        {
+                            case WeatherLionApplication.CURRENT_LOCATION_PREFERENCE:
+                                WeatherLionApplication.storedPreferences.setLocation( stringValue );
+                                summary = WeatherLionApplication.storedPreferences.getLocation();
+                                break;
+                            case WeatherLionApplication.ICON_SET_PREFERENCE:
+                                WeatherLionApplication.iconSet = stringValue;
+                                WeatherLionApplication.storedPreferences.setIconSet( WeatherLionApplication.iconSet );
+                                summary = WeatherLionApplication.storedPreferences.getIconSet();
+
+                                String invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
+                                Bundle extras = new Bundle();
+                                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                                        WidgetUpdateService.LOAD_WIDGET_ICON_SET );
+                                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                                        WeatherLionApplication.UNIT_NOT_CHANGED );
+
+                                Intent methodIntent = new Intent( getContext(), WidgetUpdateService.class );
+                                methodIntent.putExtras( extras );
+                                WidgetUpdateService.enqueueWork( getContext(), methodIntent );
+                                break;
+                            case WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE:
+                                WeatherLionApplication.storedPreferences.setWidgetBackground( stringValue );
+                                summary = WeatherLionApplication.storedPreferences.getWidgetBackground();
+
+                                if( stringValue != null )
+                                {
+                                    switch( stringValue.toLowerCase() )
+                                    {
+                                        case WeatherLionApplication.AQUA_THEME:
+                                            WeatherLionApplication.systemColor = Color.valueOf( getContext().getColor( R.color.aqua ) );
+                                            WeatherLionApplication.systemButtonDrawable = getContext().getDrawable( R.drawable.wl_aqua_rounded_btn_bg );
+
+                                            break;
+                                        case WeatherLionApplication.RABALAC_THEME:
+                                            WeatherLionApplication.systemColor = Color.valueOf( getContext().getColor( R.color.rabalac ) );
+                                            WeatherLionApplication.systemButtonDrawable = getContext().getDrawable( R.drawable.wl_rabalac_rounded_btn_bg );
+
+                                            break;
+                                        case WeatherLionApplication.FROSTY_THEME:
+                                            WeatherLionApplication.systemColor = Color.valueOf( getContext().getColor( R.color.frosty ) );
+                                            WeatherLionApplication.systemButtonDrawable = getContext().getDrawable( R.drawable.wl_frosty_rounded_btn_bg );
+
+                                            break;
+                                        case WeatherLionApplication.LION_THEME:
+                                            WeatherLionApplication.systemColor = Color.valueOf( getContext().getColor( R.color.lion ) );
+                                            WeatherLionApplication.systemButtonDrawable = getContext().getDrawable( R.drawable.wl_lion_rounded_btn_bg );
+
+                                            break;
+                                    }// end of switch block
+
+                                    // update global value
+                                    WeatherLionApplication.storedPreferences.setWidgetBackground( stringValue );
+
+                                    invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
+                                    extras = new Bundle();
+                                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                                    extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                                            WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
+                                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                                            WeatherLionApplication.UNIT_NOT_CHANGED );
+
+                                    methodIntent = new Intent( getContext(), WidgetUpdateService.class );
+                                    methodIntent.putExtras( extras );
+                                    WidgetUpdateService.enqueueWork( getContext(), methodIntent );
+
+                                    // reload all activities in the stack with the updated theme
+                                    TaskStackBuilder.create( getActivity() )
+                                            .addNextIntent( new Intent( getActivity(), WeatherLionMain.class ) )
+                                            .addNextIntent( getActivity().getIntent() )
+                                            .startActivities();
+
+                                }// end of if block
+
+                                break;
+                            default:
+                                break;
+                        }// end of switch block
+
+                        // For other preferences, set the summary to the value's simple string representation.
+                        preference.setSummary( summary );
+                    }// end of else block
+
+                    // this means that the change was not done by a binding event
+                    if( UtilityMethod.refreshRequestedBySystem || UtilityMethod.refreshRequestedByUser )
+                    {
+                        WidgetUpdateService.widgetRefreshRequired = true;
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                                "Preferences requesting a data refresh...",
+                                TAG + "::onPreferenceChange" );
+
+                        String invoker = this.getClass().getSimpleName() + "::onReceive";
+                        Bundle extras = new Bundle();
+                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                                WeatherLionApplication.UNIT_NOT_CHANGED );
+
+                        // call the weather update service it the user selects a new weather source
+                        Intent updateIntent = new Intent( WeatherLionApplication.getAppContext(),
+                                WidgetUpdateService.class );
+                        updateIntent.putExtras( extras );
+                        WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(),
+                                updateIntent );
+
+                    }// end of if block
+
+//                    if( preferenceTitle != null )
+//                    {
+//                        if( preferenceTitle.equals( getString( R.string.wx_source ) ) )
+//                        {
+//                            return okToUse;
+//                        }// end of if block
+//                        else
+//                        {
+//                            return true;
+//                        }// end of else block
+//                    }// end of if block
+//                    else
+//                    {
+//                        return true;
+//                    }// end of else block
+                }
+            };
+
+            spf.registerOnSharedPreferenceChangeListener( listener );
+
             final Preference useGpsSwitch = findPreference( WeatherLionApplication.USE_GPS_LOCATION_PREFERENCE );
-            ListPreference weatherProvidersSetting = (ListPreference) findPreference( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE );
+//            LionListPreference weatherProvidersSetting = (LionListPreference) findPreference( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE );
 
             // Update the weather providers list with the authorized data
-            weatherProvidersSetting.setEntries( WeatherLionApplication.authorizedProviders );
-            weatherProvidersSetting.setEntryValues( WeatherLionApplication.authorizedProviders );
+            //weatherProvidersSetting.setEntries( WeatherLionApplication.authorizedProviders );
+            //weatherProvidersSetting.setEntryValues( WeatherLionApplication.authorizedProviders );
 
-            if( WeatherLionApplication.storedPreferences != null )
-            {
-                if( WeatherLionApplication.firstRun )
-                {
-                    weatherProvidersSetting.setDefaultValue( WeatherLionApplication.authorizedProviders[ 0 ] );
-                }// end of if block
-                else
-                {
-                    weatherProvidersSetting.setDefaultValue( WeatherLionApplication.storedPreferences.getProvider() );
-                }// end of else block
-            }// end of if block
-            else
-            {
-                if( WeatherLionApplication.authorizedProviders != null )
-                {
-                    weatherProvidersSetting.setDefaultValue( WeatherLionApplication.authorizedProviders[ 0 ] );
-                }// end of if block
-            }// end of else block
+//            if( WeatherLionApplication.storedPreferences != null )
+//            {
+//                if( WeatherLionApplication.firstRun )
+//                {
+//                    weatherProvidersSetting.setDefaultValue( WeatherLionApplication.authorizedProviders[ 0 ] );
+//                }// end of if block
+//                else
+//                {
+//                    weatherProvidersSetting.setDefaultValue( WeatherLionApplication.storedPreferences.getProvider() );
+//                }// end of else block
+//            }// end of if block
+//            else
+//            {
+//                if( WeatherLionApplication.authorizedProviders != null )
+//                {
+//                    weatherProvidersSetting.setDefaultValue( WeatherLionApplication.authorizedProviders[ 0 ] );
+//                }// end of if block
+//            }// end of else block
 
-            Preference weatherSource = findPreference( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE );
-
+            //Preference weatherSource = findPreference( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE );
             Preference useMetricSwitch = findPreference( WeatherLionApplication.USE_METRIC_PREFERENCE );
 
             boolean useSystemLocation = spf.getBoolean( WeatherLionApplication.USE_GPS_LOCATION_PREFERENCE,
@@ -454,27 +542,6 @@ public class PrefsActivity extends AppCompatActivity
             LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
                 .registerReceiver( gpsBroadcastReceiver, new IntentFilter(
                     GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE ) );
-
-            LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .registerReceiver( locationPreferenceBR, new IntentFilter(
-                    CityFinderPreference.CITY_LOCATION_SERVICE_MESSAGE ) );
-
-            LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .registerReceiver( iconSetPreferenceBR, new IntentFilter(
-                    IconSetPreference.ICON_SET_SERVICE_MESSAGE ) );
-
-            LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .registerReceiver( widgetBackgroundPreferenceBR, new IntentFilter(
-                    WidgetBackgroundPreference.WIDGET_BACKGROUND_SERVICE_MESSAGE ) );
-
-            weatherSource.setOnPreferenceClickListener( new Preference.OnPreferenceClickListener()
-            {
-                public boolean onPreferenceClick( Preference preference )
-                {
-                    userClickedPreference = true;
-                    return true;
-                }
-            });
 
             useGpsSwitch.setOnPreferenceChangeListener( new Preference.OnPreferenceChangeListener()
             {
@@ -489,7 +556,6 @@ public class PrefsActivity extends AppCompatActivity
 
                     if( isEnabled )
                     {
-
                         if ( gpsReady )
                         {
                             mLongitude = outer.locationTrackerService.getLongitude();
@@ -551,16 +617,7 @@ public class PrefsActivity extends AppCompatActivity
         public void onDestroy()
         {
             LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                    .unregisterReceiver(gpsBroadcastReceiver);
-
-            LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                    .unregisterReceiver( locationPreferenceBR );
-
-            LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                    .unregisterReceiver( iconSetPreferenceBR );
-
-            LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                    .unregisterReceiver( widgetBackgroundPreferenceBR );
+                    .unregisterReceiver( gpsBroadcastReceiver );
 
             super.onDestroy();
         }// end of method onDestroy
@@ -605,32 +662,7 @@ public class PrefsActivity extends AppCompatActivity
                     preferenceTitle = (String) preference.getTitle();
                     preference.setSummary( entry );
 
-                    // handle preferences using the built in ListPreference
-                    if( preferenceTitle.equals( getString( R.string.wx_source ) ) )
-                    {
-                        if(  userClickedPreference &&
-                                !WeatherLionApplication.previousWeatherProvider.toString().equals( entry ) )
-                        {
-                            okToUse = UtilityMethod.okToUseService( entry );
-
-                            if( okToUse )
-                            {
-                                UtilityMethod.serviceCall( entry );
-                                WeatherLionApplication.storedPreferences.setProvider( entry );
-                                WeatherLionApplication.storedData.getProvider().setName( entry );
-                                UtilityMethod.refreshRequestedByUser = true;
-                                UtilityMethod.refreshRequestedBySystem = false;
-                            }// end of if block
-                            else
-                            {
-                                refreshPreference( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE );
-                                UtilityMethod.butteredToast( getContext(),
-                                        "The daily call limit has been exceeded for " + entry + ".",
-                                        1, Toast.LENGTH_SHORT );
-                            }// end of else
-                        }// end of if block
-                    }// end of if block
-                    else if( preferenceTitle.equals( getString( R.string.update_interval ) ) )
+                    if( preferenceTitle.equals( getString( R.string.update_interval ) ) )
                     {
                         WeatherLionApplication.storedPreferences.setInterval( entryValue );
                     }// end of else if block
@@ -641,6 +673,32 @@ public class PrefsActivity extends AppCompatActivity
                     }// end of else if block
                 }// end of if block
             }// end of if block
+            else if( preference instanceof LionListPreference )
+            {
+                preferenceTitle = (String) preference.getTitle();
+                String summary = null;
+
+                switch( preference.getKey() )
+                {
+                    case WeatherLionApplication.WEATHER_SOURCE_PREFERENCE:
+                        summary = WeatherLionApplication.storedPreferences.getProvider();
+                        break;
+                    case WeatherLionApplication.UPDATE_INTERVAL:
+                        WeatherLionApplication.storedPreferences.setInterval( stringValue );
+                        summary =
+                            WeatherLionApplication.updateIntervalValues.get(
+                                WeatherLionApplication.storedPreferences.getInterval() );
+                        break;
+                    case WeatherLionApplication.UI_FONT:
+                        WeatherLionApplication.storedPreferences.setFont( stringValue );
+                        summary = WeatherLionApplication.storedPreferences.getFont();
+                        break;
+                    default:
+                        break;
+                }// end of switch block
+
+                preference.setSummary( summary );
+            }// end of else if block
             else
             {
                 // For other preferences, set the summary to the value's simple string representation.
@@ -651,9 +709,9 @@ public class PrefsActivity extends AppCompatActivity
             if( UtilityMethod.refreshRequestedBySystem || UtilityMethod.refreshRequestedByUser )
             {
                 WidgetUpdateService.widgetRefreshRequired = true;
-                UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO,
-                        "Preferences requesting a data refresh...",
-                        TAG + "::onPreferenceChange");
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                "Preferences requesting a data refresh...",
+                    TAG + "::onPreferenceChange" );
 
                 String invoker = this.getClass().getSimpleName() + "::onReceive";
                 Bundle extras = new Bundle();
@@ -855,75 +913,6 @@ public class PrefsActivity extends AppCompatActivity
                     currentLocation ).apply();
             }// end of if block
         }// end of method saveLocationPreference
-
-        /**
-         * Refreshes the shared preferences values displayed to the user.
-         *
-         * @param pref  The preference value to be refreshed.
-         */
-        private void refreshPreference( String pref )
-        {
-            Preference preference = findPreference( pref );
-            String stringValue = UtilityMethod.getPrefValues( pref );
-
-
-            if ( preference instanceof ListPreference )
-            {
-                // For list preferences, look up the correct display value in
-                // the preference's 'entries' list (since they have separate labels/values).
-                ListPreference listPreference = (ListPreference) preference;
-                int prefIndex = listPreference.findIndexOfValue( stringValue );
-
-                if ( prefIndex >= 0 )
-                {
-                    String entry = (String) listPreference.getEntries()[ prefIndex ];
-                    String entryValue = (String) listPreference.getEntryValues()[ prefIndex ];
-                    String preferenceTitle = (String) preference.getTitle();
-                    preference.setSummary( entry );
-
-                    // handle preferences using the built in ListPreference
-                    if( preferenceTitle.equals( getString( R.string.wx_source ) ) )
-                    {
-                        if( userClickedPreference &&
-                                WeatherLionApplication.previousWeatherProvider.toString().equals( entry ) )
-                        {
-                            okToUse = UtilityMethod.okToUseService( entry );
-
-                            if( okToUse )
-                            {
-                                UtilityMethod.serviceCall( entry );
-                                WeatherLionApplication.storedPreferences.setProvider( entry );
-                                WeatherLionApplication.storedData.getProvider().setName( entry );
-                                UtilityMethod.refreshRequestedByUser = true;
-                                UtilityMethod.refreshRequestedBySystem = false;
-                            }// end of if block
-                            else
-                            {
-                                refreshPreference( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE );
-                                UtilityMethod.butteredToast( getContext(),
-                                        "The daily call limit has been exceeded for " + entry + ".",
-                                        1, Toast.LENGTH_SHORT );
-                            }// end of else
-                        }// end of if block
-
-                    }// end of if block
-                    else if( preferenceTitle.equals( getString( R.string.update_interval ) ) )
-                    {
-                        WeatherLionApplication.storedPreferences.setInterval( entryValue );
-                    }// end of else if block
-                    else if( preferenceTitle.equals( getString( R.string.optional_fonts ) ) )
-                    {
-                        WeatherLionApplication.storedPreferences.setFont( entry );
-                        updateUIFont( entry );
-                    }// end of else if block
-                }// end of if block
-            }// end of if block
-            else
-            {
-                // For other preferences, set the summary to the value's simple string representation.
-                preference.setSummary( stringValue );
-            }// end of else block
-        }// end of method refreshPreference
 
         /**
          * Update the current font typeface used throughout the UI

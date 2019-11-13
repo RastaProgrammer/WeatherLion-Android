@@ -2,7 +2,6 @@ package com.bushbungalo.weatherlion.custom;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -10,7 +9,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.preference.DialogPreference;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AdapterView;
@@ -32,9 +30,6 @@ import java.util.Objects;
 @SuppressWarnings({"unchecked", "WeakerAccess"})
 public class WidgetBackgroundPreference extends DialogPreference
 {
-    public static final String WIDGET_BACKGROUND_SERVICE_MESSAGE = "widgetBackgroundServiceMessage";
-    public static final String WIDGET_BACKGROUND_SERVICE_PAYLOAD = "widgetBackgroundServicePayload";
-
     public static final String CALLER_NAME = "background";
 
     final String TAG = "WidgetBackgroundPreference";
@@ -215,13 +210,9 @@ public class WidgetBackgroundPreference extends DialogPreference
                                 UtilityMethod.toProperCase(
                                         selectedBackgroundStyle.toString() ) );
                         editor.commit();
-
-                        Intent messageIntent = new Intent( WIDGET_BACKGROUND_SERVICE_MESSAGE );
-                        messageIntent.putExtra( WIDGET_BACKGROUND_SERVICE_PAYLOAD,
-                                WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE );
-                        LocalBroadcastManager manager = LocalBroadcastManager.getInstance( mContext );
-                        manager.sendBroadcast( messageIntent) ;
                     }// end of if block
+
+                    getDialog().dismiss();
                 }// end of method onClick
             });
 

@@ -2,7 +2,6 @@ package com.bushbungalo.weatherlion.custom;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -10,7 +9,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.preference.DialogPreference;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AdapterView;
@@ -33,9 +31,6 @@ import java.util.Objects;
 @SuppressWarnings({"unused", "unchecked", "WeakerAccess"})
 public class IconSetPreference extends DialogPreference
 {
-    public static final String ICON_SET_SERVICE_MESSAGE = "iconSetServiceMessage";
-    public static final String ICON_SET_SERVICE_PAYLOAD = "iconSetServicePayload";
-
     public static final String CALLER_NAME = "icons";
 
     private Context mContext;
@@ -145,7 +140,6 @@ public class IconSetPreference extends DialogPreference
             }
         });
 
-
         dialogView.setClickable( true );
 
         return dialogView;
@@ -168,6 +162,7 @@ public class IconSetPreference extends DialogPreference
     {
         super.onDialogClosed( positiveResult );
     }// end of method onDialogClosed
+
     /**
      * {@inheritDoc}
      */
@@ -217,14 +212,9 @@ public class IconSetPreference extends DialogPreference
                         editor.putString( WeatherLionApplication.ICON_SET_PREFERENCE,
                                 selectedIconSet.toString() );
                         editor.commit();
-
-                        Intent messageIntent = new Intent(ICON_SET_SERVICE_MESSAGE);
-                        messageIntent.putExtra( ICON_SET_SERVICE_PAYLOAD,
-                                WeatherLionApplication.ICON_SET_PREFERENCE );
-                        LocalBroadcastManager manager =
-                                LocalBroadcastManager.getInstance( mContext );
-                        manager.sendBroadcast( messageIntent );
                     }// end of if block
+
+                    getDialog().dismiss();
                 }// end of method onClick
             });
 

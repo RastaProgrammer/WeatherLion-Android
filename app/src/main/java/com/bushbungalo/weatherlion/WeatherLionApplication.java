@@ -65,6 +65,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -140,6 +141,15 @@ public class WeatherLionApplication extends Application
     public static final int DAILY_CALL_LIMIT = 1000;
 
     public static String[] authorizedProviders;
+
+    public static LinkedHashMap<String, String> updateIntervalValues;
+    static
+    {
+        updateIntervalValues = new LinkedHashMap<>();
+        updateIntervalValues.put( "900000", "15 Minutes" );
+        updateIntervalValues.put( "1800000", "30 Minutes" );
+        updateIntervalValues.put( "3600000", "1 Hour" );
+    }
 
     public static String[] darkSkyRequiredKeys = new String[] { "api_key" };
     public static String[] geoNamesRequiredKeys = new String[] { "username" };

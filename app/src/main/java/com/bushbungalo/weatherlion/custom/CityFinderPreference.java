@@ -60,10 +60,6 @@ public class CityFinderPreference extends DialogPreference
 {
     private final String TAG = "CityFinderPreference";
 
-    // package-private
-    public static final String CITY_LOCATION_SERVICE_MESSAGE = "cityLocationServiceMessage";
-    public static final String CITY_LOCATION_SERVICE_PAYLOAD = "cityLocationServicePayload";
-
     private static boolean popupVisible = false;
     private EditText edtCityName;
     private ImageButton imbSearch;
@@ -234,7 +230,9 @@ public class CityFinderPreference extends DialogPreference
         super.onBindDialogView( view );
 
         SharedPreferences sharedPreferences = getSharedPreferences();
-        edtCityName.setText ( sharedPreferences.getString( "pref_location", null ) );
+        edtCityName.setText ( sharedPreferences.getString(
+            WeatherLionApplication.CURRENT_LOCATION_PREFERENCE
+                , Preference.DEFAULT_WEATHER_LOCATION ) );
         edtCityName.setSelection( edtCityName.getText().length() );
 
     }// end of method onBindDialogView
@@ -358,14 +356,6 @@ public class CityFinderPreference extends DialogPreference
 
                                 WeatherLionApplication.storedPreferences.setLocation( currentLocation );
 
-                                // send out a broadcast to the preferences activity that the location preference has been modified
-                                Intent messageIntent = new Intent( CITY_LOCATION_SERVICE_MESSAGE );
-                                messageIntent.putExtra( CITY_LOCATION_SERVICE_PAYLOAD,
-                                        WeatherLionApplication.CURRENT_LOCATION_PREFERENCE );
-                                LocalBroadcastManager manager =
-                                        LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );
-                                manager.sendBroadcast( messageIntent );
-
                                 // send out a broadcast to the widget service that the location preference has been modified
                                 UtilityMethod.refreshRequestedBySystem = true;
                                 UtilityMethod.refreshRequestedByUser = false;
@@ -468,6 +458,9 @@ public class CityFinderPreference extends DialogPreference
             {
                 case WeatherLionApplication.AQUA_THEME:
                     popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_aqua ) );
+                    break;
+                case WeatherLionApplication.FROSTY_THEME:
+                    popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_frosty ));
                     break;
                 case WeatherLionApplication.RABALAC_THEME:
                     popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_rabalac ));

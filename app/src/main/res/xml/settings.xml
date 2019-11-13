@@ -15,24 +15,18 @@
             android:summary="Current Location"
             android:key="@string/pref_location"/>
 
-        <ListPreference
-            android:id="@+id/lstProvider"
+        <com.bushbungalo.weatherlion.custom.LionListPreference
+            android:id="@+id/cpProvider"
             android:dialogIcon="@drawable/icon"
             android:title="@string/wx_source"
             android:summary="Weather Provider"
-            android:entries="@array/weather_providers"
-            android:entryValues="@array/weather_providers"
-            android:defaultValue="Yahoo! Weather"
-            android:key="@string/pref_wx_source"/>
+            android:key="pref_wx_source"/>
 
-        <ListPreference
+        <com.bushbungalo.weatherlion.custom.LionListPreference
             android:id="@+id/lstInterval"
             android:dialogIcon="@drawable/icon"
             android:title="@string/update_interval"
             android:summary="Refresh period"
-            android:entries="@array/update_times"
-            android:entryValues="@array/update_milliseconds"
-            android:defaultValue="1800000"
             android:key="@string/pref_update_interval"/>
 
         <SwitchPreference
@@ -67,7 +61,7 @@
             android:summary="@string/current_background_style"
             android:key="@string/pref_widget_background" />
 
-        <ListPreference
+        <com.bushbungalo.weatherlion.custom.LionListPreference
             android:id="@+id/lstFonts"
             android:dialogIcon="@drawable/icon"
             android:title="@string/optional_fonts"

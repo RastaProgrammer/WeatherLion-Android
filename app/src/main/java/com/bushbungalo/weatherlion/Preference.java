@@ -221,7 +221,8 @@ public class Preference
 		{
 			if( WeatherLionApplication.storedData.getLocation().getCity().length() > 0 )
 			{
-				editor.putString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE, WeatherLionApplication.storedData.getLocation().getCity() );
+				editor.putString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+						WeatherLionApplication.storedData.getLocation().getCity() );
 			}// end of if block
 		}// end of if block
 		else

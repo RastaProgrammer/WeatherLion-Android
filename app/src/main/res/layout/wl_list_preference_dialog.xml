@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/iconGrid"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:id="@+id/rlDialogTitleBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/wl_custom_dialog_title">
+
+        <ImageView
+            android:id="@+id/diaIcon"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentStart="true"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="10dip"
+            android:src="@drawable/icon"
+            android:contentDescription="@string/dialog_icon" />
+
+        <TextView
+            android:id="@+id/txvDialogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="40dip"
+            android:layout_gravity="center_vertical"
+            android:layout_toEndOf="@+id/diaIcon"
+            android:layout_toStartOf="@+id/imvCloseDialog"
+            android:gravity="start|center_vertical"
+            android:layout_marginStart="8dip"
+            android:text="@string/wx_source"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/imvCloseDialog"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentEnd="true"
+            android:layout_centerInParent="true"
+            android:layout_marginEnd="10dip"
+            android:src="@drawable/wl_close_dialog"
+            android:contentDescription="@string/close_dialog" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rlDialogBody"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rlDialogTitleBar"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="0dp"
+        android:background="@color/off_white">
+
+        <ScrollView
+            android:id="@+id/scrEntries"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginBottom="30dp">
+
+            <RadioGroup
+                android:id="@+id/rdgEntries"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_margin="0dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dip" />
+        </ScrollView>
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="100dip"
+            android:layout_height="30dip"
+            android:layout_below="@+id/scrEntries"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="10dip"
+            android:background="@drawable/wl_aqua_rounded_btn_bg"
+            android:gravity="center"
+            android:text="@string/cancel"
+            android:textColor="#FFFFFF"
+            android:stateListAnimator="@null" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rlDialogFooter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rlDialogBody"
+        android:background="@drawable/wl_custom_dialog_footer" />
+</RelativeLayout>
+
