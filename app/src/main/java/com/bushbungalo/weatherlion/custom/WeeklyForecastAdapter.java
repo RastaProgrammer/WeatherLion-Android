@@ -97,7 +97,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
             Calendar cal = Calendar.getInstance();
             cal.add( Calendar.DAY_OF_MONTH, 1 );
             String tomorrow = dayFormat.format( cal.getTime() );
-            String fCondition = forecast.getCondition();
+            String fCondition = UtilityMethod.validateCondition( forecast.getCondition() );
             String fConditionIcon
                 = UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
                     ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
@@ -175,5 +175,4 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
     {
         return mWeeklyForecast.size();
     }// end of method getItemCount
-
 }// end of class WeeklyForecastAdapter

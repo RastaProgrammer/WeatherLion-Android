@@ -18,8 +18,11 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
@@ -266,8 +269,11 @@ public class CityFinderPreference extends DialogPreference
             btnOk.setTypeface( WeatherLionApplication.currentTypeface );
 
             // Controlling width and height with random values
-            getDialog().getWindow().setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
-                CustomPreferenceGrid.DEFAULT_DIALOG_HEIGHT );
+            Window dialogWindow = getDialog().getWindow();
+            dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                    ViewGroup.LayoutParams.WRAP_CONTENT );
+//            dialogWindow.setLayout( ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT );
+            dialogWindow.setGravity( Gravity.CENTER );
 
             btnCancel.setOnClickListener( new View.OnClickListener()
             {
@@ -383,7 +389,7 @@ public class CityFinderPreference extends DialogPreference
                                     2, Toast.LENGTH_LONG );
                         }// end of else block
                     }// end of if block
-                }// end of method onClick
+               }// end of method onClick
             });
         }// end of if block
     }// end of method showDialog
@@ -460,10 +466,10 @@ public class CityFinderPreference extends DialogPreference
                     popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_aqua ) );
                     break;
                 case WeatherLionApplication.FROSTY_THEME:
-                    popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_frosty ));
+                    popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_frosty ) );
                     break;
                 case WeatherLionApplication.RABALAC_THEME:
-                    popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_rabalac ));
+                    popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_rabalac ) );
                     break;
                 case WeatherLionApplication.LION_THEME:
                     popupWindow.setBackgroundDrawable( getContext().getDrawable( R.drawable.wl_round_list_popup_lion ) );

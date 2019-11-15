@@ -10,7 +10,10 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
@@ -219,8 +222,11 @@ public class IconSetPreference extends DialogPreference
             });
 
             // Controlling width and height with random values
-            getDialog().getWindow().setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
-                CustomPreferenceGrid.DEFAULT_GRID_DIALOG_HEIGHT );
+            Window dialogWindow = getDialog().getWindow();
+            dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                    ViewGroup.LayoutParams.WRAP_CONTENT );
+//            dialogWindow.setLayout( ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT );
+            dialogWindow.setGravity( Gravity.CENTER );
         }// end of if block
     }// end of method showDialog
 

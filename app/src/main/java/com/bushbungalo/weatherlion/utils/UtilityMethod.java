@@ -3791,6 +3791,88 @@ public abstract class UtilityMethod
     }// end of method timeForConnectivityCheck
 
     /**
+     * Returns a valid weather condition that is relevant to the application
+     *
+     * @param condition The weather condition to be validated
+     * @return  A {@code String} value representing a valid weather condition
+     */
+    public static String validateCondition( String condition )
+    {
+        condition = condition.toLowerCase();
+
+        for( String keyName : UtilityMethod.weatherImages.keySet() )
+        {
+            int cLen = condition.length();
+
+            if( keyName.length() >= cLen )
+            {
+                if( keyName.substring( 0, cLen ).equals( condition ) )
+                {
+                    condition = keyName.contains( "(night)" ) ?
+                            keyName.replace( "(night)", "" ).trim() :
+                            keyName.trim();
+
+                    // break if a closest match is found
+                    break;
+                }// end of if block
+            }// end of if block
+        }// end of for each loop
+
+        if ( condition.contains( "until" ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( "until" ) - 1 ).trim();
+        }// end of if block
+
+        if ( condition.contains( "starting" ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( "starting" ) - 1 ).trim();
+        }// end of if block
+
+        if ( condition.contains( "overnight" ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( "overnight" ) - 1 ).trim();
+        }// end of if block
+
+        if ( condition.contains( "night" ) )
+        {
+            condition = condition.replaceAll( "night", "" ).trim();
+        }// end of if block
+
+        if ( condition.contains( "possible" ) )
+        {
+            condition = condition.replaceAll( "possible", "" ).trim();
+        }// end of if block
+
+        if ( condition.contains( "throughout" ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( "throughout" ) - 1 ).trim();
+        }// end of if block
+
+        if ( condition.contains( " in " ) )
+        {
+            condition = condition.substring( 0, condition.indexOf( " in " ) - 1 ).trim();
+        }// end of if block
+
+        if( condition.toLowerCase().contains( "and" ) )
+        {
+            String[] conditions = condition.toLowerCase().split( "and" );
+
+            condition = conditions[ 0 ].trim();
+        }// end of if block
+
+        if( condition.toLowerCase().contains( "(day)") )
+        {
+            condition = condition.replace( "(day)", "").trim();
+        }// end of if block
+        else if( condition.toLowerCase().contains( "(night)" ) )
+        {
+            condition = condition.replace( "(night)", "" ).trim();
+        }// end of if block
+
+        return toProperCase( condition );
+    }// end of method validateCondition
+
+    /**
      * Support method for method  {@link #getConditionIcon(StringBuilder, Date) getConditionIcon}
      *
      * @param currentCondition  The current weather condition
@@ -3936,9 +4018,9 @@ public abstract class UtilityMethod
                         // sometimes the JSON data received is incomplete so this has to be taken into account
                         for ( Map.Entry<String, String> e : weatherImages.entrySet() )
                         {
-                            if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
+                            if ( e.getKey().startsWith( currentCondition.toString().toLowerCase() ) )
                             {
-                                currentConditionIcon =  weatherImages.get( e.getKey() ); // use the closest match
+                                currentConditionIcon = weatherImages.get( e.getKey() ); // use the closest match
                                 break; // exit the loop
                             }// end of if block
                         }// end of for block

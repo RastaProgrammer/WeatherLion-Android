@@ -1,6 +1,7 @@
 package com.bushbungalo.weatherlion;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
 import android.content.BroadcastReceiver;
@@ -197,6 +198,8 @@ public class WeatherLionApplication extends Application
     public static Typeface productsSans;
     public static Typeface samsungSans;
 
+    public static LinkedHashMap<String, Typeface> fonts;
+
     public static boolean firstRun;
     public static boolean localWeatherDataAvailable;
 
@@ -252,6 +255,8 @@ public class WeatherLionApplication extends Application
     public static String timeOfDayToUse;
 
     public static LocalDateTime localDateTime;
+
+    public static Activity currentActivity;
 
     /**
      * Checks to see if the program is being run for the first time.
@@ -1303,6 +1308,11 @@ public class WeatherLionApplication extends Application
         productsSans = Typeface.createFromAsset( getAssets(), "fonts/product_sans.ttf");
         samsungSans = Typeface.createFromAsset( getAssets(), "fonts/samsung_sans_regular.ttf");
 
+        fonts = new LinkedHashMap<>();
+        fonts.put( "Helvetica Neue", helveticaNeue );
+        fonts.put( "Product Sans", productsSans );
+        fonts.put( "Samsung Sans", samsungSans );
+
         if( uiFont != null )
         {
             switch( uiFont )
@@ -1628,9 +1638,6 @@ public class WeatherLionApplication extends Application
      */
     private class AppBroadcastReceiver extends BroadcastReceiver
     {
-        /**
-         * {@inheritDoc}
-         */
         @Override
         public void onReceive( Context context, Intent intent )
         {
@@ -1864,6 +1871,21 @@ public class WeatherLionApplication extends Application
                                 new Class[]{ String.class }, new Object[]{ invoker } );
                     }// end of if block
                 }// end of if block
+
+                String invoker = this.getClass().getSimpleName() + "::onReceive";
+                Bundle extras = new Bundle();
+                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                    "updateConnectivity" );
+                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                        WeatherLionApplication.UNIT_NOT_CHANGED );
+
+                // connectivity check
+                Intent connectivityIntent = new Intent( WeatherLionApplication.getAppContext(),
+                        WidgetUpdateService.class );
+                connectivityIntent.putExtras( extras );
+                WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(),
+                    connectivityIntent );
             }// end of if block
         }// end of method onReceive
     }// end of class SystemBroadcastReceiver

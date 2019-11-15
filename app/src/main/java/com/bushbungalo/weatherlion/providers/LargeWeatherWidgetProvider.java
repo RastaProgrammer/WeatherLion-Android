@@ -33,6 +33,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     private static final String TAG = "LargeWeatherWidgetProvider";
     private static final String LAUNCH_MAIN = "Main";
     private static final String OPEN_CLOCK_APP = "Clock";
+    private static final String OFFLINE = "Offline";
     private BroadcastReceiver mSystemBroadcastReceiver;
 
     public static final String REFRESH_BUTTON_CLICKED = "Refresh";
@@ -96,6 +97,12 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
                     getPendingSelfIntent( context, REFRESH_BUTTON_CLICKED )
             );
 
+            largeWidgetRemoteViews.setOnClickPendingIntent(
+                    R.id.imvOffline,
+                    getPendingSelfIntent( context, OFFLINE )
+            );
+
+            // display the main window on click
             PendingIntent mainIntent = PendingIntent.getBroadcast( context,
                     0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
             largeWidgetRemoteViews.setOnClickPendingIntent( R.id.imvCurrentCondition, mainIntent );
@@ -186,13 +193,29 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
                     public void run()
                     {
                         UtilityMethod.butteredToast(  mContext,
-                                "Please check your internet connection!",
+                                "Check internet connection!",
                                 2, Toast.LENGTH_LONG );
                     }
                 });
             }// end of else block      
 
         }// end of if block
+        else if ( OFFLINE.equals( intent.getAction() ) )
+        {
+            // Calling from a Non-UI Thread
+            Handler handler = new Handler( Looper.getMainLooper() );
+
+            handler.post( new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    UtilityMethod.butteredToast(  mContext,
+                            "Check internet connection!",
+                            2, Toast.LENGTH_LONG );
+                }
+            });
+        }// end of else if block
         else if ( LAUNCH_MAIN.equals( intent.getAction() ) )
         {
             Intent mainActivityIntent = new Intent( context, WeatherLionMain.class );

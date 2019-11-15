@@ -34,6 +34,7 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
 
     private static final String TAG = "SmallWeatherWidgetProvider";
     private static final String LAUNCH_MAIN = "Main";
+    private static final String OFFLINE = "Offline";
     private BroadcastReceiver mSystemBroadcastReceiver;
 
     public static final String REFRESH_BUTTON_CLICKED = "Refresh";
@@ -94,6 +95,11 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
             smallWidgetRemoteViews.setOnClickPendingIntent(
                     R.id.imvRefresh,
                     getPendingSelfIntent( context, REFRESH_BUTTON_CLICKED )
+            );
+
+            smallWidgetRemoteViews.setOnClickPendingIntent(
+                    R.id.imvOffline,
+                    getPendingSelfIntent( context, OFFLINE )
             );
 
             PendingIntent mainIntent = PendingIntent.getBroadcast( context,
@@ -181,12 +187,28 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
                     public void run()
                     {
                         UtilityMethod.butteredToast( mContext,
-                                "Please check your internet connection!",
+                                "Check internet connection!",
                                 2, Toast.LENGTH_LONG );
                     }
                 });
             }// end of else block
         }// end of if block
+        else if ( OFFLINE.equals( intent.getAction() ) )
+        {
+            // Calling from a Non-UI Thread
+            Handler handler = new Handler( Looper.getMainLooper() );
+
+            handler.post( new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    UtilityMethod.butteredToast(  mContext,
+                            "Check internet connection!",
+                            2, Toast.LENGTH_LONG );
+                }
+            });
+        }// end of else if block
         else if ( LAUNCH_MAIN.equals( intent.getAction() ) )
         {
             Intent mainActivityIntent = new Intent( context, WeatherLionMain.class );

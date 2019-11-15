@@ -182,7 +182,7 @@ public class WeatherLionMain extends AppCompatActivity
                 else
                 {
                     View rootView = getWindow().getDecorView().findViewById(
-                            android.R.id.content );
+                        android.R.id.content );
                     noInternetAlert( rootView );
                 }// end of else block
             }// end of if block
@@ -596,7 +596,8 @@ public class WeatherLionMain extends AppCompatActivity
         if( WeatherLionApplication.storedData.getHourlyForecast().size() > 0 )
         {
             hourlyForecastGrid.setVisibility( View.VISIBLE );
-            hourlyForecastList = new ArrayList<>( WeatherLionApplication.storedData.getHourlyForecast() );
+            hourlyForecastList = new ArrayList<>(
+                WeatherLionApplication.storedData.getHourlyForecast() );
 
             TextView txvHour;
             ImageView imvHour;
@@ -642,7 +643,9 @@ public class WeatherLionMain extends AppCompatActivity
                 }// end of catch block
 
                 // Load current forecast condition weather image
-                StringBuilder fCondition = new StringBuilder( wxHourForecast.getCondition());
+                StringBuilder fCondition = new StringBuilder(
+                    UtilityMethod.validateCondition(
+                        wxHourForecast.getCondition() ) );
                 String fConditionIcon = UtilityMethod.getConditionIcon( fCondition, onTime );
 
                 loadWeatherIcon( imvHour, String.format(
@@ -687,7 +690,8 @@ public class WeatherLionMain extends AppCompatActivity
         currentCountry.append( WeatherLionApplication.storedData.getLocation().getCountry() );
 
         currentCondition.setLength( 0 ); // reset
-        currentCondition.append( WeatherLionApplication.storedData.getCurrent().getCondition() );
+        currentCondition.append( UtilityMethod.validateCondition(
+                WeatherLionApplication.storedData.getCurrent().getCondition() ) );
 
         currentWindDirection.setLength( 0 ); // reset
         currentWindDirection.append( WeatherLionApplication.storedData.getWind().getWindDirection() );
@@ -1003,7 +1007,7 @@ public class WeatherLionMain extends AppCompatActivity
         IntentFilter systemFilter = new IntentFilter();
         systemFilter.addAction( Intent.ACTION_TIME_TICK );
         systemFilter.addAction( ConnectivityManager.CONNECTIVITY_ACTION );
-        this.registerReceiver(systemEventsBroadcastReceiver, systemFilter );
+        this.registerReceiver( systemEventsBroadcastReceiver, systemFilter );
 
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
                 .registerReceiver( xmlStorageBroadcastReceiver, new IntentFilter(
@@ -1038,6 +1042,28 @@ public class WeatherLionMain extends AppCompatActivity
         }// end of if block
         else
         {
+            String widBackgroundColor = WeatherLionApplication.spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
+                Preference.DEFAULT_WIDGET_BACKGROUND );
+
+            if( widBackgroundColor != null )
+            {
+                switch( widBackgroundColor.toLowerCase() )
+                {
+                    case WeatherLionApplication.AQUA_THEME:
+                        setTheme( R.style.AquaTheme );
+                        break;
+                    case WeatherLionApplication.FROSTY_THEME:
+                        setTheme( R.style.FrostyTheme );
+                        break;
+                    case WeatherLionApplication.RABALAC_THEME:
+                        setTheme( R.style.RabalacTheme );
+                        break;
+                    default:
+                        setTheme( R.style.LionTheme );
+                        break;
+                }// end of switch block
+            }// end of if block
+
             WeatherLionApplication.callMethodByName( null, "checkForStoredWeatherData",
                     null, null );
 
@@ -1210,6 +1236,7 @@ public class WeatherLionMain extends AppCompatActivity
         super.onResume();
 
         this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
+        removeInternetAlert();
 
         // recheck to see if some weather data has been obtained
         if( new File( this.getFileStreamPath(
@@ -1356,22 +1383,25 @@ public class WeatherLionMain extends AppCompatActivity
      */
     private void removeInternetAlert()
     {
-        if( internetCafeView.getVisibility() == View.VISIBLE )
+        if( internetCafeView != null )
         {
-            // animate the view downward before removing it from the layout
-            internetCafeView.animate()
-                .translationY( 200 )
-                .setDuration( 500 )
-                .withEndAction(
-                    new Runnable()
-                    {
-                        @Override
-                        public void run()
+            if( internetCafeView.getVisibility() == View.VISIBLE )
+            {
+                // animate the view downward before removing it from the layout
+                internetCafeView.animate()
+                    .translationY( 200 )
+                    .setDuration( 500 )
+                    .withEndAction(
+                        new Runnable()
                         {
-                            ( (ViewGroup) internetCafeView.getParent() )
-                                .removeView( internetCafeView );
-                        }// end of method run
-                    });
+                            @Override
+                            public void run()
+                            {
+                                ( (ViewGroup) internetCafeView.getParent() )
+                                        .removeView( internetCafeView );
+                            }// end of method run
+                        });
+            }// end of if block
         }// end of if block
     }// end of method removeInternetAlert
 
@@ -1540,7 +1570,7 @@ public class WeatherLionMain extends AppCompatActivity
         popupWindow = new ListPopupWindow( this );
         popupWindow.setAnchorView( anchor );
         popupWindow.setAdapter( new ArrayAdapter<>( this,
-                R.layout.wl_popup_list_item_light_bg, listItems ) );
+                R.layout.wl_popup_list_item_dark_bg, listItems ) );
         StringBuilder longestString = new StringBuilder();
 
         for( String s : listItems )
@@ -1561,8 +1591,33 @@ public class WeatherLionMain extends AppCompatActivity
 
         popupWindow.setWidth( (int) width ); // hack
         popupWindow.setVerticalOffset( 6 );
-        popupWindow.setBackgroundDrawable( this.getDrawable(
-                R.drawable.wl_round_list_popup_frosty) );
+
+        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
+        String widBackgroundColor = spf.getString(
+                WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
+                Preference.DEFAULT_WIDGET_BACKGROUND );
+
+        int largeDrawableId = 0;
+        int smallDrawableId = 0;
+
+        if( widBackgroundColor != null )
+        {
+            switch ( widBackgroundColor.toLowerCase() )
+            {
+                case WeatherLionApplication.AQUA_THEME:
+                    popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_aqua ) );
+                    break;
+                case WeatherLionApplication.FROSTY_THEME:
+                    popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_frosty ) );
+                    break;
+                case WeatherLionApplication.RABALAC_THEME:
+                    popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_rabalac ) );
+                    break;
+                case WeatherLionApplication.LION_THEME:
+                    popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_lion ) );
+                    break;
+            }// end of switch block
+        }// end of if block
 
         // if the list has more than 9 elements we will set the height if the window manually
         if( listItems.length > 9 )
@@ -2237,10 +2292,10 @@ public class WeatherLionMain extends AppCompatActivity
 
         // set the duration of the animation based on the wind speed
         int rotationSpeed = UtilityMethod.getWindRotationSpeed(
-                Integer.parseInt( currentWindSpeed.toString() ), "mph" );
+            Integer.parseInt( currentWindSpeed.toString() ), "mph" );
 
         // Tester
-//        int rotationSpeed = UtilityMethod.getWindRotationSpeed(70, "mph" );
+//        int rotationSpeed = UtilityMethod.getWindRotationSpeed( 70, "mph" );
 
         // only set a rotation if the value is greater than 0
         if( rotationSpeed > 0 )

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/rlKeysDialog"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center" >
 
     <RelativeLayout
         android:id="@+id/rlDialogTitleBar"
@@ -13,8 +14,8 @@
 
         <ImageView
             android:id="@+id/diaIcon"
-            android:layout_width="20dip"
-            android:layout_height="20dip"
+            android:layout_width="26dip"
+            android:layout_height="26dip"
             android:layout_alignParentStart="true"
             android:layout_centerInParent="true"
             android:layout_marginStart="10dip"
@@ -33,7 +34,7 @@
             android:text="@string/key_dialog_title"
             android:textAppearance="?android:attr/textAppearance"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
         <ImageView

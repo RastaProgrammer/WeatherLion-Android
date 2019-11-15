@@ -11,7 +11,10 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RadioButton;
@@ -96,6 +99,7 @@ public class LionListPreference extends DialogPreference
                     entryButton.setPadding( 60, 0, 0, 0 );
                     entryButton.setLayoutParams( params );
                     entryButton.setText( entry );
+                    entryButton.setTypeface( WeatherLionApplication.currentTypeface );
                     rdgEntries.addView( entryButton );
                 }// end of for each loop
 
@@ -127,6 +131,8 @@ public class LionListPreference extends DialogPreference
                         selectedRadioButton.setChecked( true );
                     }// end of if block
                 }// end of if block
+
+                txvDialogTitle.setText( getContext().getResources().getString( R.string.wx_source ) );
 
                 break;
             case WeatherLionApplication.UPDATE_INTERVAL:
@@ -167,6 +173,7 @@ public class LionListPreference extends DialogPreference
                     selectedRadioButton.setChecked( true );
                 }// end of if block
 
+                txvDialogTitle.setText( getContext().getResources().getString( R.string.update_interval ) );
                 break;
             case WeatherLionApplication.UI_FONT:
                 String[] fontFaces = mContext.getResources().getStringArray( R.array.font_faces );
@@ -178,6 +185,12 @@ public class LionListPreference extends DialogPreference
                     entryButton.setPadding( 60, 0, 0, 0 );
                     entryButton.setLayoutParams( params );
                     entryButton.setText( font );
+
+                    if( !font.equalsIgnoreCase( "System" ) )
+                    {
+                        entryButton.setTypeface( WeatherLionApplication.fonts.get( font ) );
+                    }// end fo if block
+
                     rdgEntries.addView( entryButton );
                 }// end of for each loop
 
@@ -203,6 +216,8 @@ public class LionListPreference extends DialogPreference
                     RadioButton selectedRadioButton = (RadioButton) rdgEntries.getChildAt( selectedIndex );
                     selectedRadioButton.setChecked( true );
                 }// end of if block
+
+                txvDialogTitle.setText( getContext().getResources().getString( R.string.optional_fonts ) );
 
                 break;
             default:
@@ -237,7 +252,6 @@ public class LionListPreference extends DialogPreference
     @Override
     public void onDismiss( DialogInterface dialog )
     {
-
        super.onDismiss( dialog );
        onDialogClosed(mWhichButtonClicked == DialogInterface.BUTTON_POSITIVE);
     }
@@ -301,8 +315,11 @@ public class LionListPreference extends DialogPreference
             });
 
             // Controlling width and height with random values
-            getDialog().getWindow().setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
-                    CustomPreferenceGrid.DEFAULT_GRID_DIALOG_HEIGHT );
+            Window dialogWindow = getDialog().getWindow();
+            dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                    ViewGroup.LayoutParams.WRAP_CONTENT );
+//            dialogWindow.setLayout( ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT );
+            dialogWindow.setGravity( Gravity.CENTER );
         }// end of if block
     }// end of method showDialog
 

@@ -847,6 +847,12 @@ public class ConfigureWidget extends AppCompatActivity
             widgetRefreshIntent.putExtras( pendingIntentExtras );
             WidgetUpdateService.enqueueWork( mContext, widgetRefreshIntent );
 
+            Intent offlineIntent = new Intent( mContext, WeatherLionMain.class );
+            PendingIntent pOfflineIntent = PendingIntent.getActivity( mContext,
+                    0, offlineIntent, 0 );
+
+            widgetView.setOnClickPendingIntent( R.id.imvOffline, pOfflineIntent );
+
             // main intent
             Intent mainActivityIntent = new Intent( mContext, WeatherLionMain.class );
             PendingIntent pMainActivityIntent = PendingIntent.getActivity( mContext,

@@ -223,9 +223,9 @@
         <ImageView
             android:id="@+id/imvOffline"
             android:layout_width="20dip"
-            android:layout_height="20dip"
+            android:layout_height="23dip"
             android:layout_alignTop="@+id/imvCurrentCondition"
-            android:layout_marginTop="-6dip"
+            android:layout_marginTop="-9dip"
             android:layout_marginBottom="1dip"
             android:layout_toStartOf="@id/imvRefresh"
             android:adjustViewBounds="false"

@@ -264,10 +264,6 @@ public class WidgetUpdateService extends JobIntentService
             invoker = extras.getString( WEATHER_SERVICE_INVOKER );
         }// end of if block
 
-        // if no widgets have been created then there is nothing to do
-//        if( WeatherLionApplication.largeWidgetIds.length == 0 &&
-//                WeatherLionApplication.smallWidgetIds.length == 0 ) return;
-
         // the caller requires only a method to be run
         if( callMethod != null )
         {
@@ -334,8 +330,8 @@ public class WidgetUpdateService extends JobIntentService
                 }// ed of else block
 
                 String json;
-                float lat = 0.0f;
-                float lng = 0.0f;
+                float lat;
+                float lng;
                 strJSON = new ArrayList<>();
                 String wxDataProvider;
 
@@ -391,6 +387,9 @@ public class WidgetUpdateService extends JobIntentService
                             }// end of if block
                             else
                             {
+                                lat = CityData.currentCityData.getLatitude();
+                                lng = CityData.currentCityData.getLongitude();
+
                                 String today = new SimpleDateFormat( "MM/dd/yyyy",
                                     Locale.ENGLISH ).format( new Date() );
 
@@ -855,7 +854,6 @@ public class WidgetUpdateService extends JobIntentService
             if( strJSON != null && !strJSON.isEmpty() )
             {
                 // we are connected to the Internet if JSON data is returned
-
                 if( WeatherLionApplication.largeWidgetIds.length > 0 )
                 {
                     largeWidgetRemoteViews.setViewVisibility( R.id.imvOffline, View.INVISIBLE );
@@ -946,7 +944,6 @@ public class WidgetUpdateService extends JobIntentService
                         UtilityMethod.refreshRequestedByUser = false;
                     }// end of if block
 
-//                    UtilityMethod.lastUpdated = new Date();
                     Calendar updateCalendar = Calendar.getInstance();
                     updateCalendar.set( Calendar.SECOND, 0 ); // perform updates on the minute mark
                     UtilityMethod.lastUpdated = updateCalendar.getTime();
@@ -1407,7 +1404,7 @@ public class WidgetUpdateService extends JobIntentService
         catch ( IOException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
-                    e.getMessage(), TAG +
+                e.getMessage(), TAG +
                     "::retrieveWeatherData" );
         }// end of catch block
     }// end of method retrieveWeatherData
@@ -1448,9 +1445,6 @@ public class WidgetUpdateService extends JobIntentService
         SimpleDateFormat sdf = new SimpleDateFormat( pattern, Locale.ENGLISH );
 
         // Obtain all default value from the stored preferences
-//        int timeAmount = UtilityMethod.millisecondsToMinutes(
-//                Integer.parseInt( WeatherLionApplication.storedPreferences.getInterval() ) );
-//        Calendar c = Calendar.getInstance();
         Date rn = new Date();
         Date schedSunriseTime = null;
         Date schedSunsetTime = null;
@@ -1519,8 +1513,6 @@ public class WidgetUpdateService extends JobIntentService
         AlarmManager alarmManager = (AlarmManager) getApplicationContext().
                 getSystemService( Context.ALARM_SERVICE );
 
-//        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
-
         // Obtain all default value from the stored preferences
         int timeAmount = UtilityMethod.millisecondsToMinutes(
                 Integer.parseInt( WeatherLionApplication.storedPreferences.getInterval() ) );
@@ -1554,7 +1546,7 @@ public class WidgetUpdateService extends JobIntentService
         currentCountry.append( CityData.currentCityData.getCountryName() );
 
         currentCondition.setLength( 0 ); // reset
-        currentCondition.append( validateCondition(
+        currentCondition.append( UtilityMethod.validateCondition(
                 UtilityMethod.toProperCase( darkSky.getCurrently().getSummary() ) ) );
 
         currentWindDirection.setLength( 0 );
@@ -1661,7 +1653,7 @@ public class WidgetUpdateService extends JobIntentService
                         new FiveHourForecast( currentForecastHour, String.valueOf(
                             Math.round( hourlyReading.get( forecastTime ) ) ),
                                 UtilityMethod.toProperCase(
-                                    validateCondition(
+                                    UtilityMethod.validateCondition(
                                         wxHourlyForecast.getSummary().toLowerCase() ) ) ) );
                     x++;
                 }// end of else if block
@@ -1674,7 +1666,7 @@ public class WidgetUpdateService extends JobIntentService
                     new FiveHourForecast( currentForecastHour, String.valueOf(
                         Math.round( hourlyReading.get( forecastTime ) ) ),
                             UtilityMethod.toProperCase(
-                                validateCondition(
+                                UtilityMethod.validateCondition(
                                     wxHourlyForecast.getSummary().toLowerCase() ) ) ) );
                 x++;
             }// end of if block
@@ -1689,11 +1681,10 @@ public class WidgetUpdateService extends JobIntentService
         int i = 1;
         currentFiveDayForecast.clear(); // ensure that this list is clean
 
-        for ( DarkSkyWeatherDataItem.Daily.Data wxForecast : darkSky.getDaily().getData() )
+        for( DarkSkyWeatherDataItem.Daily.Data wxForecast : darkSky.getDaily().getData() )
         {
             Date fxDate = UtilityMethod.getDateTime( wxForecast.getTime() );
-            String fCondition = UtilityMethod.toProperCase(
-                    validateCondition( wxForecast.getSummary().toLowerCase() ) );
+            String fCondition = UtilityMethod.validateCondition( wxForecast.getSummary() );
 
             int  fDay= this.getResources().getIdentifier( "txvDay" + (i),
                     "id", this.getPackageName() );
@@ -1759,8 +1750,8 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 );
         currentCondition.append( obs.getIconName().contains( "_" ) ?
-                UtilityMethod.toProperCase( validateCondition( obs.getIconName().replaceAll( "_", " " ) ) ) :
-                UtilityMethod.toProperCase( validateCondition( obs.getIconName().replaceAll( "_", " " ) ) ) );
+                UtilityMethod.toProperCase( UtilityMethod.validateCondition( obs.getIconName().replaceAll( "_", " " ) ) ) :
+                UtilityMethod.toProperCase( UtilityMethod.validateCondition( obs.getIconName().replaceAll( "_", " " ) ) ) );
 
         currentWindDirection.setLength( 0 );
         currentWindDirection.append( obs.getWindDescShort() );
@@ -1855,7 +1846,7 @@ public class WidgetUpdateService extends JobIntentService
                         UtilityMethod.toProperCase( wxForecast.getIconName().replaceAll( "_", " " ) ) :
                         UtilityMethod.toProperCase( wxForecast.getIconName().replaceAll( "_", " " ) );
                 fCondition = UtilityMethod.toProperCase(
-                        validateCondition( fCondition ) );
+                        UtilityMethod.validateCondition( fCondition ) );
 
                 int  fDayView = this.getResources().getIdentifier( "txvDay" + (i),
                         "id", this.getPackageName() );
@@ -1915,7 +1906,7 @@ public class WidgetUpdateService extends JobIntentService
         currentCountry.append( CityData.currentCityData.getCountryName() );
 
         currentCondition.setLength( 0 ); // reset
-        currentCondition.append( validateCondition(
+        currentCondition.append( UtilityMethod.validateCondition(
                 openWeatherWx.getWeather().get( 0 ).getDescription() ) );
 
         currentWindDirection.setLength( 0 ); // reset
@@ -1993,7 +1984,7 @@ public class WidgetUpdateService extends JobIntentService
             {
                 lastDate = UtilityMethod.getDateTime(wxForecast.getDt() );
                 String fCondition =  UtilityMethod.toProperCase(
-                        validateCondition( wxForecast.getWeather().get( 0 ).getDescription() ) );
+                        UtilityMethod.validateCondition( wxForecast.getWeather().get( 0 ).getDescription() ) );
                 String fDay =  new SimpleDateFormat( "E d", Locale.ENGLISH ).format( fxDate );
 
                 int  fDayView= this.getResources().getIdentifier( "txvDay" + (i),
@@ -2189,7 +2180,7 @@ public class WidgetUpdateService extends JobIntentService
             largeWidgetRemoteViews.setTextViewText( fDay, new SimpleDateFormat( "E d", Locale.ENGLISH ).format( forecastDate ) );
 
             // Load current forecast condition weather image
-            String fCondition = validateCondition( wxDayForecast.getCondition() );
+            String fCondition = UtilityMethod.validateCondition( wxDayForecast.getCondition() );
 
             if( fCondition.toLowerCase().contains( "(day)" ) )
             {
@@ -2260,7 +2251,7 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 ); // reset
         currentCondition.append( UtilityMethod.toProperCase(
-            validateCondition(
+            UtilityMethod.validateCondition(
                 weatherBitWx.getData().get( 0 ).getWeather().getDescription() ) ) );
 
         currentWindDirection.setLength( 0 );
@@ -2417,7 +2408,7 @@ public class WidgetUpdateService extends JobIntentService
 
             if ( Objects.requireNonNull( fxDate ).after( new Date() ) )
             {
-                String fCondition = validateCondition( wxForecast.getWeather().getDescription() );
+                String fCondition = UtilityMethod.validateCondition( wxForecast.getWeather().getDescription() );
 
                 if ( fxDate.after( new Date() ) )
                 {
@@ -2500,7 +2491,7 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 ); // reset
         currentCondition.append(
-            validateCondition( yahoo19.getCurrentObservation().getCondition().getText() ) );
+            UtilityMethod.validateCondition( yahoo19.getCurrentObservation().getCondition().getText() ) );
 
         currentHumidity.setLength( 0 );
         currentHumidity.append( Math.round( yahoo19.getCurrentObservation().getAtmosphere().getHumidity() ) );
@@ -2577,7 +2568,7 @@ public class WidgetUpdateService extends JobIntentService
 
             // Load current forecast condition weather image
             String fCondition = UtilityMethod.toProperCase(
-                    validateCondition( UtilityMethod.yahooWeatherCodes[
+                    UtilityMethod.validateCondition( UtilityMethod.yahooWeatherCodes[
                     fdf.get( i ).getCode() ] ) );
             int  fDay = this.getResources().getIdentifier( "txvDay" +  (i + 1),
                     "id", this.getPackageName() );
@@ -2638,7 +2629,7 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 ); // reset
         currentCondition.append( UtilityMethod.toProperCase(
-            validateCondition( yr.getForecast().get( 0 ).getSymbolName() ) ) );
+            UtilityMethod.validateCondition( yr.getForecast().get( 0 ).getSymbolName() ) ) );
 
         currentHumidity.setLength( 0 );
         currentHumidity.append( currentHumidity.toString().length() == 0 ? currentHumidity : String.valueOf( 0 ) ); // use the humidity reading from previous providers
@@ -2796,7 +2787,7 @@ public class WidgetUpdateService extends JobIntentService
 
                 // Load current forecast condition weather image
                 String fCondition = UtilityMethod.toProperCase(
-                        validateCondition( wxDailyForecast.getSymbolName() ) );
+                        UtilityMethod.validateCondition( wxDailyForecast.getSymbolName() ) );
 
                 int  fDay = this.getResources().getIdentifier( "txvDay" + (i),
                         "id", this.getPackageName() );
@@ -3011,7 +3002,7 @@ public class WidgetUpdateService extends JobIntentService
             switch ( widBackgroundColor.toLowerCase() )
             {
                 case WeatherLionApplication.AQUA_THEME:
-                    largeDrawableId =R.drawable.wl_aqua_bg_large;
+                    largeDrawableId = R.drawable.wl_aqua_bg_large;
                     smallDrawableId = R.drawable.wl_aqua_bg_small;
 
                     break;
@@ -3037,6 +3028,23 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setImageViewBitmap( R.id.imvWidgetBackground, getBitmap( largeDrawableId ) );
         smallWidgetRemoteViews.setImageViewBitmap( R.id.imvWidgetBackground, getBitmap( smallDrawableId ) );
     }// end of method loadWidgetBackground
+
+    /**
+     * Show/Hide the internet connectivity icon on the widget
+     */
+    private void updateConnectivity()
+    {
+        if( !UtilityMethod.hasInternetConnection( this ) )
+        {
+            largeWidgetRemoteViews.setViewVisibility( R.id.imvOffline, View.VISIBLE );
+            smallWidgetRemoteViews.setViewVisibility( R.id.imvOffline, View.VISIBLE );
+        }// end of if block
+        else
+        {
+            largeWidgetRemoteViews.setViewVisibility( R.id.imvOffline, View.INVISIBLE );
+            smallWidgetRemoteViews.setViewVisibility( R.id.imvOffline, View.INVISIBLE );
+        }// end of else block
+    }// end of method updateConnectivity
 
     private Bitmap getBitmap( int drawableRes )
     {
@@ -4261,71 +4269,7 @@ public class WidgetUpdateService extends JobIntentService
         smallWidgetRemoteViews.setTextColor( R.id.txvCurrentTemperature,
                 ( UtilityMethod.temperatureColor( Integer.parseInt(
                         currentTemp.toString().replaceAll( "\\D+","" ) ) ) ) );
-    }// end of method updateTemps
-
-    /**
-     * Returns a valid weather condition that is relevant to the application
-     *
-     * @param condition The weather condition to be validated
-     * @return  A {@code String} value representing a valid weather condition
-     */
-    private String validateCondition( String condition )
-    {
-        condition = condition.toLowerCase();
-
-        if ( condition.contains( "until" ) )
-        {
-            condition = condition.substring( 0, condition.indexOf( "until" ) - 1 ).trim();
-        }// end of if block
-
-        if ( condition.contains( "starting" ) )
-        {
-            condition = condition.substring( 0, condition.indexOf( "starting" ) - 1 ).trim();
-        }// end of if block
-
-        if ( condition.contains( "overnight" ) )
-        {
-            condition = condition.substring( 0, condition.indexOf( "overnight" ) - 1 ).trim();
-        }// end of if block
-
-        if ( condition.contains( "night" ) )
-        {
-            condition = condition.replaceAll( "night", "" ).trim();
-        }// end of if block
-
-        if ( condition.contains( "possible" ) )
-        {
-            condition = condition.replaceAll( "possible", "" ).trim();
-        }// end of if block
-
-        if ( condition.contains( "throughout" ) )
-        {
-            condition = condition.substring( 0, condition.indexOf( "throughout" ) - 1 ).trim();
-        }// end of if block
-
-        if ( condition.contains( " in " ) )
-        {
-            condition = condition.substring( 0, condition.indexOf( " in " ) - 1 ).trim();
-        }// end of if block
-
-        if( condition.toLowerCase().contains( "and" ) )
-        {
-            String[] conditions = condition.toLowerCase().split( "and" );
-
-            condition = conditions[ 0 ].trim();
-        }// end of if block
-
-        if( condition.toLowerCase().contains( "(day)") )
-        {
-            condition = condition.replace( "(day)", "").trim();
-        }// end of if block
-        else if( condition.toLowerCase().contains( "(night)" ) )
-        {
-            condition = condition.replace( "(night)", "" ).trim();
-        }// end of if block
-
-        return condition;
-    }// end of method validateCondition
+    }// end of method updateTemps  
 
     /**
      * This broadcast receiver waits for a broadcast from HttpHelper before
