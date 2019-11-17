@@ -37,6 +37,7 @@
     <string name="feels_like_main">Feels Like 0° Mostly Sunny</string>
     <string name="feels_like_widget">Feels Like 0°</string>
     <string name="no_reading">0°F</string>
+    <string name="no_reading_e">0°/0°</string>
     <string name="no_reading_f">0° 0°</string>
     <string name="no_reading_u">0°</string>
     <string name="Monday">Mon</string>
@@ -266,11 +267,14 @@
         "Weather Lion is an ongoing effort to create a robust Android weather widget as I continue to grow as a computer programmer."
         "\n\n\n\nPraise Ye JAH!!!!"
     </string>
+    <string name="app_icon">App Icon</string>
     <string name="app_logo">App Logo</string>
 
     <string name="app_slogan">The KING of all weather widgets!</string>
     <string name="wind">Wind:</string>
+    <string name="notif_wind">Wind</string>
     <string name="humidity">Humidity:</string>
+    <string name="notif_humidity">Humidity</string>
     <string name="widget_background_image">Widget Background Image</string>
     <string name="access_key_value">Access Key Value</string>
     <string name="local_time">Local Time:</string>
@@ -290,4 +294,5 @@
     <string name="icon_set_title">Icon Set</string>
     <string name="widget_background_title">Widget Background</string>
     <string name="image_preview">Image Preview</string>
+    <string name="notification_current_temperature">Notification Current Temperature</string>
 </resources>

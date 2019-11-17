@@ -4,6 +4,10 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -13,13 +17,17 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.text.HtmlCompat;
 import android.text.method.ScrollingMovementMethod;
@@ -27,6 +35,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,6 +61,8 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -214,6 +225,7 @@ public class WeatherLionApplication extends Application
     private BroadcastReceiver appBroadcastReceiver = new AppBroadcastReceiver();
 
     public static boolean useGps;
+    public static boolean useMetric;
     public static String wxLocation;
 
     public static Preference systemPreferences;
@@ -257,6 +269,8 @@ public class WeatherLionApplication extends Application
     public static LocalDateTime localDateTime;
 
     public static Activity currentActivity;
+
+    public static boolean mainWindowShowing = false;
 
     /**
      * Checks to see if the program is being run for the first time.
@@ -715,6 +729,16 @@ public class WeatherLionApplication extends Application
                     1, Toast.LENGTH_SHORT );
         }// end of else block
     }// end of method deletionAttempted
+
+    /**
+     * Delete all notifications for this app
+     */
+    private void deleteAllNotification()
+    {
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService( Context.NOTIFICATION_SERVICE );
+        notificationManager.cancelAll();
+    }// end of method deleteAllNotification
 
     /***
      * Removes a key that is stored in the local database
@@ -1198,6 +1222,7 @@ public class WeatherLionApplication extends Application
 
         wxLocation = spf.getString( CURRENT_LOCATION_PREFERENCE, Preference.DEFAULT_WEATHER_LOCATION );
         useGps = spf.getBoolean( USE_GPS_LOCATION_PREFERENCE, Preference.DEFAULT_USE_GPS );
+        useMetric = spf.getBoolean( USE_METRIC_PREFERENCE, Preference.DEFAULT_USE_METRIC );
         widBackgroundColor = spf.getString( WIDGET_BACKGROUND_PREFERENCE, Preference.DEFAULT_WIDGET_BACKGROUND );
         final LocationManager manager = (LocationManager) getSystemService( LOCATION_SERVICE );
         gpsRadioEnabled = manager.isProviderEnabled( LocationManager.GPS_PROVIDER );
@@ -1544,6 +1569,159 @@ public class WeatherLionApplication extends Application
     }// end of method responseDialog
 
     /**
+     * Sent a status notification to the notification bar
+     */
+    private void sendWeatherNotification()
+    {
+        RemoteViews notificationLayout = new RemoteViews( getPackageName(),
+                R.layout.wl_basic_weather_notification  );
+        RemoteViews notificationLayoutExpanded = new RemoteViews( getPackageName(),
+                R.layout.wl_hourly_weather_notification_parent );
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(
+                Context.NOTIFICATION_SERVICE );
+        String NOTIFICATION_CHANNEL_ID = "weather_lion";
+
+        if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O )
+        {
+            @SuppressLint("WrongConstant")
+            NotificationChannel notificationChannel = new NotificationChannel( NOTIFICATION_CHANNEL_ID,
+                    "WeatherLion Notification", NotificationManager.IMPORTANCE_MAX );
+            // Configure the notification channel.
+            notificationChannel.setDescription( "Weather Notification" );
+            notificationChannel.enableLights( true );
+            notificationChannel.setLightColor( Color.RED );
+            notificationChannel.setVibrationPattern( new long[]{ 0, 1000, 500, 1000 } );
+            notificationChannel.enableVibration( true );
+            notificationManager.createNotificationChannel( notificationChannel );
+        }// end of if block
+
+        WeatherLionApplication.storedData =
+                WeatherLionApplication.lastDataReceived.getWeatherData();
+
+        notificationLayout.setTextViewText( R.id.txvCityName,
+                WeatherLionApplication.storedData.getLocation().getCity() );
+        notificationLayoutExpanded.setTextViewText( R.id.txvCityName,
+                WeatherLionApplication.storedData.getLocation().getCity() );
+
+        String currentConditionIcon = UtilityMethod.getConditionIcon(
+                new StringBuilder(
+                        WeatherLionApplication.storedData.getCurrent().getCondition() ),
+                null );
+
+        String fileName = String.format( "weather_images/%s/weather_%s",
+                WeatherLionApplication.iconSet, currentConditionIcon );
+
+        loadWeatherIcon( notificationLayout, R.id.weather_icon, fileName );
+        loadWeatherIcon( notificationLayoutExpanded, R.id.weather_icon, fileName );
+
+        String temps = String.format( "%s°/ %s°",
+                WeatherLionApplication.storedData.getCurrent().getHighTemperature(),
+                WeatherLionApplication.storedData.getCurrent().getLowTemperature() );
+
+        notificationLayout.setTextViewText(R.id.txvCurrentTemp,
+                String.format(
+                        "%s°", WeatherLionApplication.storedData.getCurrent().getTemperature() ) );
+        notificationLayoutExpanded.setTextViewText( R.id.txvCurrentTemp,
+                String.format(
+                        "%s°", WeatherLionApplication.storedData.getCurrent().getTemperature() ) );
+
+        notificationLayout.setTextViewText(R.id.txvCurrentReadings,temps );
+        notificationLayoutExpanded.setTextViewText(R.id.txvCurrentReadings,temps );
+
+        notificationLayout.setTextViewText(R.id.notification_humidity,
+                String.format( "%s %%", WeatherLionApplication.storedData.getAtmosphere().getHumidity() ) );
+        notificationLayoutExpanded.setTextViewText(R.id.notification_humidity,
+                String.format( "%s %%", WeatherLionApplication.storedData.getAtmosphere().getHumidity() ) );
+
+        String unit = useMetric ? "kph" : "mph";
+        notificationLayout.setTextViewText(R.id.notification_wind,
+                String.format( "%s %s",
+                        Math.round( WeatherLionApplication.storedData.getWind().getWindSpeed() ),
+                        unit ) );
+        notificationLayoutExpanded.setTextViewText(R.id.notification_wind,
+                String.format( "%s %s",
+                        Math.round( WeatherLionApplication.storedData.getWind().getWindSpeed() ),
+                        unit ) );
+
+        Intent intent = new Intent(this, WeatherLionMain.class);
+
+        PendingIntent pIntent = PendingIntent.getActivity( this, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT );
+
+        // Apply the layouts to the notification
+        NotificationCompat.Builder customNotificationBuilder = new NotificationCompat.Builder( context,
+                NOTIFICATION_CHANNEL_ID )
+                .setWhen( System.currentTimeMillis() )
+                .setSmallIcon( R.drawable.wl_notification_icon )
+                .setTicker( "Weather Forecast" )
+                .setStyle( new NotificationCompat.DecoratedCustomViewStyle() )
+                .setContentIntent( pIntent )
+                .setCustomContentView( notificationLayout )
+                .setAutoCancel( true );
+
+        // if an hourly forecast is present then show it
+        if( WeatherLionApplication.storedData.getHourlyForecast().size() > 0 )
+        {
+            for ( int i = 0; i < WeatherLionApplication.storedData.getHourlyForecast().size(); i++ )
+            {
+                LastWeatherData.WeatherData.HourlyForecast.HourForecast wxHourForecast =
+                        WeatherLionApplication.storedData.getHourlyForecast().get( i );
+                String forecastTime = null;
+
+                RemoteViews notificationHourly = new RemoteViews( getPackageName(), R.layout.wl_hourly_weather_notification_child);
+
+                notificationHourly.setTextViewText( R.id.notification_hourly_weather_time,
+                        wxHourForecast.getTime() );
+
+                String today = new SimpleDateFormat( "MM/dd/yyyy",
+                        Locale.ENGLISH ).format( new Date() );
+
+                String hourForecast = String.format( "%s %s", today,
+                        wxHourForecast.getTime() );
+
+                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h a",
+                        Locale.ENGLISH );
+                Date onTime = null;
+
+                try
+                {
+                    onTime = sdf.parse( hourForecast );
+                } // end of try block
+                catch ( ParseException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                            TAG + "::sendWeatherNotification [line: " +
+                                    e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                }// end of catch block
+
+                // Load current forecast condition weather image
+                StringBuilder fCondition = new StringBuilder(
+                        UtilityMethod.validateCondition(
+                                wxHourForecast.getCondition() ) );
+                String fConditionIcon = UtilityMethod.getConditionIcon( fCondition, onTime );
+
+                loadWeatherIcon( notificationHourly, R.id.notification_hourly_weather_icon,
+                        String.format( "weather_images/%s/weather_%s",
+                                WeatherLionApplication.iconSet, fConditionIcon ) );
+
+                notificationLayoutExpanded.addView( R.id.view_container, notificationHourly );
+
+                if( i == 4 )
+                {
+                    break;
+                }// end of if block
+            }// end of for loop
+
+            customNotificationBuilder.setCustomBigContentView(notificationLayoutExpanded);
+        }// end of if block
+
+        // Create Notification instance.
+        Notification customNotification = customNotificationBuilder.build();
+        notificationManager.notify( 0, customNotification );
+    }// end of method sendWeatherNotification
+
+    /**
      * Display a dialog with a specific message
      *
      * @param message   The message to be displayed in the alert dialog
@@ -1837,6 +2015,26 @@ public class WeatherLionApplication extends Application
             }// end of else block
         }// end of if block
     }// end of method setCityName
+
+    /**
+     * Load the applicable weather icon image
+     * @param resID The Id of the resource
+     * @param imageFile  The file name for the icon
+     */
+    private void loadWeatherIcon( RemoteViews widget, int resID, String imageFile )
+    {
+        try( InputStream is = this.getAssets().open( imageFile ) )
+        {
+            Bitmap bmp = BitmapFactory.decodeStream( is );
+            widget.setImageViewBitmap( resID, bmp );
+        }// end of try block
+        catch ( IOException e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,"Weather icon " +
+                    imageFile + " could not be loaded!", TAG + "::loadWeatherIcon [line: " +
+                    e.getStackTrace()[1].getLineNumber()+ "]" );
+        }// end of catch block
+    }// end of method loadWeatherIcon
 
     /**
      * Receives broadcasts sent by the operating system.

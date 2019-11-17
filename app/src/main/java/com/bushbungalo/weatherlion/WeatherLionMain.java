@@ -39,6 +39,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
@@ -672,6 +673,13 @@ public class WeatherLionMain extends AppCompatActivity
 
         appRefresh = findViewById( R.id.swlRefresh );
 
+        appRefresh.setColorSchemeResources(
+                R.color.aqua,
+                R.color.frosty,
+                R.color.lion,
+                R.color.rabalac
+        );
+
         appRefresh.setOnRefreshListener( new SwipeRefreshLayout.OnRefreshListener()
         {
             @Override
@@ -999,8 +1007,8 @@ public class WeatherLionMain extends AppCompatActivity
         Objects.requireNonNull( getSupportActionBar() ).hide(); // hide the title bar
         this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
 
-        //this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-        // WindowManager.LayoutParams.FLAG_FULLSCREEN); //enable full screen
+        this.getWindow().setFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        WindowManager.LayoutParams.FLAG_FULLSCREEN ); //enable full screen
 
         TextView txvMessage;
 
@@ -1231,9 +1239,21 @@ public class WeatherLionMain extends AppCompatActivity
      * {@inheritDoc}
      */
     @Override
+    protected void onPause()
+    {
+        super.onPause();
+        WeatherLionApplication.mainWindowShowing = false;
+    }// end of method onPause
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     protected void onResume()
     {
         super.onResume();
+
+        WeatherLionApplication.mainWindowShowing = true;
 
         this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
         removeInternetAlert();

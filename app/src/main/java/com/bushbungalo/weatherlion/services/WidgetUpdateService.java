@@ -610,7 +610,6 @@ public class WidgetUpdateService extends JobIntentService
                                             retrieveWeatherData( axUrl.toString() );
                                         }// end of else if block
                                     }// end of else if block
-
                                 }// end of try block
                                 catch ( Exception e )
                                 {
@@ -950,6 +949,16 @@ public class WidgetUpdateService extends JobIntentService
 
                     WeatherLionApplication.weatherLoadedFromProvider = true;
                     WeatherLionApplication.localWeatherDataAvailable = false;
+
+                    // send a heads up notification if the main windows is
+                    // not in the foreground after an update
+                    if( !WeatherLionApplication.mainWindowShowing )
+                    {
+                        WeatherLionApplication.callMethodByName( null,
+                "sendWeatherNotification",null,
+                        null );
+                    }// end of if block
+
                 }// end of try block
                 catch( Exception e )
                 {
@@ -2899,6 +2908,11 @@ public class WidgetUpdateService extends JobIntentService
             currentCondition.append(
                     UtilityMethod.toProperCase( conditions[ 0 ].trim() ) );
         }// end of if block
+
+        tc = UtilityMethod.validateCondition( currentCondition.toString() );
+
+        currentCondition.setLength( 0 ); // reset
+        currentCondition.append( tc );
     }// end of method formatWeatherCondition()
 
     private void loadLocalWeatherData()

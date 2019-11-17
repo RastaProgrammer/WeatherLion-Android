@@ -3804,18 +3804,27 @@ public abstract class UtilityMethod
         {
             int cLen = condition.length();
 
+            String accurateCondition = keyName.contains( "(night)" ) ?
+                    keyName.replace( "(night)", "" ).trim() :
+                    keyName.trim();
+
             if( keyName.length() >= cLen )
             {
                 if( keyName.substring( 0, cLen ).equals( condition ) )
                 {
-                    condition = keyName.contains( "(night)" ) ?
-                            keyName.replace( "(night)", "" ).trim() :
-                            keyName.trim();
+                    condition = accurateCondition;
 
                     // break if a closest match is found
                     break;
                 }// end of if block
             }// end of if block
+            else if( condition.startsWith( keyName ) )
+            {
+                condition = accurateCondition;
+
+                // break if a closest match is found
+                break;
+            }// end of else if block
         }// end of for each loop
 
         if ( condition.contains( "until" ) )
@@ -3965,7 +3974,7 @@ public abstract class UtilityMethod
                         // sometimes the JSON data received is incomplete so this has to be taken into account
                         for ( Map.Entry<String, String> e : weatherImages.entrySet() )
                         {
-                            if ( e.getKey() .startsWith( currentCondition.toString().toLowerCase() ) )
+                            if ( e.getKey().startsWith( currentCondition.toString().toLowerCase() ) )
                             {
                                 currentConditionIcon =  weatherImages.get( e.getKey() ); // use the closest match
                                 break; // exit the loop
@@ -3982,8 +3991,8 @@ public abstract class UtilityMethod
                 else
                 {
                     currentConditionIcon =
-                            weatherImages.get(
-                                    currentCondition.toString().toLowerCase() );
+                        weatherImages.get(
+                            currentCondition.toString().toLowerCase() );
                 }// end of else block
             }// end of if block
         }// end of if block
