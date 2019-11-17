@@ -949,16 +949,6 @@ public class WidgetUpdateService extends JobIntentService
 
                     WeatherLionApplication.weatherLoadedFromProvider = true;
                     WeatherLionApplication.localWeatherDataAvailable = false;
-
-                    // send a heads up notification if the main windows is
-                    // not in the foreground after an update
-                    if( !WeatherLionApplication.mainWindowShowing )
-                    {
-                        WeatherLionApplication.callMethodByName( null,
-                "sendWeatherNotification",null,
-                        null );
-                    }// end of if block
-
                 }// end of try block
                 catch( Exception e )
                 {
@@ -3648,7 +3638,6 @@ public class WidgetUpdateService extends JobIntentService
 
                     // Five Day Forecast
                     List< WeatherBitWeatherDataItem.SixteenDayForecastData.Data > wFdf = weatherBitFx.getData();
-//                    int count = wFdf.size(); // number of items in the array
                     double lowTemp;
                     double Temps;
                     i = 1;
@@ -4206,22 +4195,6 @@ public class WidgetUpdateService extends JobIntentService
             {
                 LastWeatherData.WeatherData.DailyForecast.DayForecast wxDayForecast =
                         WeatherLionApplication.storedData.getDailyForecast().get( i );
-
-//                Date forecastDate = null;
-//
-//                try
-//                {
-//                    forecastDate = new SimpleDateFormat( "EEE MMM dd HH:mm:ss z yyyy",
-//                        Locale.ENGLISH ).parse( wxDayForecast.getTime() );
-//                }// end of try block
-//                catch ( ParseException e )
-//                {
-//                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Couldn't parse the forecast date!",
-//                TAG + "::updateTemps");
-//                }// end of catch block
-
-//                DateFormat df = new SimpleDateFormat( "dd MMM yyyy", Locale.ENGLISH );
-
                 String temps;
                 String fh;
                 String fLow;

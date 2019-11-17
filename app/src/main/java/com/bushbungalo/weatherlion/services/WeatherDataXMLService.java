@@ -40,7 +40,7 @@ public class WeatherDataXMLService extends JobIntentService
 	private static final String TAG = "WeatherDataXMLService";
 	private WeatherDataXML xmlData = new WeatherDataXML();
 
-	public static final String WEATHER_XML_STORAGE_MESSAGE = "WeatherXmlServiceMessage";
+	public static final String WEATHER_XML_STORAGE_MESSAGE = "WeatherXmlStorageMessage";
 
 	@Override
 	public void onCreate()

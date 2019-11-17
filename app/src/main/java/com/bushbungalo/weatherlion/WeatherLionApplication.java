@@ -301,13 +301,13 @@ public class WeatherLionApplication extends Application
      */
     private boolean checkForStoredWeatherData()
     {
-        if( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
+        if( new File( this.getFileStreamPath( WEATHER_DATA_XML ).toString() ).exists() )
         {
             // If the weather data xml file exists, that means the program has previously received
             // data from a web service. The data must then be loaded into memory.
             lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
                     UtilityMethod.readAll(
-                            this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
+                            this.getFileStreamPath( WEATHER_DATA_XML ).toString() )
                             .replaceAll( "\t", "" ).trim() );
 
             storedData = lastDataReceived.getWeatherData();
@@ -370,11 +370,11 @@ public class WeatherLionApplication extends Application
 
         if( methodName == null )
         {
-            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+            extras.putString( LAUNCH_METHOD_EXTRA, null );
         }// end of if block
         else
         {
-            extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, methodName );
+            extras.putString( LAUNCH_METHOD_EXTRA, methodName );
         }// end of else block
 
         Intent methodIntent = new Intent( this, WidgetUpdateService.class );
@@ -394,7 +394,7 @@ public class WeatherLionApplication extends Application
     public static int addSiteKeyToDatabase( String keyProvider, String keyName, String keyValue, String hex )
     {
         SQLiteOpenHelper dbHelper = new DBHelper( getAppContext(),
-                WeatherLionApplication.WAK_DATABASE_NAME );
+                WAK_DATABASE_NAME );
         SQLiteDatabase weatherAccessDB = dbHelper.getWritableDatabase();
 
         ContentValues values = new ContentValues( 4 );
@@ -417,15 +417,15 @@ public class WeatherLionApplication extends Application
         int success;
 
         // The following lines will create the databases if they do not already exist
-        SQLiteOpenHelper dbHelper = new DBHelper( getAppContext(), WeatherLionApplication.WAK_DATABASE_NAME );
+        SQLiteOpenHelper dbHelper = new DBHelper( getAppContext(), WAK_DATABASE_NAME );
         SQLiteDatabase weatherAccessDB = dbHelper.getReadableDatabase();
         weatherAccessDB.close();
 
-        dbHelper = new DBHelper( getAppContext(), WeatherLionApplication.CITIES_DATABASE_NAME );
+        dbHelper = new DBHelper( getAppContext(), CITIES_DATABASE_NAME );
         SQLiteDatabase worldCitiesDB = dbHelper.getReadableDatabase();
         worldCitiesDB.close();
 
-        dbHelper = new DBHelper( getAppContext(), WeatherLionApplication.MAIN_DATABASE_NAME );
+        dbHelper = new DBHelper( getAppContext(), MAIN_DATABASE_NAME );
         SQLiteDatabase mainDB = dbHelper.getReadableDatabase();
         mainDB.close();
 
@@ -517,12 +517,12 @@ public class WeatherLionApplication extends Application
      */
     private void checkCurrentCityStatus()
     {
-        String currLocation = WeatherLionApplication.spf.getString( CURRENT_LOCATION_PREFERENCE,
+        String currLocation = spf.getString( CURRENT_LOCATION_PREFERENCE,
                 Preference.DEFAULT_WEATHER_LOCATION );
         locationSet = Objects.requireNonNull( currLocation ).equalsIgnoreCase(
                 Preference.DEFAULT_WEATHER_LOCATION );
 
-        if( WeatherLionApplication.setCurrentCity )
+        if( setCurrentCity )
         {
             showPreferenceActivity( locationSet );
         }// end of if block
@@ -530,7 +530,7 @@ public class WeatherLionApplication extends Application
         {
             String outMsg =  "The program will not run without a location set.\nGoodbye.";
 
-            showMessageDialog( null, outMsg, WeatherLionApplication.PROGRAM_NAME + " No City",
+            showMessageDialog( null, outMsg, PROGRAM_NAME + " No City",
                     "exitApplication", null, null );
         }// end of else block
     }// end of method checkCurrentCityStatus
@@ -541,35 +541,35 @@ public class WeatherLionApplication extends Application
      */
     private void checkSystemLocationStatus()
     {
-        if( WeatherLionApplication.useSystemLocation )
+        if( useSystemLocation )
         {
-            WeatherLionApplication.storedPreferences.setUseSystemLocation( true );
-            WeatherLionApplication.storedPreferences.setLocation( WeatherLionApplication.systemLocation );
+            storedPreferences.setUseSystemLocation( true );
+            storedPreferences.setLocation( systemLocation );
 
-            systemPreferences.setPrefValues( WeatherLionApplication.USE_GPS_LOCATION_PREFERENCE,
+            systemPreferences.setPrefValues( USE_GPS_LOCATION_PREFERENCE,
                     Boolean.toString( true ) );
 
-            systemPreferences.setPrefValues( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
-                    WeatherLionApplication.systemLocation );
+            systemPreferences.setPrefValues( CURRENT_LOCATION_PREFERENCE,
+                    systemLocation );
 
             // save the city to the local WorldCites database
             if( UtilityMethod.addCityToDatabase(
-                    WeatherLionApplication.currentCityData.getCityName(),
-                    WeatherLionApplication.currentCityData.getCountryName(),
-                    WeatherLionApplication.currentCityData.getCountryCode(),
-                    WeatherLionApplication.currentCityData.getRegionName(),
-                    WeatherLionApplication.currentCityData.getRegionCode(),
-                    WeatherLionApplication.currentCityData.getTimeZone(),
-                    WeatherLionApplication.currentCityData.getLatitude(),
-                    WeatherLionApplication.currentCityData.getLongitude() ) == 1 )
+                    currentCityData.getCityName(),
+                    currentCityData.getCountryName(),
+                    currentCityData.getCountryCode(),
+                    currentCityData.getRegionName(),
+                    currentCityData.getRegionCode(),
+                    currentCityData.getTimeZone(),
+                    currentCityData.getLatitude(),
+                    currentCityData.getLongitude() ) == 1 )
             {
                 UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO, String.format("%s was added to the database",
-                        WeatherLionApplication.systemLocation ),
+                        systemLocation ),
                         TAG + ":: checkSystemLocationStatus" );
             }// end of if block
 
-            JSONHelper.exportCityToJSON( WeatherLionApplication.currentCityData );
-            XMLHelper.exportCityDataToXML( WeatherLionApplication.currentCityData );
+            JSONHelper.exportCityToJSON( currentCityData );
+            XMLHelper.exportCityDataToXML( currentCityData );
 
             locationSet = true;
         }// end of if block
@@ -578,7 +578,7 @@ public class WeatherLionApplication extends Application
             String prompt = "You must specify a current location in order to run the program.\n" +
                     "Would you like to specify it now?";
 
-            responseDialog(WeatherLionApplication.PROGRAM_NAME + " - Location Setup",
+            responseDialog(PROGRAM_NAME + " - Location Setup",
                     prompt,"Yes", "No","setCurrentCityStatus",
                     "checkCurrentCityStatus", new Object[]{true}, new Class[]{Boolean.class});
         }// end of else block
@@ -612,7 +612,7 @@ public class WeatherLionApplication extends Application
                 + fMks + "\nDo you wish to add " +
                 ( keysMissing.size() > 1 ? "them" : "it" ) + " now?";
 
-        responseDialog( WeatherLionApplication.PROGRAM_NAME + " - Missing Key",
+        responseDialog( PROGRAM_NAME + " - Missing Key",
                 prompt,"Yes", "No","showDataKeysDialog",
                 "lackPrivilegesMessage", null, null );
     }// end of message checkForMissingKeys
@@ -749,7 +749,7 @@ public class WeatherLionApplication extends Application
     public void deleteSiteKeyFromDatabase( String keyProvider, String keyName )
     {
         SQLiteOpenHelper dbHelper = new DBHelper( getAppContext(),
-                WeatherLionApplication.WAK_DATABASE_NAME );
+                WAK_DATABASE_NAME );
         SQLiteDatabase weatherAccessDB = dbHelper.getWritableDatabase();
 
         // return the number of rows affected if a whereClause is passed in, 0 otherwise.
@@ -819,7 +819,7 @@ public class WeatherLionApplication extends Application
     {
         ArrayList< String > ak = new ArrayList<>();
         SQLiteOpenHelper dbHelper = new DBHelper( getAppContext(),
-                WeatherLionApplication.WAK_DATABASE_NAME);
+                WAK_DATABASE_NAME);
         SQLiteDatabase weatherAccessDB = dbHelper.getReadableDatabase();
 
         try
@@ -872,7 +872,7 @@ public class WeatherLionApplication extends Application
             String prompt = "The program will not run without a location set.\n"
                     + "Enjoy the weather!";
 
-            showMessageDialog(null, prompt, WeatherLionApplication.PROGRAM_NAME + " - No Location",
+            showMessageDialog(null, prompt, PROGRAM_NAME + " - No Location",
                     "exitApplication", null, null);
         }// end of if block
         else
@@ -1120,15 +1120,15 @@ public class WeatherLionApplication extends Application
      */
     private boolean locationCheck()
     {
-        if( WeatherLionApplication.storedPreferences.getLocation().length() == 0 )
+        if( storedPreferences.getLocation().length() == 0 )
         {
-            if( WeatherLionApplication.systemLocation != null )
+            if( systemLocation != null )
             {
                 String prompt = "You must specify a current location in order to run the program.\n" +
-                        "Your current location is detected as " + WeatherLionApplication.systemLocation + ".\n" +
+                        "Your current location is detected as " + systemLocation + ".\n" +
                         "Would you like to use it as your current location?";
 
-                responseDialog(WeatherLionApplication.PROGRAM_NAME + " - Use GPS Location",
+                responseDialog(PROGRAM_NAME + " - Use GPS Location",
                         prompt,"Yes", "No","setSystemLocationUsage",
                         "setSystemLocationUsage", new Object[]{true}, new Class[]{Boolean.class});
             }// end of if block
@@ -1138,7 +1138,7 @@ public class WeatherLionApplication extends Application
                 String prompt = "You must specify a current location in order to run the program.\n" +
                         "Would you like to specify it now?";
 
-                responseDialog(WeatherLionApplication.PROGRAM_NAME + " - Location Setup",
+                responseDialog(PROGRAM_NAME + " - Location Setup",
                         prompt,"Yes", "No","setCurrentCityStatus",
                         "checkCurrentCityStatus", new Object[]{true}, new Class[]{Boolean.class});
             }// end of else block
@@ -1147,7 +1147,7 @@ public class WeatherLionApplication extends Application
         {
             // the location was already set
             // ensure that this variable contains realtime data
-            locationSet = !Objects.requireNonNull( spf.getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+            locationSet = !Objects.requireNonNull( spf.getString( CURRENT_LOCATION_PREFERENCE,
                     Preference.DEFAULT_WEATHER_LOCATION ) ).equals( Preference.DEFAULT_WEATHER_LOCATION );
         }// end of else block
 
@@ -1162,7 +1162,7 @@ public class WeatherLionApplication extends Application
     public void missingRequirementsMessage( String message )
     {
         // display a toast message to the user
-        UtilityMethod.butteredToast( WeatherLionApplication.getAppContext(), message, 2, Toast.LENGTH_LONG );
+        UtilityMethod.butteredToast( getAppContext(), message, 2, Toast.LENGTH_LONG );
 
         // log message
         UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Missing: " + message,
@@ -1193,7 +1193,7 @@ public class WeatherLionApplication extends Application
     {
         super.onCreate();
         context = getApplicationContext();
-        thisClass = WeatherLionApplication.this;
+        thisClass = this;
 
         connectedToInternet = UtilityMethod.hasInternetConnection( getAppContext() );
         createServiceCallLog();
@@ -1207,6 +1207,7 @@ public class WeatherLionApplication extends Application
         appFilter.addAction( GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE );
         appFilter.addAction( WeatherLionMain.KEY_UPDATE_MESSAGE );
         appFilter.addAction( WidgetUpdateService.WEATHER_XML_SERVICE_MESSAGE );
+        appFilter.addAction( WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE );
         LocalBroadcastManager.getInstance( this ).registerReceiver( appBroadcastReceiver,
                 appFilter );
 
@@ -1317,7 +1318,7 @@ public class WeatherLionApplication extends Application
                         CityData.currentCityData.getLatitude(),
                         CityData.currentCityData.getLongitude(),
                         CityData.currentCityData.getTimeZone(),
-                        UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ),
+                        UtilityMethod.getDateTime( localDateTime ),
                         schedSunriseTime,
                         schedSunsetTime );
             }// end of else block
@@ -1392,7 +1393,7 @@ public class WeatherLionApplication extends Application
             }// end of switch block
         }// end of if block
 
-        if( WeatherLionApplication.geoNamesAccountLoaded )
+        if( geoNamesAccountLoaded )
         {
             if( locationSet )
             {
@@ -1403,10 +1404,10 @@ public class WeatherLionApplication extends Application
                 {
                     Bundle extras = new Bundle();
                     extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                    extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                    extras.putString( LAUNCH_METHOD_EXTRA,
                             WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
                     extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                            WeatherLionApplication.UNIT_NOT_CHANGED );
+                            UNIT_NOT_CHANGED );
 
                     // set the widget background to the current theme color if the widget if a
                     // widget if on screen
@@ -1427,9 +1428,9 @@ public class WeatherLionApplication extends Application
             {
                 Bundle extras = new Bundle();
                 extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                extras.putString( LAUNCH_METHOD_EXTRA, null );
                 extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                        WeatherLionApplication.UNIT_NOT_CHANGED );
+                        UNIT_NOT_CHANGED );
 
                 UtilityMethod.refreshRequestedBySystem = true;
                 Intent updateIntent = new Intent( context, WidgetUpdateService.class );
@@ -1446,7 +1447,7 @@ public class WeatherLionApplication extends Application
      */
     private void setCurrentCityStatus( boolean currentCitySet )
     {
-        WeatherLionApplication.setCurrentCity = currentCitySet;
+        setCurrentCity = currentCitySet;
     }// end of method setSystemLocationUsage
 
     /**
@@ -1456,7 +1457,7 @@ public class WeatherLionApplication extends Application
      */
     private void setSystemLocationUsage( boolean useLocation )
     {
-        WeatherLionApplication.useSystemLocation = useLocation;
+        useSystemLocation = useLocation;
     }// end of method setSystemLocationUsage
 
     /**
@@ -1464,16 +1465,16 @@ public class WeatherLionApplication extends Application
      */
     private void refreshWeather( String invoker )
     {
-        if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
+        if( UtilityMethod.hasInternetConnection( getAppContext() ) )
         {
             // do not execute back-to-back requests
             if( UtilityMethod.updateRequired( context ) )
             {
                 Bundle extras = new Bundle();
                 extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
+                extras.putString( LAUNCH_METHOD_EXTRA, null );
                 extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                        WeatherLionApplication.UNIT_NOT_CHANGED );
+                        UNIT_NOT_CHANGED );
 
                 Intent updateIntent = new Intent( this, WidgetUpdateService.class );
                 updateIntent.putExtras( extras );
@@ -1508,27 +1509,27 @@ public class WeatherLionApplication extends Application
 
         // Initialize the view objects
         RelativeLayout rlTitleBar = dialogView.findViewById( R.id.rlDialogTitleBar );
-        rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+        rlTitleBar.setBackgroundColor( systemColor.toArgb() );
 
         TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
         TextView txvDialogMessage = dialogView.findViewById( R.id.txvMessage );
 
         Button btnPositive = dialogView.findViewById( R.id.btnPositive );
-        btnPositive.setBackground( WeatherLionApplication.systemButtonDrawable );
+        btnPositive.setBackground( systemButtonDrawable );
         Button btnNegative = dialogView.findViewById( R.id.btnNegative );
-        btnNegative.setBackground( WeatherLionApplication.systemButtonDrawable );
+        btnNegative.setBackground( systemButtonDrawable );
 
         txvDialogTitle.setText( title );
-        txvDialogTitle.setTypeface( WeatherLionApplication.currentTypeface );
+        txvDialogTitle.setTypeface( currentTypeface );
 
         txvDialogMessage.setText( prompt );
-        txvDialogMessage.setTypeface( WeatherLionApplication.currentTypeface );
+        txvDialogMessage.setTypeface( currentTypeface );
 
         btnPositive.setText( posResponse );
-        btnPositive.setTypeface( WeatherLionApplication.currentTypeface );
+        btnPositive.setTypeface( currentTypeface );
 
         btnNegative.setText( negResponse );
-        btnNegative.setTypeface( WeatherLionApplication.currentTypeface );
+        btnNegative.setTypeface( currentTypeface );
 
         btnPositive.setOnClickListener(new View.OnClickListener()
         {
@@ -1537,12 +1538,12 @@ public class WeatherLionApplication extends Application
             {
                 if( params == null || params.length == 0 )
                 {
-                    WeatherLionApplication.callMethodByName( WeatherLionApplication.this, positiveAction,
+                    callMethodByName( this, positiveAction,
                             null, null );
                 }// end of if block
                 else
                 {
-                    WeatherLionApplication.callMethodByName( WeatherLionApplication.this,
+                    callMethodByName( this,
                             positiveAction, paramClassTypes, params );
                 }// end of else block
 
@@ -1557,7 +1558,7 @@ public class WeatherLionApplication extends Application
             {
                 if( negativeAction != null )
                 {
-                    WeatherLionApplication.callMethodByName( WeatherLionApplication.this, negativeAction,
+                    callMethodByName( this, negativeAction,
                             null, null );
                 }// end of if block
 
@@ -1596,52 +1597,52 @@ public class WeatherLionApplication extends Application
             notificationManager.createNotificationChannel( notificationChannel );
         }// end of if block
 
-        WeatherLionApplication.storedData =
-                WeatherLionApplication.lastDataReceived.getWeatherData();
+        storedData =
+                lastDataReceived.getWeatherData();
 
         notificationLayout.setTextViewText( R.id.txvCityName,
-                WeatherLionApplication.storedData.getLocation().getCity() );
+                storedData.getLocation().getCity() );
         notificationLayoutExpanded.setTextViewText( R.id.txvCityName,
-                WeatherLionApplication.storedData.getLocation().getCity() );
+                storedData.getLocation().getCity() );
 
         String currentConditionIcon = UtilityMethod.getConditionIcon(
                 new StringBuilder(
-                        WeatherLionApplication.storedData.getCurrent().getCondition() ),
+                        storedData.getCurrent().getCondition() ),
                 null );
 
         String fileName = String.format( "weather_images/%s/weather_%s",
-                WeatherLionApplication.iconSet, currentConditionIcon );
+                iconSet, currentConditionIcon );
 
         loadWeatherIcon( notificationLayout, R.id.weather_icon, fileName );
         loadWeatherIcon( notificationLayoutExpanded, R.id.weather_icon, fileName );
 
         String temps = String.format( "%s°/ %s°",
-                WeatherLionApplication.storedData.getCurrent().getHighTemperature(),
-                WeatherLionApplication.storedData.getCurrent().getLowTemperature() );
+                storedData.getCurrent().getHighTemperature(),
+                storedData.getCurrent().getLowTemperature() );
 
         notificationLayout.setTextViewText(R.id.txvCurrentTemp,
                 String.format(
-                        "%s°", WeatherLionApplication.storedData.getCurrent().getTemperature() ) );
+                        "%s°", storedData.getCurrent().getTemperature() ) );
         notificationLayoutExpanded.setTextViewText( R.id.txvCurrentTemp,
                 String.format(
-                        "%s°", WeatherLionApplication.storedData.getCurrent().getTemperature() ) );
+                        "%s°", storedData.getCurrent().getTemperature() ) );
 
         notificationLayout.setTextViewText(R.id.txvCurrentReadings,temps );
         notificationLayoutExpanded.setTextViewText(R.id.txvCurrentReadings,temps );
 
         notificationLayout.setTextViewText(R.id.notification_humidity,
-                String.format( "%s %%", WeatherLionApplication.storedData.getAtmosphere().getHumidity() ) );
+                String.format( "%s %%", storedData.getAtmosphere().getHumidity() ) );
         notificationLayoutExpanded.setTextViewText(R.id.notification_humidity,
-                String.format( "%s %%", WeatherLionApplication.storedData.getAtmosphere().getHumidity() ) );
+                String.format( "%s %%", storedData.getAtmosphere().getHumidity() ) );
 
         String unit = useMetric ? "kph" : "mph";
         notificationLayout.setTextViewText(R.id.notification_wind,
                 String.format( "%s %s",
-                        Math.round( WeatherLionApplication.storedData.getWind().getWindSpeed() ),
+                        Math.round( storedData.getWind().getWindSpeed() ),
                         unit ) );
         notificationLayoutExpanded.setTextViewText(R.id.notification_wind,
                 String.format( "%s %s",
-                        Math.round( WeatherLionApplication.storedData.getWind().getWindSpeed() ),
+                        Math.round( storedData.getWind().getWindSpeed() ),
                         unit ) );
 
         Intent intent = new Intent(this, WeatherLionMain.class);
@@ -1661,12 +1662,12 @@ public class WeatherLionApplication extends Application
                 .setAutoCancel( true );
 
         // if an hourly forecast is present then show it
-        if( WeatherLionApplication.storedData.getHourlyForecast().size() > 0 )
+        if( storedData.getHourlyForecast().size() > 0 )
         {
-            for ( int i = 0; i < WeatherLionApplication.storedData.getHourlyForecast().size(); i++ )
+            for ( int i = 0; i < storedData.getHourlyForecast().size(); i++ )
             {
                 LastWeatherData.WeatherData.HourlyForecast.HourForecast wxHourForecast =
-                        WeatherLionApplication.storedData.getHourlyForecast().get( i );
+                        storedData.getHourlyForecast().get( i );
                 String forecastTime = null;
 
                 RemoteViews notificationHourly = new RemoteViews( getPackageName(), R.layout.wl_hourly_weather_notification_child);
@@ -1703,7 +1704,7 @@ public class WeatherLionApplication extends Application
 
                 loadWeatherIcon( notificationHourly, R.id.notification_hourly_weather_icon,
                         String.format( "weather_images/%s/weather_%s",
-                                WeatherLionApplication.iconSet, fConditionIcon ) );
+                                iconSet, fConditionIcon ) );
 
                 notificationLayoutExpanded.addView( R.id.view_container, notificationHourly );
 
@@ -1736,19 +1737,19 @@ public class WeatherLionApplication extends Application
         messageDialog.setView( messageDialogView );
 
         RelativeLayout rlTitleBar = messageDialogView.findViewById( R.id.rlDialogTitleBar );
-        rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+        rlTitleBar.setBackgroundColor( systemColor.toArgb() );
 
         TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
         txvTitle.setMovementMethod( new ScrollingMovementMethod() );
-        txvTitle.setTypeface( WeatherLionApplication.currentTypeface );
+        txvTitle.setTypeface( currentTypeface );
         txvTitle.setText( title );
 
         TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
-        txvMessage.setTypeface( WeatherLionApplication.currentTypeface );
+        txvMessage.setTypeface( currentTypeface );
 
         Button btnOk = messageDialogView.findViewById( R.id.btnOk );
-        btnOk.setBackground( WeatherLionApplication.systemButtonDrawable );
-        btnOk.setTypeface( WeatherLionApplication.currentTypeface );
+        btnOk.setBackground( systemButtonDrawable );
+        btnOk.setTypeface( currentTypeface );
 
         if( messageType != null && messageType.equals( UtilityMethod.MsgType.HTML ) )
         {
@@ -1773,11 +1774,11 @@ public class WeatherLionApplication extends Application
 
                 if( params == null || params.length == 0 )
                 {
-                    WeatherLionApplication.callMethodByName( WeatherLionApplication.this, methodToCall,null, null );
+                    callMethodByName( this, methodToCall,null, null );
                 }// end of if block
                 else
                 {
-                    WeatherLionApplication.callMethodByName( WeatherLionApplication.this, methodToCall, paramClassTypes, params );
+                    callMethodByName( this, methodToCall, paramClassTypes, params );
                 }// end of else block
 
                 messageDialog.dismiss();
@@ -1835,11 +1836,11 @@ public class WeatherLionApplication extends Application
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                             "Reloading access keys...", TAG + "::keyUpdateReceiver" );
 
-                    callMethodByName( WeatherLionApplication.this, methodToCall,
+                    callMethodByName( this, methodToCall,
                             null, null );
 
                     // Load only the providers who have access keys assigned to them
-                    ArrayList<String> wxOnly = WeatherLionApplication.webAccessGranted;
+                    ArrayList<String> wxOnly = webAccessGranted;
 
                     Collections.sort( wxOnly );    // sort the list
 
@@ -1858,6 +1859,46 @@ public class WeatherLionApplication extends Application
                     WeatherDataXMLService.enqueueWork( context, weatherXMLIntent );
 
                     break;
+                case WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE:
+                    if( new File( WeatherLionApplication.this.getFileStreamPath( WEATHER_DATA_XML ).toString() ).exists() )
+                    {
+                        // refresh the xml data stored after the last update
+                        lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                            UtilityMethod.readAll(
+                                context.getFileStreamPath( WEATHER_DATA_XML ).toString() )
+                                    .replaceAll( "\t", "" ).trim() );
+
+                        storedData = lastDataReceived.getWeatherData();
+                        DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
+
+                        try
+                        {
+                            UtilityMethod.lastUpdated = df.parse(
+                                    storedData.getProvider().getDate() );
+                        }// end of try block
+                        catch ( ParseException e )
+                        {
+                            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                                    TAG + "::onCreate [line: " +
+                                            e.getStackTrace()[1].getLineNumber()+ "]" );
+                        }// end of catch block
+
+                        currentSunriseTime = new StringBuilder(
+                                storedData.getAstronomy().getSunrise() );
+                        currentSunsetTime = new StringBuilder(
+                                storedData.getAstronomy().getSunset() );
+
+                        // send a heads up notification if the main windows is
+                        // not in the foreground after an update
+                        if( !mainWindowShowing )
+                        {
+                            callMethodByName( null,
+                                    "sendWeatherNotification",null,
+                                    null );
+                        }// end of if block
+                    }// end of if block
+
+                    break;
             }// end of switch block
         }// end of method onReceive
     }// end of class AppBroadcastReceiver
@@ -1869,7 +1910,7 @@ public class WeatherLionApplication extends Application
      */
     private void setCityName( String cityJSON )
     {
-        WeatherLionApplication.currentCityData = new CityData();
+        currentCityData = new CityData();
 
         String city;
         String countryCode;
@@ -1931,7 +1972,7 @@ public class WeatherLionApplication extends Application
             // countries who have a region such as a state or municipality
             if( location.length > 2 )
             {
-                WeatherLionApplication.systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
 
                 if( location[ 2 ].trim().equalsIgnoreCase( "US" ) ||
                         location[ 2 ].trim().equalsIgnoreCase( "United States" ) )
@@ -1939,17 +1980,17 @@ public class WeatherLionApplication extends Application
                     // if the state name has a length of 2 then nothing needs to be done
                     if( location[ 1 ].trim().length() > 2 )
                     {
-                        WeatherLionApplication.systemLocation = location[ 0 ].trim() + ", " +
+                        systemLocation = location[ 0 ].trim() + ", " +
                                 UtilityMethod.usStatesByName.get( location[ 0 ].trim() );
                     }// end of if block
                     else
                     {
-                        WeatherLionApplication.systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                        systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
                     }// end of else block
                 }// end of if block
                 else
                 {
-                    WeatherLionApplication.systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                    systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
                 }// end of else block
             }// end of if block
             else if( location.length > 1 )
@@ -1960,47 +2001,47 @@ public class WeatherLionApplication extends Application
                     // if the state name has a length of 2 then nothing needs to be done
                     if( location[ 1 ].trim().length() > 2 )
                     {
-                        WeatherLionApplication.systemLocation = location[ 0 ].trim() + ", " +
+                        systemLocation = location[ 0 ].trim() + ", " +
                                 UtilityMethod.usStatesByName.get( location[ 0 ].trim() );
                     }// end of if block
                     else
                     {
-                        WeatherLionApplication.systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                        systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
                     }// end of else block
                 }// end of if block
                 else
                 {
-                    WeatherLionApplication.systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
+                    systemLocation = location[ 0 ].trim() + ", " + location[ 1 ].trim();
                 }// end of else block
             }// end of else if block
         }// end of if block
 
         // if the user requires the current detected city location to be used as default
-        if( WeatherLionApplication.storedPreferences.getUseSystemLocation() )
+        if( storedPreferences.getUseSystemLocation() )
         {
-            if( WeatherLionApplication.systemLocation != null )
+            if( systemLocation != null )
             {
                 // use the detected city location as the default
-                WeatherLionApplication.storedPreferences.setLocation( WeatherLionApplication.systemLocation );
+                storedPreferences.setLocation( systemLocation );
 
-                if( !WeatherLionApplication.storedPreferences.getLocation().equals( WeatherLionApplication.systemLocation ) )
+                if( !storedPreferences.getLocation().equals( systemLocation ) )
                 {
                     // update the preferences file
-                    WeatherLionApplication.systemPreferences.setPrefValues( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE, WeatherLionApplication.systemLocation );
+                    systemPreferences.setPrefValues( CURRENT_LOCATION_PREFERENCE, systemLocation );
 
                     // save the city to the local WorldCites database
                     UtilityMethod.addCityToDatabase(
-                            WeatherLionApplication.currentCityData.getCityName(),
-                            WeatherLionApplication.currentCityData.getCountryName(),
-                            WeatherLionApplication.currentCityData.getCountryCode(),
-                            WeatherLionApplication.currentCityData.getRegionName(),
-                            WeatherLionApplication.currentCityData.getRegionCode(),
-                            WeatherLionApplication.currentCityData.getTimeZone(),
-                            WeatherLionApplication.currentCityData.getLatitude(),
-                            WeatherLionApplication.currentCityData.getLongitude() );
+                            currentCityData.getCityName(),
+                            currentCityData.getCountryName(),
+                            currentCityData.getCountryCode(),
+                            currentCityData.getRegionName(),
+                            currentCityData.getRegionCode(),
+                            currentCityData.getTimeZone(),
+                            currentCityData.getLatitude(),
+                            currentCityData.getLongitude() );
 
-                    JSONHelper.exportCityToJSON( WeatherLionApplication.currentCityData );
-                    XMLHelper.exportCityDataToXML( WeatherLionApplication.currentCityData );
+                    JSONHelper.exportCityToJSON( currentCityData );
+                    XMLHelper.exportCityDataToXML( currentCityData );
                 }// end of if block
 
                 init();
@@ -2010,7 +2051,7 @@ public class WeatherLionApplication extends Application
                 String prompt = "The program was unable to obtain your system's location."
                         + "\nYour location will have to be set manually using the preferences activity.";
 
-                showMessageDialog( null, prompt, WeatherLionApplication.PROGRAM_NAME + " - Location Setup",
+                showMessageDialog( null, prompt, PROGRAM_NAME + " - Location Setup",
                         "showPreferenceActivity", null, null );
             }// end of else block
         }// end of if block
@@ -2073,16 +2114,16 @@ public class WeatherLionApplication extends Application
                 String invoker = this.getClass().getSimpleName() + "::onReceive";
                 Bundle extras = new Bundle();
                 extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                extras.putString( LAUNCH_METHOD_EXTRA,
                     "updateConnectivity" );
                 extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                        WeatherLionApplication.UNIT_NOT_CHANGED );
+                        UNIT_NOT_CHANGED );
 
                 // connectivity check
-                Intent connectivityIntent = new Intent( WeatherLionApplication.getAppContext(),
+                Intent connectivityIntent = new Intent( getAppContext(),
                         WidgetUpdateService.class );
                 connectivityIntent.putExtras( extras );
-                WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(),
+                WidgetUpdateService.enqueueWork( getAppContext(),
                     connectivityIntent );
             }// end of if block
         }// end of method onReceive

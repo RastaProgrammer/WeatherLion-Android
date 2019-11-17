@@ -236,88 +236,86 @@ public class WeatherLionMain extends AppCompatActivity
         }// end of method onReceive
     };
 
-
-    /**
-     * Refresh the main activity once new data has been stored
-     */
-    private BroadcastReceiver xmlStorageBroadcastReceiver = new BroadcastReceiver()
-    {
-        @Override
-        public void onReceive( Context context, Intent intent )
+        /**
+         * Refresh the main activity once new data has been stored
+         */
+        private BroadcastReceiver xmlStorageBroadcastReceiver = new BroadcastReceiver()
         {
-            if( WeatherLionApplication.restoringWeatherData )
+            @Override
+            public void onReceive( Context context, Intent intent )
             {
-                setContentView( R.layout.wl_main_activity );
-
-                UtilityMethod.lastUpdated = new Date();
-
-                if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
+                if( WeatherLionApplication.restoringWeatherData )
                 {
-                    noGpsAlert();
-                }// end of if block
+                    setContentView( R.layout.wl_main_activity );
 
-                if( !UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
-                {
-                    View mainActivity = findViewById( R.id.weather_main_container );
-                    noInternetAlert( mainActivity );
-                }// end of if block
-                else if( internetCafeView != null )
-                {
-                    if( internetCafeView.getVisibility() == View.VISIBLE )
+                    UtilityMethod.lastUpdated = new Date();
+
+                    if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
                     {
-                        removeInternetAlert();
+                        noGpsAlert();
                     }// end of if block
-                }// end of else if block
 
-                WeatherLionApplication.restoringWeatherData = false;
-            }  // end of if block
+                    if( !UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
+                    {
+                        View mainActivity = findViewById( R.id.weather_main_container );
+                        noInternetAlert( mainActivity );
+                    }// end of if block
+                    else if( internetCafeView != null )
+                    {
+                        if( internetCafeView.getVisibility() == View.VISIBLE )
+                        {
+                            removeInternetAlert();
+                        }// end of if block
+                    }// end of else if block
 
-            if( new File( WeatherLionMain.this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
-            {
-                // refresh the xml data stored after the last update
-                WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
-                        UtilityMethod.readAll(
-                                context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
-                                .replaceAll( "\t", "" ).trim() );
+                    WeatherLionApplication.restoringWeatherData = false;
+                }  // end of if block
 
-                WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
-                DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
-
-                try
+                if( new File( WeatherLionMain.this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
                 {
-                    UtilityMethod.lastUpdated = df.parse(
-                            WeatherLionApplication.storedData.getProvider().getDate() );
-                }// end of try block
-                catch ( ParseException e )
+                    // refresh the xml data stored after the last update
+                    WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                            UtilityMethod.readAll(
+                                    context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
+                                    .replaceAll( "\t", "" ).trim() );
+
+                    WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
+                    DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
+
+                    try
+                    {
+                        UtilityMethod.lastUpdated = df.parse(
+                                WeatherLionApplication.storedData.getProvider().getDate() );
+                    }// end of try block
+                    catch ( ParseException e )
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                                TAG + "::onCreate [line: " +
+                                        e.getStackTrace()[1].getLineNumber()+ "]" );
+                    }// end of catch block
+
+                    WeatherLionApplication.currentSunriseTime = new StringBuilder(
+                            WeatherLionApplication.storedData.getAstronomy().getSunrise() );
+                    WeatherLionApplication.currentSunsetTime = new StringBuilder(
+                            WeatherLionApplication.storedData.getAstronomy().getSunset() );
+
+                    // reload main activity
+                    loadMainActivityWeather();
+                }// end of if block
+
+                if( appRefresh != null )
                 {
-                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
-                            TAG + "::onCreate [line: " +
-                                    e.getStackTrace()[1].getLineNumber()+ "]" );
-                }// end of catch block
+                    // cancel the visual indication of a refresh
+                    appRefresh.setRefreshing( false );
+                }// end of if block
 
-                WeatherLionApplication.currentSunriseTime = new StringBuilder(
-                        WeatherLionApplication.storedData.getAstronomy().getSunrise() );
-                WeatherLionApplication.currentSunsetTime = new StringBuilder(
-                        WeatherLionApplication.storedData.getAstronomy().getSunset() );
-
-                // reload main activity
-                loadMainActivityWeather();
-            }// end of if block
-
-            if( appRefresh != null )
-            {
-                // cancel the visual indication of a refresh
-                appRefresh.setRefreshing( false );
-            }// end of if block
-
-            if( loadingDialog != null )
-            {
-                stopLoading();
-                loadingDialog.dismiss();
-            }// end of if block
-        }// end of method onReceive
-    };
-
+                if( loadingDialog != null )
+                {
+                    stopLoading();
+                    loadingDialog.dismiss();
+                }// end of if block
+            }// end of method onReceive
+        };
 
     /**
      * Method to be called after the required data accesses have be obtained.

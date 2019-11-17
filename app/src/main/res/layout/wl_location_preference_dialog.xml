@@ -146,7 +146,7 @@
             android:layout_marginTop="10dip"
             android:background="@drawable/wl_aqua_rounded_btn_bg"
             android:gravity="center"
-            android:text="@string/Ok"
+            android:text="@string/Save"
             android:textColor="#FFFFFF"
             android:stateListAnimator="@null" />
 
