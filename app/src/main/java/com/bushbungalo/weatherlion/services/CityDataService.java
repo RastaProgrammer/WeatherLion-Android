@@ -592,8 +592,12 @@ public class CityDataService extends IntentService
                     cityName = cityName.replace( " ", "+" );
                 }// end of if block
 
-                searchURL = String.format( "http://api.geonames.org/searchJSON?name_equals=%s&maxRows=%s&username=%s",
-                        cityName.toLowerCase(), maxRows, WidgetUpdateService.geoNameAccount );
+                searchURL = String.format(
+                        "http://api.geonames.org/searchJSON?%s=%s&maxRows=%s&username=%s",
+                        QUERY_COMMAND,
+                        cityName.toLowerCase(),
+                        maxRows,
+                        WidgetUpdateService.geoNameAccount );
 
                 response = HttpHelper.downloadUrl( searchURL, false ); // get the search results from the GeoNames web service
             }// end of try block

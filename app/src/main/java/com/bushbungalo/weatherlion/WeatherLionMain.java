@@ -988,7 +988,9 @@ public class WeatherLionMain extends AppCompatActivity
                     }// end of method onClick
                 });
         internetCafeView = internetCafe.getView();
-        internetCafeView.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+        internetCafeView.setBackgroundColor(
+                UtilityMethod.addOpacity( WeatherLionApplication.systemColor.toArgb() ,
+                        90 ) );
         TextView infoText = internetCafeView.findViewById(
                 android.support.design.R.id.snackbar_text );
         infoText.setTextColor( Color.YELLOW );
@@ -1253,7 +1255,8 @@ public class WeatherLionMain extends AppCompatActivity
 
         WeatherLionApplication.mainWindowShowing = true;
 
-        this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
+        //this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
+
         removeInternetAlert();
 
         // recheck to see if some weather data has been obtained
@@ -1401,24 +1404,27 @@ public class WeatherLionMain extends AppCompatActivity
      */
     private void removeInternetAlert()
     {
-        if( internetCafeView != null )
+        if( UtilityMethod.hasInternetConnection( mContext ) )
         {
-            if( internetCafeView.getVisibility() == View.VISIBLE )
+            if( internetCafeView != null )
             {
-                // animate the view downward before removing it from the layout
-                internetCafeView.animate()
-                    .translationY( 200 )
-                    .setDuration( 500 )
-                    .withEndAction(
-                        new Runnable()
-                        {
-                            @Override
-                            public void run()
+                if( internetCafeView.getVisibility() == View.VISIBLE )
+                {
+                    // animate the view downward before removing it from the layout
+                    internetCafeView.animate()
+                        .translationY( 200 )
+                        .setDuration( 500 )
+                        .withEndAction(
+                            new Runnable()
                             {
-                                ( (ViewGroup) internetCafeView.getParent() )
-                                        .removeView( internetCafeView );
-                            }// end of method run
-                        });
+                                @Override
+                                public void run()
+                                {
+                                    ( (ViewGroup) internetCafeView.getParent() )
+                                            .removeView( internetCafeView );
+                                }// end of method run
+                            });
+                }// end of if block
             }// end of if block
         }// end of if block
     }// end of method removeInternetAlert

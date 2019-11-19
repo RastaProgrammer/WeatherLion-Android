@@ -1641,12 +1641,11 @@ public class WidgetUpdateService extends JobIntentService
                     currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() &&
                     currentForecastHour.getYear() == checkTime.getYear() )
             {
-                if( currentForecastHour.getHour() == checkTime.getHour() ||
-                        currentForecastHour.getHour() < checkTime.getHour())
+                if( currentForecastHour.getHour() <= checkTime.getHour() )
                 {
                     continue;
                 }// end of if block
-                else if( currentForecastHour.getHour() == ( checkTime.getHour() + x ) )
+                else if( currentForecastHour.getHour() > checkTime.getHour() )
                 {
                     currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(
@@ -2349,12 +2348,11 @@ public class WidgetUpdateService extends JobIntentService
                     currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() &&
                     currentForecastHour.getYear() == checkTime.getYear() )
             {
-                if( currentForecastHour.getHour() == checkTime.getHour() ||
-                        currentForecastHour.getHour() < checkTime.getHour())
+                if( currentForecastHour.getHour() <= checkTime.getHour() )
                 {
                     continue;
                 }// end of if block
-                else if( currentForecastHour.getHour() == ( checkTime.getHour() + x ) )
+                else if( currentForecastHour.getHour() > checkTime.getHour() )
                 {
                     currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(
@@ -2737,12 +2735,11 @@ public class WidgetUpdateService extends JobIntentService
                     currentForecastHour.getDayOfMonth() == checkTime.getDayOfMonth() &&
                     currentForecastHour.getYear() == checkTime.getYear() )
             {
-                if( currentForecastHour.getHour() == checkTime.getHour() ||
-                        currentForecastHour.getHour() < checkTime.getHour())
+                if( currentForecastHour.getHour() <= checkTime.getHour() )
                 {
                     continue;
                 }// end of if block
-                else if( currentForecastHour.getHour() == ( checkTime.getHour() + x ) )
+                else if( currentForecastHour.getHour() > checkTime.getHour() )
                 {
                     currentFiveHourForecast.add(
                         new FiveHourForecast( currentForecastHour, String.valueOf(

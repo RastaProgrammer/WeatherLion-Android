@@ -1581,19 +1581,21 @@ public class WeatherLionApplication extends Application
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(
                 Context.NOTIFICATION_SERVICE );
-        String NOTIFICATION_CHANNEL_ID = "weather_lion";
+        String channelId = "weather_lion";
+        String description = "WeatherLion Notification";
+        int importance = NotificationManager.IMPORTANCE_LOW;
 
         if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O )
         {
             @SuppressLint("WrongConstant")
-            NotificationChannel notificationChannel = new NotificationChannel( NOTIFICATION_CHANNEL_ID,
-                    "WeatherLion Notification", NotificationManager.IMPORTANCE_MAX );
+            NotificationChannel notificationChannel = new NotificationChannel( channelId,
+                description, importance );
             // Configure the notification channel.
-            notificationChannel.setDescription( "Weather Notification" );
+            notificationChannel.setDescription( description );
             notificationChannel.enableLights( true );
-            notificationChannel.setLightColor( Color.RED );
-            notificationChannel.setVibrationPattern( new long[]{ 0, 1000, 500, 1000 } );
-            notificationChannel.enableVibration( true );
+            notificationChannel.setLightColor( systemColor.toArgb() );
+            //notificationChannel.setVibrationPattern( new long[]{ 0, 1000, 500, 1000 } );
+            notificationChannel.enableVibration( false );
             notificationManager.createNotificationChannel( notificationChannel );
         }// end of if block
 
@@ -1620,19 +1622,19 @@ public class WeatherLionApplication extends Application
                 storedData.getCurrent().getHighTemperature(),
                 storedData.getCurrent().getLowTemperature() );
 
-        notificationLayout.setTextViewText(R.id.txvCurrentTemp,
+        notificationLayout.setTextViewText( R.id.txvCurrentTemp,
                 String.format(
                         "%s°", storedData.getCurrent().getTemperature() ) );
         notificationLayoutExpanded.setTextViewText( R.id.txvCurrentTemp,
                 String.format(
                         "%s°", storedData.getCurrent().getTemperature() ) );
 
-        notificationLayout.setTextViewText(R.id.txvCurrentReadings,temps );
+        notificationLayout.setTextViewText( R.id.txvCurrentReadings,temps );
         notificationLayoutExpanded.setTextViewText(R.id.txvCurrentReadings,temps );
 
-        notificationLayout.setTextViewText(R.id.notification_humidity,
+        notificationLayout.setTextViewText( R.id.notification_humidity,
                 String.format( "%s %%", storedData.getAtmosphere().getHumidity() ) );
-        notificationLayoutExpanded.setTextViewText(R.id.notification_humidity,
+        notificationLayoutExpanded.setTextViewText( R.id.notification_humidity,
                 String.format( "%s %%", storedData.getAtmosphere().getHumidity() ) );
 
         String unit = useMetric ? "kph" : "mph";
@@ -1640,22 +1642,26 @@ public class WeatherLionApplication extends Application
                 String.format( "%s %s",
                         Math.round( storedData.getWind().getWindSpeed() ),
                         unit ) );
-        notificationLayoutExpanded.setTextViewText(R.id.notification_wind,
+        notificationLayoutExpanded.setTextViewText( R.id.notification_wind,
                 String.format( "%s %s",
                         Math.round( storedData.getWind().getWindSpeed() ),
                         unit ) );
 
-        Intent intent = new Intent(this, WeatherLionMain.class);
+        Intent intent = new Intent( this, WeatherLionMain.class );
 
         PendingIntent pIntent = PendingIntent.getActivity( this, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT );
+        String tickerText = String.format( "Current temperature in %s is %s° and %s",
+                storedData.getLocation().getCity(), storedData.getCurrent().getTemperature(),
+                storedData.getCurrent().getCondition() );
 
         // Apply the layouts to the notification
         NotificationCompat.Builder customNotificationBuilder = new NotificationCompat.Builder( context,
-                NOTIFICATION_CHANNEL_ID )
+                channelId )
                 .setWhen( System.currentTimeMillis() )
                 .setSmallIcon( R.drawable.wl_notification_icon )
-                .setTicker( "Weather Forecast" )
+                .setBadgeIconType( 1 )
+                .setTicker( tickerText )
                 .setStyle( new NotificationCompat.DecoratedCustomViewStyle() )
                 .setContentIntent( pIntent )
                 .setCustomContentView( notificationLayout )

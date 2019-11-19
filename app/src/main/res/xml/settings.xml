@@ -17,7 +17,6 @@
 
         <com.bushbungalo.weatherlion.custom.LionListPreference
             android:id="@+id/cpProvider"
-            android:dialogIcon="@drawable/icon"
             android:title="@string/wx_source"
             android:summary="Weather Provider"
             android:key="pref_wx_source"/>
@@ -26,6 +25,8 @@
             android:id="@+id/lstInterval"
             android:dialogIcon="@drawable/icon"
             android:title="@string/update_interval"
+            android:entries="@array/update_times"
+            android:entryValues="@array/update_milliseconds"
             android:summary="Refresh period"
             android:key="@string/pref_update_interval"/>
 

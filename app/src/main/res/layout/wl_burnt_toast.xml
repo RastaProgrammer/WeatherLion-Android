@@ -5,20 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/wl_burnt_toast_background"
-    android:orientation="horizontal">
-
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/toastMessage"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
+        android:fontFamily="sans-serif-condensed"
+        android:layout_gravity="center"
+        android:padding="6dp"
         android:text=""
-        android:textAlignment="textStart"
         android:textColor="#FFFFFF"
-        android:textSize="16sp" />
+        android:textSize="15sp" />
 
 </LinearLayout>

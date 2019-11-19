@@ -19,10 +19,10 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextClock;
 import android.widget.TextView;
@@ -1223,6 +1223,56 @@ public abstract class UtilityMethod
     }// end of method getResourceEntryName
 
     /**
+     * Coverts device pixels to pixels
+     *
+     * @param dp The specific pixels required
+     * @return  An {@code int} value representing the value in pixels
+     */
+    public static int devicePixelsToPixels( int dp )
+    {
+        float density = getAppContext().getResources().getDisplayMetrics().density;
+
+
+        return (int) ( dp * density );
+    }// end of method devicePixelsToPixels
+
+    /**
+     * Converts a color code into a transparent color code
+     *
+     * @param colorCode A {@code int} value representing a color code
+     * @param opacityLevel A {@code int} value representing the level of opacity
+     * @return A {@code int} value representing a transparent color code
+     * @author Hemant Chand
+     * <br />
+     * {@link 'https://github.com/duggu-hcd/TransparentColorCode'}
+     */
+    public static int addOpacity( int colorCode, int opacityLevel )
+    {
+        // convert color code into hex string and remove starting 2 digits
+        String color = Integer.toHexString( colorCode ).toUpperCase().substring( 2 );
+
+        if( opacityLevel < 100 )
+        {
+            String hexString = Integer.toHexString( Math.round( 255 * opacityLevel / 100 ) );
+            String conversion = ( hexString.length() < 2 ? "0" : "" ) + hexString;
+
+            if( color.trim().length() == 6 )
+            {
+                return Color.parseColor( "#" + conversion + color );
+            } // end of if block
+            else
+            {
+                logMessage( LogLevel.INFO, "The color is already transparent!",
+                        "addOpacity" );
+                return Color.parseColor( conversion + color );
+            }// end of else block
+        }// end of if block
+
+        // if color is empty or any other problem occurs then we return default color;
+        return Color.parseColor( "#" + Integer.toHexString( R.color.colorAccent ).toUpperCase().substring( 2 ) );
+    }// end of method addOpacity
+
+    /**
      * Displays a custom Toast message to the user.
      *
      * @param context   The context of the caller.
@@ -1232,43 +1282,53 @@ public abstract class UtilityMethod
      */
     public static void butteredToast( Context context, String message, int type, int duration )
     {
-        View layout;
+        Toast toast = Toast.makeText( context, message, duration );
+        View toastView = toast.getView(); // This'll return the default View of the Toast.
+        int horizontalPadding = 20;
+        int verticalPadding = 10;
+
+
+        TextView toastMessage = toastView.findViewById( android.R.id.message );
+        LinearLayout.LayoutParams params = new
+                LinearLayout.LayoutParams( LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT );
+        //params.setMargins( 40, 0, 40, 0 );
+
+
+        toastMessage.setLayoutParams( params );
+        toastView.setPadding( devicePixelsToPixels( horizontalPadding ), devicePixelsToPixels( verticalPadding ),
+                devicePixelsToPixels( horizontalPadding ),devicePixelsToPixels( verticalPadding ) );
+
+        toastMessage.setTextSize( 15 );
+        toastMessage.setTextColor( Color.WHITE );
 
         switch ( type )
         {
             case 1: default:
-            layout = View.inflate( context, R.layout.wl_buttered_toast, null );
-
-            // ensure that the toast background is consistent with the overall UI theme
-            if( WeatherLionApplication.widBackgroundColor != null )
-            {
-                switch( WeatherLionApplication.widBackgroundColor.toLowerCase() )
+                // ensure that the toast background is consistent with the overall UI theme
+                if( WeatherLionApplication.widBackgroundColor != null )
                 {
-                    case "aqua":
-                        layout.setBackground( context.getDrawable( R.drawable.wl_aqua_toast_background ) );
-                        break;
-                    case "rabalac":
-                        layout.setBackground( context.getDrawable( R.drawable.wl_rabalac_toast_background ) );
-                        break;
-                    default:
-                        layout.setBackground( context.getDrawable( R.drawable.wl_lion_toast_background ) );
-                        break;
-                }// end of switch block
-            }// end of if block
-            break;
+                    switch( WeatherLionApplication.widBackgroundColor.toLowerCase() )
+                    {
+                        case "aqua":
+                            toastView.setBackgroundResource( R.drawable.wl_aqua_toast_background );
+                            break;
+                        case "frosty":
+                            toastView.setBackgroundResource (R.drawable.wl_frosty_toast_background );
+                            break;
+                        case "rabalac":
+                            toastView.setBackgroundResource( R.drawable.wl_rabalac_toast_background );
+                            break;
+                        default:
+                            toastView.setBackgroundResource( R.drawable.wl_lion_toast_background );
+                            break;
+                    }// end of switch block
+                }// end of if block
+                break;
             case 2:
-                layout = View.inflate( context, R.layout.wl_burnt_toast, null );
+                toastView.setBackgroundResource( R.drawable.wl_burnt_toast_background );
                 break;
         }// end of switch block
 
-        TextView txvMessage = layout.findViewById( R.id.toastMessage );
-        txvMessage.setText( message );
-
-        Toast toast = new Toast( context );
-        toast.setDuration( duration );
-        toast.setGravity( Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL,
-                0, 180 );
-        toast.setView( layout );
         toast.show();
     }// end of method butteredToast
 
@@ -2803,7 +2863,7 @@ public abstract class UtilityMethod
         if ( wxLocation != null )
         {
             wxLocation = wxLocation.contains( "," ) ?
-                    wxLocation.substring( 0, wxLocation.indexOf( ",") ).toLowerCase() :
+                    wxLocation.substring( 0, wxLocation.indexOf( "," ) ).toLowerCase() :
                     wxLocation;
             ps = String.format( "%s%s%s", "gn_sd_", wxLocation.replaceAll( " ", "_" ), ".json" );
             WeatherLionApplication.previousCitySearchFile = getAppContext().getFileStreamPath( ps );
@@ -3447,7 +3507,7 @@ public abstract class UtilityMethod
      * @param t The temperature to be tested
      * @return A new {@code Color}
      */
-    public static int temperatureColor(int t )
+    public static int temperatureColor( int t )
     {
         int c;
         t = WeatherLionApplication.storedPreferences.getUseMetric()
