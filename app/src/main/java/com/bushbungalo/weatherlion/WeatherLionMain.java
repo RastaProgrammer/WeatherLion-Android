@@ -874,7 +874,7 @@ public class WeatherLionMain extends AppCompatActivity
                 public void onGlobalLayout()
                 {
                     forecastScroll.getViewTreeObserver().removeOnGlobalLayoutListener( this );
-                    forecastScroll.fullScroll( View.FOCUS_DOWN );
+                    forecastScroll.fullScroll( View.FOCUS_UP );
                 }
             });
 

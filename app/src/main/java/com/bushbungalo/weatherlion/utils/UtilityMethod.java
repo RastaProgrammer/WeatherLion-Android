@@ -2887,7 +2887,7 @@ public abstract class UtilityMethod
                 catch ( IOException e )
                 {
                     logMessage( LogLevel.SEVERE, e.getMessage(),
-                            TAG + "::handleWeatherData [line: " +
+                            TAG + "::retrieveGeoNamesGeoLocationUsingAddress [line: " +
                                     getExceptionLineNumber( e )  + "]" );
                 }// end of catch block
             }// end of if block
@@ -3313,44 +3313,49 @@ public abstract class UtilityMethod
         Map<String, Object> importedServiceLog = JSONHelper.importPreviousLogs(
                 getAppContext().getFileStreamPath(
                         WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
-        String date = (String) importedServiceLog.get( "Date" );
-        Date logDate = null;
-        Map importedServiceMap = (LinkedTreeMap) Objects.requireNonNull( importedServiceLog )
-                .get( "Service" );
 
-        SimpleDateFormat ldf = new SimpleDateFormat( "MMM dd, yyyy hh:mm:ss a",
-                Locale.ENGLISH );
-        SimpleDateFormat sdf = new SimpleDateFormat( "MMM dd, yyyy", Locale.ENGLISH );
-
-        int callCount;
-
-        try
+        // ensure that data is loaded
+        if( importedServiceLog != null )
         {
-            logDate = ldf.parse( date );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            logMessage( LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::okToUseService [line: " +
-                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-        }// end of catch block
+            String date = (String) importedServiceLog.get( "Date" );
+            Date logDate = null;
+            Map importedServiceMap = (LinkedTreeMap) Objects.requireNonNull( importedServiceLog )
+                    .get( "Service" );
 
-        // if we are working with today's log which we should be
-        if( sdf.format( logDate ).equals( sdf.format( new Date() ) ) )
-        {
-            if( importedServiceMap != null )
+            SimpleDateFormat ldf = new SimpleDateFormat( "MMM dd, yyyy hh:mm:ss a",
+                    Locale.ENGLISH );
+            SimpleDateFormat sdf = new SimpleDateFormat( "MMM dd, yyyy", Locale.ENGLISH );
+
+            int callCount;
+
+            try
             {
-                callCount = (int) (double) importedServiceMap.get( provider );
-                ok = callCount < WeatherLionApplication.DAILY_CALL_LIMIT;
-            }// end of if block
-        }// end of if block
-        else
-        {
-            WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
-    null, null );
+                logDate = ldf.parse( date );
+            } // end of try block
+            catch ( ParseException e )
+            {
+                logMessage( LogLevel.SEVERE , e.getMessage(),
+                        TAG + "::okToUseService [line: " +
+                                e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+            }// end of catch block
 
-            ok = true;
-        }// end of else block
+            // if we are working with today's log which we should be
+            if( sdf.format( logDate ).equals( sdf.format( new Date() ) ) )
+            {
+                if( importedServiceMap != null )
+                {
+                    callCount = (int) (double) importedServiceMap.get( provider );
+                    ok = callCount < WeatherLionApplication.DAILY_CALL_LIMIT;
+                }// end of if block
+            }// end of if block
+            else
+            {
+                WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
+                        null, null );
+
+                ok = true;
+            }// end of else block
+        }// end of if block
 
         return ok;
     }// end of method okToUseService

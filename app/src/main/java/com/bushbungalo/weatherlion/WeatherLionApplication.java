@@ -1618,7 +1618,7 @@ public class WeatherLionApplication extends Application
         loadWeatherIcon( notificationLayout, R.id.weather_icon, fileName );
         loadWeatherIcon( notificationLayoutExpanded, R.id.weather_icon, fileName );
 
-        String temps = String.format( "%s°/ %s°",
+        String temps = String.format( "%s° / %s°",
                 storedData.getCurrent().getHighTemperature(),
                 storedData.getCurrent().getLowTemperature() );
 

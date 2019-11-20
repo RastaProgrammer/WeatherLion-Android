@@ -296,4 +296,6 @@
     <string name="widget_background_title">Widget Background</string>
     <string name="image_preview">Image Preview</string>
     <string name="notification_current_temperature">Notification Current Temperature</string>
+    <string name="hourly">HOURLY</string>
+    <string name="daily">DAILY</string>
 </resources>

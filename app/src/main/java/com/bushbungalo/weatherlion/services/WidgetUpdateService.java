@@ -1628,6 +1628,9 @@ public class WidgetUpdateService extends JobIntentService
         LocalDateTime currentForecastHour;
         DateTimeFormatter hourlyFormat = DateTimeFormatter.ofPattern( "h:mm a" );
 
+        // clear any previous data stores
+        currentFiveHourForecast.clear();
+
         // get and store hourly forecast
         for ( DarkSkyWeatherDataItem.Hourly.Data wxHourlyForecast : darkSky.getHourly().getData() )
         {
@@ -2336,6 +2339,9 @@ public class WidgetUpdateService extends JobIntentService
         DateTimeFormatter localDateFormat = DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm:ss" );
         List< WeatherBitWeatherDataItem.FortyEightHourForecastData.Data > wFhf = weatherBitHx.getData();
         int x = 1;
+
+        // clear any previous data stores
+        currentFiveHourForecast.clear();
 
         for ( WeatherBitWeatherDataItem.FortyEightHourForecastData.Data wxHourlyForecast : wFhf )
         {
