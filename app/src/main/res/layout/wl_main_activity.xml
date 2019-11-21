@@ -16,7 +16,7 @@
 
             <RelativeLayout
                 android:id="@+id/rlWeatherLocation"
-                android:background="#0D000000"
+                android:background="@drawable/wl_bottom_line_border"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
@@ -63,7 +63,9 @@
                 android:layout_height="match_parent"
                 android:layout_below="@+id/rlWeatherLocation"
                 android:layout_above="@+id/rlWeatherFooter"
-                android:paddingTop="4dip">
+                android:paddingTop="4dip"
+                android:paddingStart="4dip"
+                android:paddingEnd="4dip">
 
                 <RelativeLayout
                     android:id="@+id/rlRefreshChildren"
@@ -231,10 +233,10 @@
                             android:id="@+id/hourlyForecastParent"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/wl_double_border"
+                            android:background="@drawable/wl_light_top_border"
                             android:baselineAligned="false"
                             android:orientation="vertical"
-                            android:paddingTop="4dip"
+                            android:paddingTop="6dip"
                             android:paddingBottom="4dip"
                             android:visibility="visible" >
 
@@ -242,7 +244,6 @@
                                 android:id="@+id/txvHourlyTitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dip"
                                 android:layout_marginBottom="2dip"
                                 android:gravity="center_horizontal"
                                 android:text="@string/hourly"
@@ -456,6 +457,7 @@
 
                         <LinearLayout
                             android:id="@+id/dailyForecastParent"
+                            android:background="@drawable/wl_light_top_border"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:baselineAligned="false"
@@ -467,7 +469,7 @@
                                 android:id="@+id/txvDailyTitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dip"
+                                android:paddingTop="4dip"
                                 android:layout_marginBottom="2dip"
                                 android:gravity="center_horizontal"
                                 android:text="@string/daily"

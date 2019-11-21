@@ -54,7 +54,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
             imvDayConditionImage = v.findViewById( R.id.imvDayConditionImage );
             txvDayHighTemp = v.findViewById( R.id.txvDayHighTemp );
             txvDayLowTemp = v.findViewById( R.id.txvDayLowTemp );
-        }
+        }// end of default constructor
     }// end of class ViewHolder
 
     public void add( int position, LastWeatherData.WeatherData.DailyForecast.DayForecast item )

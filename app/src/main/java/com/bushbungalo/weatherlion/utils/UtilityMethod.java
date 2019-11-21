@@ -1140,7 +1140,6 @@ public abstract class UtilityMethod
         weatherImages.put("mist", "20.png");
         weatherImages.put("misty", "20.png");
         weatherImages.put("windy (night)", "21.png");
-        weatherImages.put("breez", "21.png");
         weatherImages.put("breeze", "21.png");
         weatherImages.put("breezy", "21.png");
         weatherImages.put("wind", "21.png");
@@ -3865,33 +3864,6 @@ public abstract class UtilityMethod
     {
         condition = condition.toLowerCase();
 
-        for( String keyName : UtilityMethod.weatherImages.keySet() )
-        {
-            int cLen = condition.length();
-
-            String accurateCondition = keyName.contains( "(night)" ) ?
-                    keyName.replace( "(night)", "" ).trim() :
-                    keyName.trim();
-
-            if( keyName.length() >= cLen )
-            {
-                if( keyName.substring( 0, cLen ).equals( condition ) )
-                {
-                    condition = accurateCondition;
-
-                    // break if a closest match is found
-                    break;
-                }// end of if block
-            }// end of if block
-            else if( condition.startsWith( keyName ) )
-            {
-                condition = accurateCondition;
-
-                // break if a closest match is found
-                break;
-            }// end of else if block
-        }// end of for each loop
-
         if ( condition.contains( "until" ) )
         {
             condition = condition.substring( 0, condition.indexOf( "until" ) - 1 ).trim();
@@ -3942,6 +3914,33 @@ public abstract class UtilityMethod
         {
             condition = condition.replace( "(night)", "" ).trim();
         }// end of if block
+
+        for( String keyName : UtilityMethod.weatherImages.keySet() )
+        {
+            int cLen = condition.length();
+
+            String accurateCondition = keyName.contains( "(night)" ) ?
+                keyName.replace( "(night)", "" ).trim() :
+                    keyName.trim();
+
+            if( keyName.length() >= cLen )
+            {
+                if( keyName.substring( 0, cLen ).equals( condition ) )
+                {
+                    condition = accurateCondition;
+
+                    // break if a closest match is found
+                    break;
+                }// end of if block
+            }// end of if block
+            else if( condition.startsWith( keyName ) )
+            {
+                condition = accurateCondition;
+
+                // break if a closest match is found
+                break;
+            }// end of else if block
+        }// end of for each loop
 
         return toProperCase( condition );
     }// end of method validateCondition

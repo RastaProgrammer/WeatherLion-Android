@@ -1581,7 +1581,7 @@ public class WeatherLionApplication extends Application
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(
                 Context.NOTIFICATION_SERVICE );
-        String channelId = "weather_lion";
+        String channelId = "weatherLion";
         String description = "WeatherLion Notification";
         int importance = NotificationManager.IMPORTANCE_LOW;
 
@@ -1591,6 +1591,8 @@ public class WeatherLionApplication extends Application
             NotificationChannel notificationChannel = new NotificationChannel( channelId,
                 description, importance );
             // Configure the notification channel.
+            notificationChannel.setShowBadge( false );
+            notificationChannel.setSound( null, null );
             notificationChannel.setDescription( description );
             notificationChannel.enableLights( true );
             notificationChannel.setLightColor( systemColor.toArgb() );
@@ -1661,11 +1663,14 @@ public class WeatherLionApplication extends Application
                 .setWhen( System.currentTimeMillis() )
                 .setSmallIcon( R.drawable.wl_notification_icon )
                 .setBadgeIconType( 1 )
+                .setOngoing( false )
                 .setTicker( tickerText )
                 .setStyle( new NotificationCompat.DecoratedCustomViewStyle() )
                 .setContentIntent( pIntent )
                 .setCustomContentView( notificationLayout )
-                .setAutoCancel( true );
+                .setAutoCancel( true )
+                .setPriority( NotificationCompat.PRIORITY_DEFAULT )
+                .setVisibility( NotificationCompat.VISIBILITY_PUBLIC );
 
         // if an hourly forecast is present then show it
         if( storedData.getHourlyForecast().size() > 0 )

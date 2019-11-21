@@ -1687,9 +1687,9 @@ public class WidgetUpdateService extends JobIntentService
             Date fxDate = UtilityMethod.getDateTime( wxForecast.getTime() );
             String fCondition = UtilityMethod.validateCondition( wxForecast.getSummary() );
 
-            int  fDay= this.getResources().getIdentifier( "txvDay" + (i),
+            int fDay = this.getResources().getIdentifier( "txvDay" + (i),
                     "id", this.getPackageName() );
-            int  fIcon= this.getResources().getIdentifier( "imvDay" + (i) + "Icon",
+            int fIcon = this.getResources().getIdentifier( "imvDay" + (i) + "Icon",
                     "id", this.getPackageName() );
 
             largeWidgetRemoteViews.setTextViewText( fDay, new SimpleDateFormat(
@@ -1702,8 +1702,8 @@ public class WidgetUpdateService extends JobIntentService
             WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
             currentFiveDayForecast.add(
-                    new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
-                            String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition ) );
+                new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
+                    String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition ) );
 
             if ( i == 5 )
             {

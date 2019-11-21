@@ -260,6 +260,7 @@
     <!-- About Strings -->
     <string name="about_menu_item">About</string>
     <string name="app_title">Weather Lion</string>
+    <string name="app_title_beta">Weather Lion (Beta)</string>
     <string name="author_name">Paul O. Patterson</string>
     <string name="company_name">BushBungalo Productions™ 2005–2019</string>
     <string name="version_info">Version 1.0</string>

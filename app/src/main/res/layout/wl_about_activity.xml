@@ -20,7 +20,7 @@
         android:id="@+id/txvAppName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/app_title"
+        android:text="@string/app_title_beta"
         android:layout_below="@id/imvAppLogo"
         android:layout_marginTop="20dip"
         android:gravity="center"

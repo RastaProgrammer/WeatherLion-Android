@@ -589,12 +589,12 @@ public class WeatherLionMain extends AppCompatActivity
         StringBuilder sunsetTime = new StringBuilder(
                 WeatherLionApplication.storedData.getAstronomy().getSunset() );
 
-        LinearLayout hourlyForecastGrid = findViewById( R.id.hourlyForecastGrid );
+        LinearLayout hourlyForecast = findViewById( R.id.hourlyForecastParent );
 
         // if an hourly forecast is present then show it
         if( WeatherLionApplication.storedData.getHourlyForecast().size() > 0 )
         {
-            hourlyForecastGrid.setVisibility( View.VISIBLE );
+            hourlyForecast.setVisibility( View.VISIBLE );
             hourlyForecastList = new ArrayList<>(
                 WeatherLionApplication.storedData.getHourlyForecast() );
 
@@ -661,7 +661,7 @@ public class WeatherLionMain extends AppCompatActivity
         }// end of if block
         else
         {
-            hourlyForecastGrid.setVisibility( View.GONE );
+            hourlyForecast.setVisibility( View.GONE );
         }// end of else block
 
         fiveDayForecastList = new ArrayList<>( WeatherLionApplication.storedData.getDailyForecast() );
