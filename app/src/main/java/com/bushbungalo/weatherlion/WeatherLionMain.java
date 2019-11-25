@@ -1,5 +1,6 @@
 package com.bushbungalo.weatherlion;
 
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -31,13 +32,11 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextPaint;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
-import android.text.method.ScrollingMovementMethod;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -54,12 +53,12 @@ import android.widget.LinearLayout;
 import android.widget.ListPopupWindow;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bushbungalo.weatherlion.custom.CustomPreferenceGrid;
 import com.bushbungalo.weatherlion.custom.WeeklyForecastAdapter;
 import com.bushbungalo.weatherlion.database.DBHelper;
 import com.bushbungalo.weatherlion.database.WeatherAccess;
@@ -158,164 +157,8 @@ public class WeatherLionMain extends AppCompatActivity
     private AlertDialog loadingDialog;
     private AnimationDrawable loadingAnimation;
 
-    /**
-     * Update the time since the last update
-     */
-    private BroadcastReceiver systemEventsBroadcastReceiver = new BroadcastReceiver()
-    {
-        @Override
-        public void onReceive( Context context, Intent intent )
-        {
-            final String action = Objects.requireNonNull( intent.getAction() );
-
-            if( action.equals( ConnectivityManager.CONNECTIVITY_ACTION ) )
-            {
-                if( UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
-                {
-                    if( internetCafeView != null )
-                    {
-                        if( internetCafeView.getVisibility() == View.VISIBLE )
-                        {
-                            removeInternetAlert();
-                        }// end of if block
-                    }// end of if block
-                }// end of if block
-                else
-                {
-                    View rootView = getWindow().getDecorView().findViewById(
-                        android.R.id.content );
-                    noInternetAlert( rootView );
-                }// end of else block
-            }// end of if block
-            else if( action.equals( Intent.ACTION_TIME_TICK ) )
-            {
-                if( txvLastUpdated != null && UtilityMethod.lastUpdated != null )
-                {
-                    txvLastUpdated.setTypeface( WeatherLionApplication.currentTypeface );
-
-                    if( WeatherLionApplication.currentLocationTimeZone != null )
-                    {
-                        txcLocalTime.setTimeZone(
-                                WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
-                    }// end of if block
-
-                    txvLastUpdated.setText( String.format( "%s%s", "Updated ",
-                            UtilityMethod.getTimeSince( UtilityMethod.lastUpdated ) ) );
-                }// end of if block
-
-                // if an update is required but was not performed
-                if( UtilityMethod.updateRequired( WeatherLionMain.this ) )
-                {
-                    UtilityMethod.refreshRequestedBySystem = true;
-                    UtilityMethod.refreshRequestedByUser = false;
-
-                    String invoker = WeatherLionMain.this.getClass().getSimpleName() +
-                            "::systemEventsBroadcastReceiver::onReceive";
-                    WeatherLionApplication.callMethodByName( null,
-                            "refreshWeather",
-                            new Class[]{ String.class }, new Object[]{ invoker } );
-                }// end of if block
-            }// end of else if block
-        }// end of method onReceive
-    };
-
-    /**
-     * There was an error getting weather data
-     */
-    private BroadcastReceiver loadingErrorBroadcastReceiver = new BroadcastReceiver()
-    {
-        @Override
-        public void onReceive( Context context, Intent intent )
-        {
-            // cancel the Visual indication of a refresh
-            if( appRefresh != null )
-            {
-                // cancel the visual indication of a refresh
-                appRefresh.setRefreshing( false );
-            }// end of if block
-        }// end of method onReceive
-    };
-
-        /**
-         * Refresh the main activity once new data has been stored
-         */
-        private BroadcastReceiver xmlStorageBroadcastReceiver = new BroadcastReceiver()
-        {
-            @Override
-            public void onReceive( Context context, Intent intent )
-            {
-                if( WeatherLionApplication.restoringWeatherData )
-                {
-                    setContentView( R.layout.wl_main_activity );
-
-                    UtilityMethod.lastUpdated = new Date();
-
-                    if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
-                    {
-                        noGpsAlert();
-                    }// end of if block
-
-                    if( !UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
-                    {
-                        View mainActivity = findViewById( R.id.weather_main_container );
-                        noInternetAlert( mainActivity );
-                    }// end of if block
-                    else if( internetCafeView != null )
-                    {
-                        if( internetCafeView.getVisibility() == View.VISIBLE )
-                        {
-                            removeInternetAlert();
-                        }// end of if block
-                    }// end of else if block
-
-                    WeatherLionApplication.restoringWeatherData = false;
-                }  // end of if block
-
-                if( new File( WeatherLionMain.this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
-                {
-                    // refresh the xml data stored after the last update
-                    WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
-                            UtilityMethod.readAll(
-                                    context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
-                                    .replaceAll( "\t", "" ).trim() );
-
-                    WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
-                    DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
-
-                    try
-                    {
-                        UtilityMethod.lastUpdated = df.parse(
-                                WeatherLionApplication.storedData.getProvider().getDate() );
-                    }// end of try block
-                    catch ( ParseException e )
-                    {
-                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
-                                TAG + "::onCreate [line: " +
-                                        e.getStackTrace()[1].getLineNumber()+ "]" );
-                    }// end of catch block
-
-                    WeatherLionApplication.currentSunriseTime = new StringBuilder(
-                            WeatherLionApplication.storedData.getAstronomy().getSunrise() );
-                    WeatherLionApplication.currentSunsetTime = new StringBuilder(
-                            WeatherLionApplication.storedData.getAstronomy().getSunset() );
-
-                    // reload main activity
-                    loadMainActivityWeather();
-                }// end of if block
-
-                if( appRefresh != null )
-                {
-                    // cancel the visual indication of a refresh
-                    appRefresh.setRefreshing( false );
-                }// end of if block
-
-                if( loadingDialog != null )
-                {
-                    stopLoading();
-                    loadingDialog.dismiss();
-                }// end of if block
-            }// end of method onReceive
-        };
+    private BroadcastReceiver  systemEventsBroadcastReceiver = new SystemBroadcastReceiver();
+    private BroadcastReceiver appBroadcastReceiver = new AppBroadcastReceiver();
 
     /**
      * Method to be called after the required data accesses have be obtained.
@@ -602,25 +445,21 @@ public class WeatherLionMain extends AppCompatActivity
             ImageView imvHour;
             TextView txvTemp;
 
+            LinearLayout hourlyForecastGrid = findViewById( R.id.hourlyForecastGrid );
+            hourlyForecastGrid.removeAllViews();
+
             for ( int i = 0; i < WeatherLionApplication.storedData.getHourlyForecast().size(); i++ )
             {
                 LastWeatherData.WeatherData.HourlyForecast.HourForecast wxHourForecast =
                         WeatherLionApplication.storedData.getHourlyForecast().get( i );
                 String forecastTime = null;
 
-                int  fTime = this.getResources().getIdentifier( "txvHour" + (i + 1),
-                        "id", this.getPackageName() );
-                int  fIcon = this.getResources().getIdentifier( "imvHour" + (i + 1) + "Icon",
-                        "id", this.getPackageName() );
+                View hourForecastView = View.inflate( this, R.layout.wl_hourly_weather_child, null );
+                TextView txvForecastTime = hourForecastView.findViewById( R.id.txvHourForecastTime );
+                ImageView imvHourWeatherIcon = hourForecastView.findViewById( R.id.imvHourForecastWeatherIcon );
+                TextView txvHourlyForecastTemp = hourForecastView.findViewById( R.id.txvHourForecastTemperature );
 
-                int  fTemp = this.getResources().getIdentifier( "txvHour" + (i + 1) + "Temp",
-                        "id", this.getPackageName() );
-
-                txvHour = findViewById( fTime );
-                imvHour = findViewById( fIcon );
-                txvTemp = findViewById( fTemp );
-
-                txvHour.setText( wxHourForecast.getTime() );
+                txvForecastTime.setText( wxHourForecast.getTime() );
 
                 String today = new SimpleDateFormat( "MM/dd/yyyy",
                         Locale.ENGLISH ).format( new Date() );
@@ -628,7 +467,8 @@ public class WeatherLionMain extends AppCompatActivity
                 String hourForecast = String.format( "%s %s", today,
                         wxHourForecast.getTime() );
 
-                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h a", Locale.ENGLISH );
+                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h a",
+                        Locale.ENGLISH );
                 Date onTime = null;
 
                 try
@@ -647,11 +487,44 @@ public class WeatherLionMain extends AppCompatActivity
                         wxHourForecast.getCondition() ) );
                 String fConditionIcon = UtilityMethod.getConditionIcon( fCondition, onTime );
 
-                loadWeatherIcon( imvHour, String.format(
+                loadWeatherIcon( imvHourWeatherIcon, String.format(
                     "weather_images/%s/weather_%s", WeatherLionApplication.iconSet, fConditionIcon ) );
 
-                txvTemp.setText( String.format( "%s%s", wxHourForecast.getTemperature(),
-                        WeatherLionApplication.DEGREES ) );
+                txvHourlyForecastTemp.setText( String.format( "%s%s", wxHourForecast.getTemperature(),
+                    WeatherLionApplication.DEGREES ) );
+
+                // distribute the views equally horizontally across the parent view
+                LinearLayout.LayoutParams childLayoutParams = new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT );
+                childLayoutParams.weight = 0.2f;
+
+                // tag will be used to identify the view index
+                hourForecastView.setTag( i );
+
+                // apply the layout params to the child view
+                hourForecastView.setLayoutParams( childLayoutParams );
+
+                // add the newly generated view to the parent view
+                hourlyForecastGrid.addView( hourForecastView );
+
+                // listen for user touch of the hourly forecast view
+                hourForecastView.setOnClickListener( new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick( View v )
+                    {
+                        LastWeatherData.WeatherData.HourlyForecast.HourForecast selectHourForecast =
+                            WeatherLionApplication.storedData.getHourlyForecast().get(
+                                Integer.parseInt( v.getTag().toString() ) );
+
+                        String message = String.format( "The forecast for %s should be %s with a high temperature of %s°.",
+                                selectHourForecast.getTime().toLowerCase(),
+                                selectHourForecast.getCondition().toLowerCase(),
+                                selectHourForecast.getTemperature() );
+
+                        UtilityMethod.showMessageDialog( message, "Hour Forecast", mContext );
+                    }// end of method onClick
+                });
 
                 if( i == 4 )
                 {
@@ -854,29 +727,11 @@ public class WeatherLionMain extends AppCompatActivity
                     UtilityMethod.getTimeSince( timeUpdated ) ) );
         }// end of if block
 
-//        if( UtilityMethod.updateRequired( this ) )
-//        {
-//            refreshWeather();
-//        }// end of if block
-
         if( loadingDialog != null )
         {
             stopLoading();
             loadingDialog.dismiss();
         }// end of if block
-
-        final ScrollView forecastScroll = findViewById( R.id.svForecastScroll );
-
-        forecastScroll.getViewTreeObserver().addOnGlobalLayoutListener(
-            new ViewTreeObserver.OnGlobalLayoutListener()
-            {
-                @Override
-                public void onGlobalLayout()
-                {
-                    forecastScroll.getViewTreeObserver().removeOnGlobalLayoutListener( this );
-                    forecastScroll.fullScroll( View.FOCUS_UP );
-                }
-            });
 
         if( !UtilityMethod.hasInternetConnection( this ) )
         {
@@ -1010,20 +865,24 @@ public class WeatherLionMain extends AppCompatActivity
         this.getWindow().setFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN,
         WindowManager.LayoutParams.FLAG_FULLSCREEN ); //enable full screen
 
+        //UtilityMethod.showMessageDialog(nextAlarmDate.toString(), "Next Alarm", this );
+
         TextView txvMessage;
 
+        // create and register the local application broadcast receiver
+        IntentFilter appBroadcastFilter = new IntentFilter();
+        appBroadcastFilter.addAction( WidgetUpdateService.WEATHER_LOADING_ERROR_MESSAGE );
+        appBroadcastFilter.addAction( PrefsActivity.FONT_SWITCH );
+        appBroadcastFilter.addAction( PrefsActivity.ICON_SWITCH );
+        appBroadcastFilter.addAction( WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE );
+        LocalBroadcastManager.getInstance( this ).registerReceiver( appBroadcastReceiver,
+                appBroadcastFilter );
+
+        // create and register the system broadcast receiver
         IntentFilter systemFilter = new IntentFilter();
         systemFilter.addAction( Intent.ACTION_TIME_TICK );
         systemFilter.addAction( ConnectivityManager.CONNECTIVITY_ACTION );
         this.registerReceiver( systemEventsBroadcastReceiver, systemFilter );
-
-        LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .registerReceiver( xmlStorageBroadcastReceiver, new IntentFilter(
-                        WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE ) );
-
-        LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .registerReceiver( loadingErrorBroadcastReceiver, new IntentFilter(
-                        WidgetUpdateService.WEATHER_LOADING_ERROR_MESSAGE ) );
 
         // Check if any previous weather data is stored locally
         if( WeatherLionApplication.firstRun &&
@@ -1229,10 +1088,7 @@ public class WeatherLionMain extends AppCompatActivity
         this.unregisterReceiver( systemEventsBroadcastReceiver );
 
         LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .unregisterReceiver( xmlStorageBroadcastReceiver );
-
-        LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() )
-                .unregisterReceiver( loadingErrorBroadcastReceiver );
+                .unregisterReceiver( appBroadcastReceiver );
     }// end of method onDestroy
 
     /**
@@ -1430,6 +1286,37 @@ public class WeatherLionMain extends AppCompatActivity
     }// end of method removeInternetAlert
 
     /**
+     * Animate the footer layout
+     */
+    private void animateFooter( int direction )
+    {
+        final RelativeLayout footerBar = findViewById( R.id.rlWeatherFooter );
+
+        LinearLayout.LayoutParams params;
+
+        // upward
+        if( direction == 1 )
+        {
+            footerBar.setVisibility( View.VISIBLE );
+            // animate the view upward
+            footerBar.animate().translationY( 0 ).setDuration( 450 );
+        }// end of if block
+        else if( direction == 0 )
+        {
+            // animate the view downward
+            footerBar.animate().translationY( footerBar.getHeight() ).setDuration( 450 ) .withEndAction(
+                new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        footerBar.setVisibility( View.INVISIBLE );
+                    }
+                });
+        }// end of else if block
+    }// end of method animateFooter
+
+    /**
      * Display a dialog eliciting a response from the user
      *
      * @param prompt    The prompt to be displayed to the user
@@ -1445,32 +1332,36 @@ public class WeatherLionMain extends AppCompatActivity
                                  String negResponse, final String positiveAction,
                                  final String negativeAction, final Object[] params, final Class[] paramClassTypes )
     {
-        final AlertDialog response = new AlertDialog.Builder( this ).create();
-        View dialogView = View.inflate( WeatherLionMain.this, R.layout.wl_response_dialog, null );
-        response.setView( dialogView );
-        response.setCancelable( false );
+        final AlertDialog responseDialog = new AlertDialog.Builder( this ).create();
+        View responseDialogView = View.inflate( WeatherLionMain.this, R.layout.wl_response_dialog, null );
 
-        UtilityMethod.loadCustomFont( (LinearLayout) dialogView.findViewById( R.id.llResponseDialog ) );
+        UtilityMethod.loadCustomFont( (LinearLayout) responseDialogView.findViewById(
+                R.id.llResponseDialog ) );
 
-        // Initialize the view objects
-        RelativeLayout rlTitleBar = dialogView.findViewById( R.id.rlDialogTitleBar );
-        //rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
-
+        RelativeLayout rlTitleBar = responseDialogView.findViewById( R.id.rlDialogTitleBar );
         GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
         bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
-        TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvDialogMessage = dialogView.findViewById( R.id.txvMessage );
+        TextView txvDialogTitle = responseDialogView.findViewById( R.id.txvDialogTitle );
+        TextView txvDialogMessage = responseDialogView.findViewById( R.id.txvMessage );
 
-        Button btnPositive = dialogView.findViewById( R.id.btnPositive );
+        Button btnPositive = responseDialogView.findViewById( R.id.btnPositive );
         btnPositive.setBackground( WeatherLionApplication.systemButtonDrawable );
-        Button btnNegative = dialogView.findViewById( R.id.btnNegative );
+        Button btnNegative = responseDialogView.findViewById( R.id.btnNegative );
         btnNegative.setBackground( WeatherLionApplication.systemButtonDrawable );
 
         txvDialogTitle.setText( title );
         txvDialogMessage.setText( prompt );
         btnPositive.setText( posResponse );
         btnNegative.setText( negResponse );
+
+        responseDialog.setView( responseDialogView );
+        responseDialog.setCancelable( false );
+
+        Objects.requireNonNull( responseDialog.getWindow() ).setBackgroundDrawable(
+                new ColorDrawable( Color.TRANSPARENT ) );
+        UtilityMethod.loadCustomFont( (LinearLayout) responseDialogView.findViewById(
+                R.id.llResponseDialog ) );
 
         btnPositive.setOnClickListener(new View.OnClickListener()
         {
@@ -1488,7 +1379,7 @@ public class WeatherLionMain extends AppCompatActivity
                             positiveAction, paramClassTypes, params );
                 }// end of else block
 
-                response.dismiss();
+                responseDialog.dismiss();
             }
         });
 
@@ -1503,11 +1394,17 @@ public class WeatherLionMain extends AppCompatActivity
                             null, null );
                 }// end of if block
 
-                response.dismiss();
+                responseDialog.dismiss();
             }
         });
 
-        response.show();
+        responseDialog.show();
+
+        // adjust the layout after the window is displayed
+        Window dialogWindow = responseDialog.getWindow();
+        dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                ViewGroup.LayoutParams.WRAP_CONTENT );
+        dialogWindow.setGravity( Gravity.CENTER );
     }// end of method responseDialog
 
     /**
@@ -1747,7 +1644,8 @@ public class WeatherLionMain extends AppCompatActivity
         int[][] states = { { android.R.attr.state_checked }, {} };
         int[] colors = { WeatherLionApplication.systemColor.toArgb(),
                 WeatherLionApplication.systemColor.toArgb() };
-        CompoundButtonCompat.setButtonTintList( chkShowPwd, new ColorStateList( states, colors ) );
+        CompoundButtonCompat.setButtonTintList( chkShowPwd,
+                new ColorStateList( states, colors ) );
 
         ImageView imvAccessProviderDropArrow = keyDialogView.findViewById(
                 R.id.imvAccessProviderDropArrow );
@@ -1905,7 +1803,7 @@ public class WeatherLionMain extends AppCompatActivity
                         edtKeyName.setText( "" );
                         edtKeyName.requestFocus();
 
-                        break;
+                    break;
 
                 }// end of switch block
             }
@@ -2183,23 +2081,33 @@ public class WeatherLionMain extends AppCompatActivity
     {
         final View messageDialogView = View.inflate( this, R.layout.wl_message_dialog, null );
         final AlertDialog messageDialog = new AlertDialog.Builder( this ).create();
-        messageDialog.setView( messageDialogView );
+        TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
+        TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
+
+        txvTitle.setText( title );
+        txvMessage.setText( message );
 
         RelativeLayout rlTitleBar = messageDialogView.findViewById( R.id.rlDialogTitleBar );
-        //rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
-
         GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
         bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
-
-        TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
-        txvTitle.setMovementMethod( new ScrollingMovementMethod() );
-
-        TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
 
         Button btnOk = messageDialogView.findViewById( R.id.btnOk );
         btnOk.setBackground( WeatherLionApplication.systemButtonDrawable );
 
-        txvTitle.setText( title );
+        btnOk.setOnClickListener( new View.OnClickListener()
+        {
+            @Override
+            public void onClick( View v )
+            {
+                messageDialog.dismiss();
+            }
+        });
+
+        messageDialog.setView( messageDialogView );
+        Objects.requireNonNull( messageDialog.getWindow() ).setBackgroundDrawable(
+                new ColorDrawable( Color.TRANSPARENT ) );
+        UtilityMethod.loadCustomFont( (RelativeLayout) messageDialogView.findViewById(
+                R.id.rlMessageDialog ) );
 
         if( messageType != null && messageType.equalsIgnoreCase( "html" ) )
         {
@@ -2229,6 +2137,12 @@ public class WeatherLionMain extends AppCompatActivity
         });
 
         messageDialog.show();
+
+        // adjust the layout after the window is displayed
+        Window dialogWindow = messageDialog.getWindow();
+        dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                ViewGroup.LayoutParams.WRAP_CONTENT );
+        dialogWindow.setGravity( Gravity.CENTER );
     }// end of method showMessageDialog
 
     /***
@@ -2353,4 +2267,180 @@ public class WeatherLionMain extends AppCompatActivity
                 ( UtilityMethod.temperatureColor( Integer.parseInt(
                         currentTemp.toString().replaceAll( "\\D+","" ) ) ) ) );
     }// end of method updateTemps
+
+    /**
+     * This broadcast receiver listens for local broadcasts within the program
+     */
+    private class AppBroadcastReceiver extends BroadcastReceiver
+    {
+        @Override
+        public void onReceive( Context context, Intent intent )
+        {
+            final String action = Objects.requireNonNull( intent.getAction() );
+
+            switch( action )
+            {
+                case WidgetUpdateService.WEATHER_LOADING_ERROR_MESSAGE:
+                    // cancel the Visual indication of a refresh
+                    if( appRefresh != null )
+                    {
+                        // cancel the visual indication of a refresh
+                        appRefresh.setRefreshing( false );
+                    }// end of if block
+
+                    break;
+                case PrefsActivity.FONT_SWITCH:
+                case PrefsActivity.ICON_SWITCH:
+                    if( new File( WeatherLionMain.this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
+                    {
+                        // refresh the xml data stored after the last update
+                        WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                                UtilityMethod.readAll(
+                                        context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
+                                        .replaceAll( "\t", "" ).trim() );
+
+                        loadMainActivityWeather();
+                    }// end of if block
+
+                    break;
+                case WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE:
+                    if( WeatherLionApplication.restoringWeatherData )
+                    {
+                        setContentView( R.layout.wl_main_activity );
+
+                        UtilityMethod.lastUpdated = new Date();
+
+                        if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
+                        {
+                            noGpsAlert();
+                        }// end of if block
+
+                        if( !UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
+                        {
+                            View mainActivity = findViewById( R.id.weather_main_container );
+                            noInternetAlert( mainActivity );
+                        }// end of if block
+                        else if( internetCafeView != null )
+                        {
+                            if( internetCafeView.getVisibility() == View.VISIBLE )
+                            {
+                                removeInternetAlert();
+                            }// end of if block
+                        }// end of else if block
+
+                        WeatherLionApplication.restoringWeatherData = false;
+                    }  // end of if block
+
+                    if( new File( WeatherLionMain.this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
+                    {
+                        // refresh the xml data stored after the last update
+                        WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                                UtilityMethod.readAll(
+                                        context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
+                                        .replaceAll( "\t", "" ).trim() );
+
+                        WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
+                        DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
+
+                        try
+                        {
+                            UtilityMethod.lastUpdated = df.parse(
+                                    WeatherLionApplication.storedData.getProvider().getDate() );
+                        }// end of try block
+                        catch ( ParseException e )
+                        {
+                            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                                    TAG + "::onCreate [line: " +
+                                            e.getStackTrace()[1].getLineNumber()+ "]" );
+                        }// end of catch block
+
+                        WeatherLionApplication.currentSunriseTime = new StringBuilder(
+                                WeatherLionApplication.storedData.getAstronomy().getSunrise() );
+                        WeatherLionApplication.currentSunsetTime = new StringBuilder(
+                                WeatherLionApplication.storedData.getAstronomy().getSunset() );
+
+                        // reload main activity
+                        loadMainActivityWeather();
+                    }// end of if block
+
+                    if( appRefresh != null )
+                    {
+                        // cancel the visual indication of a refresh
+                        appRefresh.setRefreshing( false );
+                    }// end of if block
+
+                    if( loadingDialog != null )
+                    {
+                        stopLoading();
+                        loadingDialog.dismiss();
+                    }// end of if block
+
+                    break;
+            }// end of switch block
+        }// end of method onReceive
+    }// end of class AppBroadcastReceiver
+
+    /**
+     * Receives broadcasts sent by the operating system.
+     */
+    private class SystemBroadcastReceiver extends BroadcastReceiver
+    {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void onReceive( Context context, Intent intent )
+        {
+            final String action = Objects.requireNonNull( intent.getAction() );
+
+            if( action.equals( ConnectivityManager.CONNECTIVITY_ACTION ) )
+            {
+                if( UtilityMethod.hasInternetConnection( WeatherLionMain.this ) )
+                {
+                    if( internetCafeView != null )
+                    {
+                        if( internetCafeView.getVisibility() == View.VISIBLE )
+                        {
+                            removeInternetAlert();
+                        }// end of if block
+                    }// end of if block
+                }// end of if block
+                else
+                {
+                    View rootView = getWindow().getDecorView().findViewById(
+                            android.R.id.content );
+                    noInternetAlert( rootView );
+                }// end of else block
+            }// end of if block
+            else if( action.equals( Intent.ACTION_TIME_TICK ) )
+            {
+                if( txvLastUpdated != null && UtilityMethod.lastUpdated != null )
+                {
+                    txvLastUpdated.setTypeface( WeatherLionApplication.currentTypeface );
+
+                    if( WeatherLionApplication.currentLocationTimeZone != null )
+                    {
+                        txcLocalTime.setTimeZone(
+                                WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+                    }// end of if block
+
+                    txvLastUpdated.setText( String.format( "%s%s", "Updated ",
+                            UtilityMethod.getTimeSince( UtilityMethod.lastUpdated ) ) );
+                }// end of if block
+
+                // if an update is required but was not performed
+                if( UtilityMethod.updateRequired( WeatherLionMain.this ) )
+                {
+                    UtilityMethod.refreshRequestedBySystem = true;
+                    UtilityMethod.refreshRequestedByUser = false;
+
+                    String invoker = WeatherLionMain.this.getClass().getSimpleName() +
+                            "::systemEventsBroadcastReceiver::onReceive";
+                    WeatherLionApplication.callMethodByName( null,
+                            "refreshWeather",
+                            new Class[]{ String.class }, new Object[]{ invoker } );
+                }// end of if block
+            }// end of else if block
+        }// end of method onReceive
+    }// end of class SystemBroadcastReceiver
 }// end of class WeatherLionMain

@@ -296,7 +296,9 @@
     <string name="icon_set_title">Icon Set</string>
     <string name="widget_background_title">Widget Background</string>
     <string name="image_preview">Image Preview</string>
+    <string name="forecast_hour_temperature">Forecast Hour Temperature</string>
     <string name="notification_current_temperature">Notification Current Temperature</string>
     <string name="hourly">HOURLY</string>
     <string name="daily">DAILY</string>
+    <string name="default_alarm">3:05 AM</string>
 </resources>

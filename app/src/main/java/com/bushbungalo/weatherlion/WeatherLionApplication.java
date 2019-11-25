@@ -2,6 +2,7 @@ package com.bushbungalo.weatherlion;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.Application;
 import android.app.Notification;
@@ -1202,7 +1203,7 @@ public class WeatherLionApplication extends Application
             Objects.requireNonNull(
                 new Object() {}.getClass().getEnclosingMethod() ).getName();
 
-        // setup a broadcast receiver that will listen for gps data
+        // setup a broadcast receiver that will listen local app broadcasts
         IntentFilter appFilter = new IntentFilter();
         appFilter.addAction( GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE );
         appFilter.addAction( WeatherLionMain.KEY_UPDATE_MESSAGE );
@@ -1215,7 +1216,7 @@ public class WeatherLionApplication extends Application
         // network connectivity and system clock changes
         IntentFilter systemFilter = new IntentFilter();
         systemFilter.addAction( ConnectivityManager.CONNECTIVITY_ACTION );
-        //systemFilter.addAction( Intent.ACTION_TIME_TICK );
+        systemFilter.addAction( AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED );
         this.registerReceiver( systemBroadcastReceiver, systemFilter );
 
         spf = PreferenceManager.getDefaultSharedPreferences( this );
@@ -1417,6 +1418,20 @@ public class WeatherLionApplication extends Application
                 }// end of if block
             }// end of if block
 
+            Bundle extras = new Bundle();
+            extras.putString ( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+            extras.putString( LAUNCH_METHOD_EXTRA,
+                    "updateUserSetAlarm" );
+            extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                    UNIT_NOT_CHANGED );
+
+            // connectivity check
+            Intent wakeUpAlarmIntent = new Intent( getAppContext(),
+                    WidgetUpdateService.class );
+            wakeUpAlarmIntent.putExtras( extras );
+            WidgetUpdateService.enqueueWork( getAppContext(),
+                    wakeUpAlarmIntent );
+
             // check if any weather data exists locally
             if( checkForStoredWeatherData() )
             {
@@ -1426,7 +1441,7 @@ public class WeatherLionApplication extends Application
 
             if( UtilityMethod.updateRequired( this ) )
             {
-                Bundle extras = new Bundle();
+                extras = new Bundle();
                 extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
                 extras.putString( LAUNCH_METHOD_EXTRA, null );
                 extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
@@ -1681,7 +1696,8 @@ public class WeatherLionApplication extends Application
                         storedData.getHourlyForecast().get( i );
                 String forecastTime = null;
 
-                RemoteViews notificationHourly = new RemoteViews( getPackageName(), R.layout.wl_hourly_weather_notification_child);
+                RemoteViews notificationHourly = new RemoteViews( getPackageName(),
+                        R.layout.wl_hourly_weather_notification_child );
 
                 notificationHourly.setTextViewText( R.id.notification_hourly_weather_time,
                         wxHourForecast.getTime() );
@@ -2100,43 +2116,61 @@ public class WeatherLionApplication extends Application
         public void onReceive( Context context, Intent intent )
         {
             final String action = Objects.requireNonNull( intent.getAction() );
+            String invoker = this.getClass().getSimpleName() + "::onReceive";
+            Bundle extras;
 
-            if( action.equals( ConnectivityManager.CONNECTIVITY_ACTION ) )
+            switch ( action )
             {
-                // if the last weather update is null then the program has just been launched
-                // an the system will always imply that the connection state has changed.
-                if( UtilityMethod.lastUpdated != null )
-                {
-                    if( UtilityMethod.updateRequired( getAppContext() ) &&
-                            UtilityMethod.hasInternetConnection( getAppContext() ) )
+                case ConnectivityManager.CONNECTIVITY_ACTION:
+                    // if the last weather update is null then the program has just been launched
+                    // an the system will always imply that the connection state has changed.
+                    if ( UtilityMethod.lastUpdated != null )
                     {
-                        UtilityMethod.refreshRequestedBySystem = true;
-                        UtilityMethod.refreshRequestedByUser = false;
+                        if (UtilityMethod.updateRequired( getAppContext() ) &&
+                                UtilityMethod.hasInternetConnection( getAppContext() ) )
+                        {
+                            UtilityMethod.refreshRequestedBySystem = true;
+                            UtilityMethod.refreshRequestedByUser = false;
 
-                        String invoker = this.getClass().getSimpleName() + "::" +
-                            Objects.requireNonNull(
-                                new Object() {}.getClass().getEnclosingMethod() ).getName();
-                        callMethodByName( WeatherLionApplication.class,
-                                "refreshWeather",
-                                new Class[]{ String.class }, new Object[]{ invoker } );
+                            callMethodByName(WeatherLionApplication.class,
+                                    "refreshWeather",
+                                    new Class[]{ String.class }, new Object[]{ invoker } );
+                        }// end of if block
                     }// end of if block
-                }// end of if block
 
-                String invoker = this.getClass().getSimpleName() + "::onReceive";
-                Bundle extras = new Bundle();
-                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                extras.putString( LAUNCH_METHOD_EXTRA,
-                    "updateConnectivity" );
-                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                        UNIT_NOT_CHANGED );
+                    extras = new Bundle();
+                    extras.putString (WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                    extras.putString( LAUNCH_METHOD_EXTRA,
+                            "updateConnectivity" );
+                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                            UNIT_NOT_CHANGED );
 
-                // connectivity check
-                Intent connectivityIntent = new Intent( getAppContext(),
-                        WidgetUpdateService.class );
-                connectivityIntent.putExtras( extras );
-                WidgetUpdateService.enqueueWork( getAppContext(),
-                    connectivityIntent );
-            }// end of if block
-        }// end of method onReceive
+                    // connectivity check
+                    Intent connectivityIntent = new Intent( getAppContext(),
+                            WidgetUpdateService.class );
+                    connectivityIntent.putExtras( extras );
+                    WidgetUpdateService.enqueueWork( getAppContext(),
+                            connectivityIntent );
+                    break;
+
+                case AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED:
+                    extras = new Bundle();
+                    extras.putString ( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                    extras.putString( LAUNCH_METHOD_EXTRA,
+                            "updateUserSetAlarm" );
+                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                            UNIT_NOT_CHANGED );
+
+                    // connectivity check
+                    Intent wakeUpAlarmIntent = new Intent( getAppContext(),
+                            WidgetUpdateService.class );
+                    wakeUpAlarmIntent.putExtras( extras );
+                    WidgetUpdateService.enqueueWork( getAppContext(),
+                            wakeUpAlarmIntent );
+
+                    break;
+
+            }// end of switch block
+        }
     }// end of class SystemBroadcastReceiver
 }// end of class WeatherLionApplication

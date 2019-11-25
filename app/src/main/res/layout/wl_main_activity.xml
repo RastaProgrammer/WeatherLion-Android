@@ -77,7 +77,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dip"
-                        android:layout_marginBottom="7dip">
+                        android:layout_marginBottom="7dip"
+                        android:paddingTop="8dip"
+                        android:paddingBottom="8dip">
 
                         <RelativeLayout
                             android:id="@+id/rlLocalTime"
@@ -102,7 +104,7 @@
                                 android:layout_marginStart="4dip"
                                 android:layout_marginEnd="4dip"
                                 android:layout_toEndOf="@+id/txvLocalTime"
-                                android:format12Hour="h:mm a"
+                                android:format12Hour="E, MMMM dd, h:mm a"
                                 android:textColor="#F39530"
                                 android:textSize="14sp" />
 
@@ -124,6 +126,7 @@
                             android:layout_width="120dip"
                             android:layout_height="120dip"
                             android:layout_alignParentStart="true"
+                            android:layout_below="@+id/rlLocalTime"
                             android:layout_marginStart="5dip"
                             android:layout_marginEnd="10dip"
                             android:contentDescription="@string/current_reading_icon"
@@ -232,19 +235,19 @@
                         <LinearLayout
                             android:id="@+id/hourlyForecastParent"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:background="@drawable/wl_light_top_border"
                             android:baselineAligned="false"
                             android:orientation="vertical"
-                            android:paddingTop="6dip"
-                            android:paddingBottom="4dip"
-                            android:visibility="visible" >
+                            android:paddingTop="10dip"
+                            android:paddingBottom="10dip"
+                            android:visibility="visible">
 
                             <TextView
                                 android:id="@+id/txvHourlyTitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginBottom="2dip"
+                                android:layout_marginBottom="6dip"
                                 android:gravity="center_horizontal"
                                 android:text="@string/hourly"
                                 android:textColor="#FFFFFF"
@@ -254,204 +257,12 @@
                                 android:id="@+id/hourlyForecastGrid"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:baselineAligned="false"
                                 android:orientation="horizontal"
-                                android:paddingTop="8dip"
-                                android:paddingBottom="8dip"
-                                android:visibility="visible"
-                                android:weightSum="5">
+                                android:padding="8dip"
+                                android:visibility="visible" >
 
-                                <RelativeLayout
-                                    android:id="@+id/relFiveHourForecast"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:gravity="center">
+                                <!-- Hourly forecast views will be added here at runtime -->
 
-                                    <TextView
-                                        android:id="@+id/txvHour1"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_alignParentTop="true"
-                                        android:layout_centerHorizontal="true"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/Hour1"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                    <ImageView
-                                        android:id="@+id/imvHour1Icon"
-                                        android:layout_width="46dip"
-                                        android:layout_height="46dip"
-                                        android:layout_below="@+id/txvHour1"
-                                        android:layout_centerHorizontal="true"
-                                        android:contentDescription="@string/weather_icon"
-                                        android:src="@drawable/clear" />
-
-                                    <TextView
-                                        android:id="@+id/txvHour1Temp"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_below="@+id/imvHour1Icon"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/no_reading_u"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                </RelativeLayout>
-
-                                <RelativeLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:layout_weight="1"
-                                    android:gravity="center">
-
-                                    <TextView
-                                        android:id="@+id/txvHour2"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_alignParentTop="true"
-                                        android:layout_centerHorizontal="true"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/Hour2"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                    <ImageView
-                                        android:id="@+id/imvHour2Icon"
-                                        android:layout_width="46dip"
-                                        android:layout_height="46dip"
-                                        android:layout_below="@+id/txvHour2"
-                                        android:layout_centerHorizontal="true"
-                                        android:contentDescription="@string/weather_icon"
-                                        android:src="@drawable/clear" />
-
-                                    <TextView
-                                        android:id="@+id/txvHour2Temp"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_below="@+id/imvHour2Icon"
-                                        android:layout_centerHorizontal="true"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/no_reading_u"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                </RelativeLayout>
-
-                                <RelativeLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:layout_weight="1"
-                                    android:gravity="center">
-
-                                    <TextView
-                                        android:id="@+id/txvHour3"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_alignParentTop="true"
-                                        android:layout_centerHorizontal="true"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/Hour3"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                    <ImageView
-                                        android:id="@+id/imvHour3Icon"
-                                        android:layout_width="46dip"
-                                        android:layout_height="46dip"
-                                        android:layout_below="@+id/txvHour3"
-                                        android:layout_centerHorizontal="true"
-                                        android:contentDescription="@string/weather_icon"
-                                        android:src="@drawable/clear" />
-
-                                    <TextView
-                                        android:id="@+id/txvHour3Temp"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_below="@+id/imvHour3Icon"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/no_reading_u"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                </RelativeLayout>
-
-                                <RelativeLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:layout_weight="1"
-                                    android:gravity="center">
-
-                                    <TextView
-                                        android:id="@+id/txvHour4"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_alignParentTop="true"
-                                        android:layout_centerHorizontal="true"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/Hour4"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                    <ImageView
-                                        android:id="@+id/imvHour4Icon"
-                                        android:layout_width="46dip"
-                                        android:layout_height="46dip"
-                                        android:layout_below="@+id/txvHour4"
-                                        android:layout_centerHorizontal="true"
-                                        android:contentDescription="@string/weather_icon"
-                                        android:src="@drawable/clear" />
-
-                                    <TextView
-                                        android:id="@+id/txvHour4Temp"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_below="@+id/imvHour4Icon"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/no_reading_u"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                </RelativeLayout>
-
-                                <RelativeLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:layout_weight="1"
-                                    android:gravity="center">
-
-                                    <TextView
-                                        android:id="@+id/txvHour5"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_alignParentTop="true"
-                                        android:layout_centerHorizontal="true"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/Hour5"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                    <ImageView
-                                        android:id="@+id/imvHour5Icon"
-                                        android:layout_width="46dip"
-                                        android:layout_height="46dip"
-                                        android:layout_below="@+id/txvHour5"
-                                        android:layout_centerHorizontal="true"
-                                        android:contentDescription="@string/weather_icon"
-                                        android:src="@drawable/clear" />
-
-                                    <TextView
-                                        android:id="@+id/txvHour5Temp"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_below="@+id/imvHour5Icon"
-                                        android:gravity="center_horizontal"
-                                        android:text="@string/no_reading_u"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="14sp" />
-
-                                </RelativeLayout>
                             </LinearLayout>
                         </LinearLayout>
 
@@ -462,7 +273,7 @@
                             android:layout_height="wrap_content"
                             android:baselineAligned="false"
                             android:orientation="vertical"
-                            android:paddingTop="2dip"
+                            android:paddingTop="10dip"
                             android:visibility="visible" >
 
                             <TextView
@@ -470,17 +281,11 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:paddingTop="4dip"
-                                android:layout_marginBottom="2dip"
+                                android:layout_marginBottom="6dip"
                                 android:gravity="center_horizontal"
                                 android:text="@string/daily"
                                 android:textColor="#FFFFFF"
                                 android:textSize="16sp" />
-
-                            <ScrollView
-                                android:id="@+id/svForecastScroll"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dip">
 
                                 <android.support.v7.widget.RecyclerView
                                     android:id="@+id/lstDayForecast"
@@ -488,8 +293,9 @@
                                     android:layout_height="wrap_content"
                                     android:divider="#CBCBCB"
                                     android:dividerHeight="0.5dip"
-                                    android:scrollbars="vertical" />
-                            </ScrollView>
+                                    android:scrollbars="vertical"
+                                    android:fadeScrollbars="true"/>
+
                         </LinearLayout>
                     </LinearLayout>
                 </RelativeLayout>
@@ -504,7 +310,8 @@
                 android:paddingTop="4dip"
                 android:paddingStart="14dip"
                 android:paddingEnd="14dip"
-                android:layout_alignParentBottom="true" >
+                android:layout_alignParentBottom="true"
+                android:animateLayoutChanges="true" >
 
                 <RelativeLayout
                     android:id="@+id/rlProvider"

@@ -5,8 +5,7 @@
     android:orientation="vertical"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:gravity="center"
-    android:background="@color/off_white" >
+    android:gravity="center" >
 
     <RelativeLayout
         android:id="@+id/rlDialogTitleBar"
@@ -39,45 +38,52 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
-    <ScrollView
-        android:id="@+id/scrMessage"
+    <RelativeLayout
+        android:id="@+id/rlMessageBody"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="vertical"
-        android:fillViewport="true"
-        android:layout_below="@+id/rlDialogTitleBar" >
+        android:layout_below="@+id/rlDialogTitleBar"
+        android:background="@color/off_white" >
 
-        <TextView
-            android:id="@+id/txvMessage"
-            android:layout_width="wrap_content"
+        <ScrollView
+            android:id="@+id/scrMessage"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dip"
-            android:text="@string/message_dialog_message"
-            android:textColor="@color/black_opacity_80"
-            android:textStyle="normal"
-            android:textSize="18sp" />
-    </ScrollView>
+            android:scrollbars="vertical"
+            android:fillViewport="true" >
 
-    <Button
-        android:id="@+id/btnOk"
-        android:layout_width="80dp"
-        android:layout_height="30dp"
-        android:layout_below="@+id/scrMessage"
-        android:layout_alignParentEnd="true"
-        android:layout_marginStart="10dip"
-        android:layout_marginTop="10dip"
-        android:layout_marginEnd="11dip"
-        android:background="@drawable/wl_lion_rounded_btn_bg"
-        android:text="@string/Ok"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:stateListAnimator="@null" />
+            <TextView
+                android:id="@+id/txvMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dip"
+                android:text="@string/message_dialog_message"
+                android:textColor="@color/black_opacity_80"
+                android:textStyle="normal"
+                android:textSize="18sp" />
+        </ScrollView>
+
+        <Button
+            android:id="@+id/btnOk"
+            android:layout_width="80dp"
+            android:layout_height="30dp"
+            android:layout_below="@+id/scrMessage"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="10dip"
+            android:layout_marginTop="10dip"
+            android:layout_marginEnd="11dip"
+            android:background="@drawable/wl_lion_rounded_btn_bg"
+            android:text="@string/Ok"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:stateListAnimator="@null" />
+    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/rlDialogFooter"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/btnOk"
+        android:layout_below="@+id/rlMessageBody"
         android:background="@drawable/wl_custom_dialog_footer" />
 
 

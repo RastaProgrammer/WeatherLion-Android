@@ -5,8 +5,7 @@
     android:orientation="vertical"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:gravity="center"
-    android:background="@color/off_white" >
+    android:gravity="center">
 
     <RelativeLayout
         android:layout_width="fill_parent"
@@ -43,7 +42,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/rlDialogBody"
         android:paddingLeft="6dp"
-        android:paddingRight="6dp" >
+        android:paddingRight="6dp"
+        android:background="@color/off_white" >
 
         <TextView
             android:id="@+id/txvMessage"

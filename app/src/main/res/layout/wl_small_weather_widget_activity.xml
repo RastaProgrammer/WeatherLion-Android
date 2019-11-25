@@ -53,6 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_toEndOf="@+id/txvCurrentTemperature"
             android:ellipsize="end"
+            android:singleLine="true"
             android:fontFamily="sans-serif-condensed"
             android:layout_marginTop="2dip"
             android:text="@string/current_location"

@@ -61,6 +61,9 @@ public class PrefsActivity extends AppCompatActivity
     private final static int ALL_PERMISSIONS_RESULT = 101;
     private LocationTrackerService locationTrackerService;
 
+    public static final String FONT_SWITCH = "SwapFonts";
+    public static final String ICON_SWITCH = "SwapWeatherIcons";
+
     public Intent intentStarter;
     public Activity mActivity;
     public Context mContext;
@@ -156,7 +159,7 @@ public class PrefsActivity extends AppCompatActivity
                 new String[ 0 ] ), ALL_PERMISSIONS_RESULT );
         }// end of if block
 
-        // initialize the settings activity - add is important
+        // initialize the settings activity - this is important!
         getFragmentManager()
             .beginTransaction()
                 .add( R.id.prefs_content,
@@ -351,6 +354,12 @@ public class PrefsActivity extends AppCompatActivity
                                 WeatherLionApplication.storedPreferences.setFont( stringValue );
                                 summary = WeatherLionApplication.storedPreferences.getFont();
                                 updateUIFont( summary );
+
+                                Intent fontChangeIntent = new Intent( FONT_SWITCH );
+                                LocalBroadcastManager manager =
+                                        LocalBroadcastManager.getInstance( mContext );
+                                manager.sendBroadcast( fontChangeIntent );
+
                                 break;
                             default:
                                 break;
@@ -382,6 +391,12 @@ public class PrefsActivity extends AppCompatActivity
                                 Intent methodIntent = new Intent( mContext, WidgetUpdateService.class );
                                 methodIntent.putExtras( extras );
                                 WidgetUpdateService.enqueueWork( mContext, methodIntent );
+
+                                Intent iconChangeIntent = new Intent( ICON_SWITCH );
+                                LocalBroadcastManager manager =
+                                        LocalBroadcastManager.getInstance( mContext );
+                                manager.sendBroadcast( iconChangeIntent );
+
                                 break;
                             case WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE:
                                 WeatherLionApplication.storedPreferences.setWidgetBackground( stringValue );
@@ -851,7 +866,8 @@ public class PrefsActivity extends AppCompatActivity
                         .startActivities();
 
             }// end of if block
-        }
+        }// end of method updateTheme
+
         /**
          * Update the current font typeface used throughout the UI
          *

@@ -12,15 +12,20 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -30,6 +35,7 @@ import android.widget.Toast;
 
 import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
+import com.bushbungalo.weatherlion.custom.CustomPreferenceGrid;
 import com.bushbungalo.weatherlion.database.DBHelper;
 import com.bushbungalo.weatherlion.database.WorldCities;
 import com.bushbungalo.weatherlion.model.CityData;
@@ -1289,9 +1295,9 @@ public abstract class UtilityMethod
 
         TextView toastMessage = toastView.findViewById( android.R.id.message );
         LinearLayout.LayoutParams params = new
-                LinearLayout.LayoutParams( LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT );
+                LinearLayout.LayoutParams( LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT );
         //params.setMargins( 40, 0, 40, 0 );
-
 
         toastMessage.setLayoutParams( params );
         toastView.setPadding( devicePixelsToPixels( horizontalPadding ), devicePixelsToPixels( verticalPadding ),
@@ -1299,6 +1305,7 @@ public abstract class UtilityMethod
 
         toastMessage.setTextSize( 15 );
         toastMessage.setTextColor( Color.WHITE );
+        toastMessage.setTypeface( WeatherLionApplication.currentTypeface );
 
         switch ( type )
         {
@@ -3481,7 +3488,7 @@ public abstract class UtilityMethod
     {
         final View messageDialogView = View.inflate( c, R.layout.wl_message_dialog, null );
         final AlertDialog messageDialog = new AlertDialog.Builder( c ).create();
-        messageDialog.setView( messageDialogView );
+
         TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
         TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
 
@@ -3489,20 +3496,32 @@ public abstract class UtilityMethod
         txvMessage.setText( message );
 
         RelativeLayout rlTitleBar = messageDialogView.findViewById( R.id.rlDialogTitleBar );
-        rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
+        GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
+        bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
-        messageDialogView.findViewById( R.id.btnOk ).setOnClickListener(new View.OnClickListener()
+        Button btnOk = messageDialogView.findViewById( R.id.btnOk );
+        btnOk.setBackground( WeatherLionApplication.systemButtonDrawable );
+
+        btnOk.setOnClickListener( new View.OnClickListener()
         {
             @Override
-            public void onClick(View v)
+            public void onClick( View v )
             {
                 messageDialog.dismiss();
             }
         });
 
+        messageDialog.setView( messageDialogView );
+        Objects.requireNonNull( messageDialog.getWindow() ).setBackgroundDrawable(
+                new ColorDrawable( Color.TRANSPARENT ) );
         loadCustomFont( (RelativeLayout) messageDialogView.findViewById( R.id.rlMessageDialog ) );
-
         messageDialog.show();
+
+        // adjust the layout after the window is displayed
+        Window dialogWindow = messageDialog.getWindow();
+        dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                ViewGroup.LayoutParams.WRAP_CONTENT );
+        dialogWindow.setGravity( Gravity.CENTER );
     }// end of method showMessageDialog
 
     /**
@@ -3726,6 +3745,32 @@ public abstract class UtilityMethod
 
         return fileContents.toString().trim();
     }// end of method readAll
+
+    /**
+     * Subtracts two dates and return a hour value
+     *
+     **@param firstDate The first date that will do the subtracting.
+     * @param secondDate The second date that will be subtracted.
+     * @return  A {@code String} representing the time frame that has passed.
+     */
+    public static int getHoursDifference( Date firstDate, Date secondDate )
+    {
+        //milliseconds
+        long difference = Math.abs( firstDate.getTime() - secondDate.getTime() );
+
+        long secondsInMilli = 1000;
+        long minutesInMilli = secondsInMilli * 60;
+
+        long elapsedMinutes = difference / minutesInMilli;
+        String timeElapsed;
+
+        if( elapsedMinutes >= 60 )
+        {
+           return (int) elapsedMinutes / 60;
+        }// end of if block
+
+        return 0;
+    }// end of method getHoursDifference
 
     /**
      * Get the duration of time that has elapsed since a certain date.

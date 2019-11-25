@@ -64,7 +64,8 @@
             android:minHeight="20dip"
             android:fontFamily="sans_serif"
             android:text="@string/default_wind"
-            android:singleLine="true" android:includeFontPadding="false" />
+            android:singleLine="true"
+            android:includeFontPadding="false" />
 
         <TextView
             android:id="@+id/notification_humidity"

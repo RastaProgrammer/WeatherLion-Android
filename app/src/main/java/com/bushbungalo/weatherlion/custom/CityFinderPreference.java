@@ -450,7 +450,8 @@ public class CityFinderPreference extends DialogPreference
         popupWindow = new ListPopupWindow( getContext() );
 
         popupWindow.setAnchorView( anchor );
-        popupWindow.setAdapter( new ArrayAdapter<>( getContext(), R.layout.wl_popup_list_item_dark_bg, listItems ) );
+        popupWindow.setAdapter( new ArrayAdapter<>( getContext(),
+                R.layout.wl_popup_list_item_dark_bg, listItems ) );
         popupWindow.setWidth( anchor.getWidth() );
         popupWindow.setVerticalOffset( 6 );
 
@@ -556,6 +557,6 @@ public class CityFinderPreference extends DialogPreference
         final InputMethodManager edCityBox = (InputMethodManager)
                 getContext().getSystemService( Context.INPUT_METHOD_SERVICE );
 
-        edCityBox.hideSoftInputFromWindow(dialogView.getWindowToken(), 0);
+        edCityBox.hideSoftInputFromWindow( dialogView.getWindowToken(), 0 );
     }// end of method stopSearchAnimation
 }// end of class CityFinderPreference

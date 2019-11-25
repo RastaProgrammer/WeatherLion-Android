@@ -804,6 +804,16 @@ public class WidgetUpdateService extends JobIntentService
                 provider + " returned: " + e.getMessage(), TAG + "::dataRetrievalError" );
         // Calling from a Non-UI Thread
         Handler handler = new Handler( Looper.getMainLooper() );
+        final String message;
+
+        if( strJSON.size() == 0 )
+        {
+            message = provider + " did not return data!";
+        }// end of if block
+        else
+        {
+            message = e.getMessage();
+        }// end of else block
 
         handler.post( new Runnable()
         {
@@ -811,8 +821,7 @@ public class WidgetUpdateService extends JobIntentService
             public void run()
             {
                 UtilityMethod.butteredToast( getApplicationContext(),
-                    provider + " did not return data!",
-                    2, Toast.LENGTH_LONG );
+                        message, 2, Toast.LENGTH_LONG );
             }
         });
     }// end of method dataRetrievalError
@@ -909,7 +918,7 @@ public class WidgetUpdateService extends JobIntentService
                                 catch ( JSONException e )
                                 {
                                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Bad Yahoo data: " + e.getMessage(),
-                                            TAG + "::done [line: " +
+                                            TAG + "::updateAllAppWidgets [line: " +
                                                     e.getStackTrace()[1].getLineNumber()+ "]" );
                                 }// end of catch block
 
@@ -1510,7 +1519,7 @@ public class WidgetUpdateService extends JobIntentService
         PendingIntent alarmIntent = PendingIntent.getBroadcast( getApplicationContext(),
                 0, intentToFire, 0 );
         AlarmManager alarmManager = (AlarmManager) getApplicationContext().
-                getSystemService( Context.ALARM_SERVICE );
+            getSystemService( Context.ALARM_SERVICE );
 
         // Obtain all default value from the stored preferences
         int timeAmount = UtilityMethod.millisecondsToMinutes(
@@ -3035,6 +3044,43 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setImageViewBitmap( R.id.imvWidgetBackground, getBitmap( largeDrawableId ) );
         smallWidgetRemoteViews.setImageViewBitmap( R.id.imvWidgetBackground, getBitmap( smallDrawableId ) );
     }// end of method loadWidgetBackground
+
+    /**
+     * Show/Hide the internet connectivity icon on the widget
+     */
+    private void updateUserSetAlarm()
+    {
+        AlarmManager alarmManager = (AlarmManager) this.getSystemService( Context.ALARM_SERVICE );
+
+        if( alarmManager.getNextAlarmClock() != null )
+        {
+            long nextAlarmTime = alarmManager.getNextAlarmClock().getTriggerTime();
+            Date nextAlarmDate = new Date( nextAlarmTime );
+            String alarmTime = new SimpleDateFormat(
+                    "h:mm a", Locale.ENGLISH ).format( nextAlarmDate );
+            int hoursTilNextAlarm = UtilityMethod.getHoursDifference( new Date(), nextAlarmDate );
+
+            if( hoursTilNextAlarm <= 12 )
+            {
+                largeWidgetRemoteViews.setViewVisibility( R.id.relNextAlarm, View.VISIBLE );
+                largeWidgetRemoteViews.setTextViewText( R.id.txvAlarmTime, alarmTime );
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Next Alarm Due",
+                        TAG + "::updateUserSetAlarm");
+            }// end of if block
+            else
+            {
+                largeWidgetRemoteViews.setViewVisibility( R.id.relNextAlarm, View.INVISIBLE );
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "No Alarm Due",
+                        TAG + "::updateUserSetAlarm");
+            }// end of else block
+        }// end of if block
+        else
+        {
+            largeWidgetRemoteViews.setViewVisibility( R.id.relNextAlarm, View.INVISIBLE );
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "No Alarm Due",
+                    TAG + "::updateUserSetAlarm");
+        }// end of else block
+    }// end of method updateConnectivity
 
     /**
      * Show/Hide the internet connectivity icon on the widget
