@@ -33,6 +33,7 @@ import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bushbungalo.weatherlion.Preference;
 import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.custom.CustomPreferenceGrid;
@@ -3566,13 +3567,54 @@ public abstract class UtilityMethod
      *
      * @param property	The name of the preference to be retrieved
      */
-    public static String getPrefValues(String property )
+    public static String getPrefValues( String property )
     {
-        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( getAppContext() );
+        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences(
+            getAppContext() );
+        String keyValue = null;
+
+        switch( property )
+        {
+            case WeatherLionApplication.CURRENT_LOCATION_PREFERENCE:
+                keyValue = spf.getString( property,
+                        Preference.DEFAULT_WEATHER_LOCATION );
+                break;
+            case WeatherLionApplication.WEATHER_SOURCE_PREFERENCE:
+                keyValue = spf.getString( property,
+                        Preference.DEFAULT_WEATHER_SOURCE );
+                break;
+            case WeatherLionApplication.UPDATE_INTERVAL:
+                keyValue = spf.getString( property,
+                        Preference.DEFAULT_UPDATE_INTERVAL );
+                break;
+            case WeatherLionApplication.USE_GPS_LOCATION_PREFERENCE:
+                keyValue = String.valueOf( spf.getBoolean( property,
+                        Preference.DEFAULT_USE_GPS ) );
+                break;
+
+            case WeatherLionApplication.USE_METRIC_PREFERENCE:
+                keyValue = String.valueOf( spf.getBoolean( property,
+                        Preference.DEFAULT_USE_METRIC ) );
+                break;
+
+            case WeatherLionApplication.ICON_SET_PREFERENCE:
+                keyValue = spf.getString( property,
+                        Preference.DEFAULT_ICON_SET );
+                break;
+
+            case WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE:
+                keyValue = spf.getString( property,
+                        Preference.DEFAULT_WIDGET_BACKGROUND );
+                break;
+
+            case WeatherLionApplication.UI_FONT:
+                keyValue = spf.getString( property,
+                        Preference.DEFAULT_UI_FONT );
+                break;
+        }// end of switch block
 
         // get the preference value and use it
-
-        return spf.getString( property, null );
+        return keyValue;
     }// end of method getPrefValues()
 
     /**
@@ -3581,7 +3623,7 @@ public abstract class UtilityMethod
      * @param cityName	The name of the city
      * @return	True/False dependent on the outcome of the check.
      */
-    public static boolean cityFoundInXMLStorage(String cityName )
+    public static boolean cityFoundInXMLStorage( String cityName )
     {
         boolean found = false;
 

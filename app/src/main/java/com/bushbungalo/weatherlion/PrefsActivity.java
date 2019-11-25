@@ -55,8 +55,8 @@ public class PrefsActivity extends AppCompatActivity
     private static double mLatitude;
     private static double mLongitude;
 
-    private ArrayList<String> permissionsToRequest;
-    private ArrayList<String> permissionsRejected;
+    private ArrayList< String > permissionsToRequest;
+    private ArrayList< String > permissionsRejected;
 
     private final static int ALL_PERMISSIONS_RESULT = 101;
     private LocationTrackerService locationTrackerService;
@@ -373,6 +373,7 @@ public class PrefsActivity extends AppCompatActivity
                         {
                             case WeatherLionApplication.CURRENT_LOCATION_PREFERENCE:
                                 WeatherLionApplication.storedPreferences.setLocation( stringValue );
+                                WeatherLionApplication.currentWxLocation = stringValue;
                                 summary = WeatherLionApplication.storedPreferences.getLocation();
                                 break;
                             case WeatherLionApplication.ICON_SET_PREFERENCE:
@@ -411,31 +412,7 @@ public class PrefsActivity extends AppCompatActivity
                         // For other preferences, set the summary to the value's simple string representation.
                         preference.setSummary( summary );
                     }// end of else block
-
-                    // this means that the change was not done by a binding event
-                    if( UtilityMethod.refreshRequestedBySystem || UtilityMethod.refreshRequestedByUser )
-                    {
-                        WidgetUpdateService.widgetRefreshRequired = true;
-                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                "Preferences requesting a data refresh...",
-                                TAG + "::onPreferenceChange" );
-
-                        String invoker = this.getClass().getSimpleName() + "::onReceive";
-                        Bundle extras = new Bundle();
-                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA, null );
-                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                            WeatherLionApplication.UNIT_NOT_CHANGED );
-
-                        // call the weather update service it the user selects a new weather source
-                        Intent updateIntent = new Intent( WeatherLionApplication.getAppContext(),
-                            WidgetUpdateService.class );
-                        updateIntent.putExtras( extras );
-                        WidgetUpdateService.enqueueWork( WeatherLionApplication.getAppContext(),
-                            updateIntent );
-
-                    }// end of if block
-                }
+                }// end of method onSharedPreferenceChanged
             };
 
             spf.registerOnSharedPreferenceChangeListener( listener );
@@ -500,6 +477,9 @@ public class PrefsActivity extends AppCompatActivity
 
                     // update global value
                     WeatherLionApplication.storedPreferences.setUseMetric( isEnabled );
+
+                    UtilityMethod.refreshRequestedByUser = true;
+                    UtilityMethod.refreshRequestedBySystem = false;
 
                     String invoker = this.getClass().getSimpleName() +
                             "::onCreate::useMetricSwitch.setOnPreferenceChangeListener";

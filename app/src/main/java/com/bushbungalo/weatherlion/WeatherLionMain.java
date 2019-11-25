@@ -1,6 +1,5 @@
 package com.bushbungalo.weatherlion;
 
-import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -108,11 +107,10 @@ public class WeatherLionMain extends AppCompatActivity
 {
     public static final String LION_LOCATION_PAYLOAD = "LocationPayload";
     public static final String LION_LIMIT_EXCEEDED_PAYLOAD = "LimitExceededPayload";
-
     public static final String KEY_UPDATE_PAYLOAD = "KeyUpdatePayload";
     public static final String KEY_UPDATE_MESSAGE = "loadAccessProviders";
-
     private final static String TAG = "WeatherLionMain";
+
     public Context mContext;
 
     // Data Access
@@ -129,7 +127,6 @@ public class WeatherLionMain extends AppCompatActivity
     private static StringBuilder currentFeelsLikeTemp = new StringBuilder();
     private static StringBuilder currentWindSpeed = new StringBuilder();
     private static StringBuilder currentWindDirection = new StringBuilder();
-    //private static StringBuilder currentHumidity = new StringBuilder();
     public  static StringBuilder currentCondition = new StringBuilder();
     private static StringBuilder currentHigh = new StringBuilder();
     private static StringBuilder currentLow = new StringBuilder();
@@ -173,7 +170,7 @@ public class WeatherLionMain extends AppCompatActivity
         Collections.sort( wxOnly );	// sort the list
 
         // GeoNames is not a weather provider so it cannot be select here
-        wxOnly.remove( "GeoNames" );
+        wxOnly.remove( WeatherLionApplication.GEO_NAMES );
 
         WeatherLionApplication.authorizedProviders = wxOnly.toArray( new String[ 0 ] );
 
@@ -184,9 +181,6 @@ public class WeatherLionMain extends AppCompatActivity
             UtilityMethod.butteredToast( WeatherLionApplication.getAppContext(),
                     "The program will not run without a working internet connection or data " +
                             "that was previously stored locally.",2, Toast.LENGTH_LONG );
-
-            // terminate the program
-            //finish();
         }// end of if block
         else if( WeatherLionApplication.connectedToInternet )
         {
@@ -478,7 +472,7 @@ public class WeatherLionMain extends AppCompatActivity
                 catch ( ParseException e )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                            TAG + "::loadMainActivity [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                    TAG + "::loadMainActivity [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
                 }// end of catch block
 
                 // Load current forecast condition weather image
@@ -490,8 +484,18 @@ public class WeatherLionMain extends AppCompatActivity
                 loadWeatherIcon( imvHourWeatherIcon, String.format(
                     "weather_images/%s/weather_%s", WeatherLionApplication.iconSet, fConditionIcon ) );
 
-                txvHourlyForecastTemp.setText( String.format( "%s%s", wxHourForecast.getTemperature(),
-                    WeatherLionApplication.DEGREES ) );
+                if( WeatherLionApplication.storedPreferences.getUseMetric() )
+                {
+                    txvHourlyForecastTemp.setText( String.format( "%s%s",
+                        Math.round( UtilityMethod.fahrenheitToCelsius(
+                            wxHourForecast.getTemperature() ) ),
+                                WeatherLionApplication.DEGREES ) );
+                }// end of if block
+                else
+                {
+                    txvHourlyForecastTemp.setText( String.format( "%s%s", wxHourForecast.getTemperature(),
+                        WeatherLionApplication.DEGREES ) );
+                }// end of else block
 
                 // distribute the views equally horizontally across the parent view
                 LinearLayout.LayoutParams childLayoutParams = new LinearLayout.LayoutParams(
@@ -865,8 +869,6 @@ public class WeatherLionMain extends AppCompatActivity
         this.getWindow().setFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN,
         WindowManager.LayoutParams.FLAG_FULLSCREEN ); //enable full screen
 
-        //UtilityMethod.showMessageDialog(nextAlarmDate.toString(), "Next Alarm", this );
-
         TextView txvMessage;
 
         // create and register the local application broadcast receiver
@@ -934,7 +936,7 @@ public class WeatherLionMain extends AppCompatActivity
             WeatherLionApplication.callMethodByName( null, "checkForStoredWeatherData",
                     null, null );
 
-            View keysDialogView = View.inflate(this, R.layout.wl_data_keys_layout, null);
+            View keysDialogView = View.inflate( this, R.layout.wl_data_keys_layout, null);
             WeatherLionApplication.iconSet = WeatherLionApplication.spf.getString(
                     WeatherLionApplication.ICON_SET_PREFERENCE, Preference.DEFAULT_ICON_SET );
 
@@ -961,11 +963,12 @@ public class WeatherLionMain extends AppCompatActivity
                 if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation() != null )
                 {
                     // if data was stored then the original value the location is known
-                    WeatherLionApplication.wxLocation =
+                    WeatherLionApplication.currentWxLocation =
                             WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
 
                     // if there is no location stored in the local preferences, go to the settings activity
-                    if( WeatherLionApplication.wxLocation.equalsIgnoreCase( "Unknown" ) )
+                    if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
+                            Preference.DEFAULT_WEATHER_LOCATION ) )
                     {
                         showPreferenceActivity( false );
                         return;
@@ -1039,7 +1042,7 @@ public class WeatherLionMain extends AppCompatActivity
 
                     txvMessage = findViewById( R.id.txvMessage );
                     txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
-                    View welcomeActivity = findViewById( R.id.weather_main_container);
+                    View welcomeActivity = findViewById( R.id.weather_main_container );
 
                     if( !UtilityMethod.hasInternetConnection( this ) )
                     {
@@ -1241,9 +1244,6 @@ public class WeatherLionMain extends AppCompatActivity
     {
         if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
         {
-//            UtilityMethod.refreshRequestedBySystem = true;
-//            UtilityMethod.refreshRequestedByUser = false;
-
             if( UtilityMethod.updateRequired( this ) )
             {
                 showLoadingDialog( "Refreshing widget" );
@@ -1543,7 +1543,7 @@ public class WeatherLionMain extends AppCompatActivity
         // if the list has more than 9 elements we will set the height if the window manually
         if( listItems.length > 9 )
         {
-            popupWindow.setHeight( 776 );
+            popupWindow.setHeight( 776 );   // random height value
         }// end of if block
 
         popupWindow.setOnItemClickListener( new AdapterView.OnItemClickListener()
@@ -1592,7 +1592,7 @@ public class WeatherLionMain extends AppCompatActivity
                             currentLocation.toString() ).apply();
 
                     WeatherLionApplication.storedPreferences.setLocation( currentLocation.toString() );
-                    WeatherLionApplication.wxLocation = currentCity.toString();
+                    WeatherLionApplication.currentWxLocation = currentCity.toString();
 
                     // send out a broadcast to the widget service that the location preference has been modified
                     UtilityMethod.refreshRequestedBySystem = false;
@@ -1671,7 +1671,8 @@ public class WeatherLionMain extends AppCompatActivity
 
         String[] accessNeededProviders = wxOnly.toArray( new String[ 0 ] );
 
-        //ArrayAdapter adapter = new ArrayAdapter( mContext, R.layout.wl_access_provider_spinner_style, accessNeededProviders );
+        //ArrayAdapter adapter = new ArrayAdapter( mContext,
+        // R.layout.wl_access_provider_spinner_style, accessNeededProviders );
 
         // create array adapter with custom fonts
         ArrayAdapter accessProvidersAdapter = new ArrayAdapter( this,
@@ -2153,64 +2154,42 @@ public class WeatherLionMain extends AppCompatActivity
         WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
 
         TextView txvCurrentTemperature = findViewById( R.id.txvCurrentTemperature );
+        txvCurrentTemperature.setTypeface( WeatherLionApplication.currentTypeface );
+
         TextView txvFeelsLikeTemperature = findViewById( R.id.txvClimateConditions);
+        txvFeelsLikeTemperature.setTypeface( WeatherLionApplication.currentTypeface );
+
         TextView txvHighTemp  = findViewById( R.id.txvHighTemp );
+        txvHighTemp.setTypeface( WeatherLionApplication.currentTypeface );
+
         TextView txvLowTemp  = findViewById( R.id.txvLowTemp );
+        txvLowTemp.setTypeface( WeatherLionApplication.currentTypeface );
 
-        // populate the global variables
-        if( WeatherLionApplication.storedPreferences.getUseMetric() )
-        {
-            currentTemp.setLength( 0 );
-            currentTemp.append( Math.round( UtilityMethod.fahrenheitToCelsius(
-                    (float) WeatherLionApplication.storedData.getCurrent().getTemperature() ) ) );
+        currentTemp.setLength( 0 );
+        currentTemp.append( Math.round(
+                (float) WeatherLionApplication.storedData.getCurrent().getTemperature() ) );
 
-            currentFeelsLikeTemp.setLength( 0 );
-            currentFeelsLikeTemp.append( Math.round( UtilityMethod.fahrenheitToCelsius(
-                    (float) WeatherLionApplication.storedData.getCurrent().getFeelsLike() ) ) );
+        currentFeelsLikeTemp.setLength( 0 );
+        currentFeelsLikeTemp.append( Math.round(
+                (float) WeatherLionApplication.storedData.getCurrent().getFeelsLike() ) );
 
-            currentHigh.setLength( 0 );
-            currentHigh.append( Math.round( UtilityMethod.fahrenheitToCelsius(
-                    (float) WeatherLionApplication.storedData.getCurrent().getHighTemperature() ) ) );
+        currentHigh.setLength( 0 );
+        currentHigh.append( Math.round(
+                (float) WeatherLionApplication.storedData.getCurrent().getHighTemperature() ) );
 
-            currentLow.setLength( 0 );
-            currentLow.append( Math.round( UtilityMethod.fahrenheitToCelsius(
-                    (float) WeatherLionApplication.storedData.getCurrent().getLowTemperature() ) ) );
+        currentLow.setLength( 0 );
+        currentLow.append( Math.round(
+                (float) WeatherLionApplication.storedData.getCurrent().getLowTemperature() ) );
 
-            currentWindSpeed.setLength( 0 );
-            currentWindSpeed.append(
-                    Math.round( UtilityMethod.mphToKmh( WeatherLionApplication.storedData.getWind().getWindSpeed() ) ) );
-        }// end of if block
-        else
-        {
-            currentTemp.setLength( 0 );
-            currentTemp.append( Math.round(
-                    (float) WeatherLionApplication.storedData.getCurrent().getTemperature() ) );
+        currentWindSpeed.setLength( 0 );
+        currentWindSpeed.append( Math.round(
+                WeatherLionApplication.storedData.getWind().getWindSpeed() ) );
 
-            currentFeelsLikeTemp.setLength( 0 );
-            currentFeelsLikeTemp.append( Math.round(
-                    (float) WeatherLionApplication.storedData.getCurrent().getFeelsLike() ) );
-
-            currentHigh.setLength( 0 );
-            currentHigh.append( Math.round(
-                    (float) WeatherLionApplication.storedData.getCurrent().getHighTemperature() ) );
-
-            currentLow.setLength( 0 );
-            currentLow.append( Math.round(
-                    (float) WeatherLionApplication.storedData.getCurrent().getLowTemperature() ) );
-
-            currentWindSpeed.setLength( 0 );
-            currentWindSpeed.append( Math.round(
-                    WeatherLionApplication.storedData.getWind().getWindSpeed() ) );
-        }// end of else block
 
         currentWindDirection.setLength( 0 );
         currentWindDirection.append( WeatherLionApplication.storedData.getWind().getWindDirection() );
 
         TextView txvWindReading = findViewById( R.id.txvWindReading );
-        txvWindReading.setTypeface( WeatherLionApplication.currentTypeface );
-        String windReading = String.format( "%s %s %s", currentWindDirection, currentWindSpeed,
-                ( WeatherLionApplication.storedPreferences.getUseMetric() ? "km/h" : "mph" ) );
-        txvWindReading.setText( windReading );
         txvWindReading.setTypeface( WeatherLionApplication.currentTypeface );
 
         // Windmill rotation
@@ -2232,9 +2211,6 @@ public class WeatherLionMain extends AppCompatActivity
         int rotationSpeed = UtilityMethod.getWindRotationSpeed(
             Integer.parseInt( currentWindSpeed.toString() ), "mph" );
 
-        // Tester
-//        int rotationSpeed = UtilityMethod.getWindRotationSpeed( 70, "mph" );
-
         // only set a rotation if the value is greater than 0
         if( rotationSpeed > 0 )
         {
@@ -2248,24 +2224,79 @@ public class WeatherLionMain extends AppCompatActivity
             blade.setAnimation( null );
         }// end of else block
 
-        // Display weather data on widget
-        txvCurrentTemperature.setText( String.format( "%s%s", currentTemp.toString(),
-                WeatherLionApplication.DEGREES ) );
-        txvCurrentTemperature.setTypeface( WeatherLionApplication.currentTypeface );
-        txvFeelsLikeTemperature.setText( String.format( "%s%s%s %s","Feels Like ",
-                currentFeelsLikeTemp, WeatherLionApplication.DEGREES, currentCondition ) );
-        txvFeelsLikeTemperature.setTypeface( WeatherLionApplication.currentTypeface );
+        // Display weather data in the activity
+        String displayCurrentTemp;
+        String displayCurrentFeelsLike;
+        String displayCurrentHighTemp;
+        String displayCurrentLowTemp;
+        String displayCurrentWindReading;
+        // Update the color of the temperature label
+        int inputValue;
 
-        txvHighTemp.setText( String.format( "%s%s",currentHigh.toString(), WeatherLionApplication.DEGREES ) );
-        txvHighTemp.setTypeface( WeatherLionApplication.currentTypeface );
-        txvLowTemp.setText( String.format( "%s%s", currentLow.toString(), WeatherLionApplication.DEGREES ) );
-        txvLowTemp.setTypeface( WeatherLionApplication.currentTypeface );
+
+        if( WeatherLionApplication.storedPreferences.getUseMetric() )
+        {
+            displayCurrentTemp = String.format( "%s%s",
+                Math.round(
+                    UtilityMethod.fahrenheitToCelsius( Float.parseFloat( currentTemp.toString() ) ) ),
+                        WeatherLionApplication.DEGREES );
+
+            displayCurrentFeelsLike = String.format( "%s %s%s %s",
+                WidgetUpdateService.FEELS_LIKE,
+                    Math.round(
+                        UtilityMethod.fahrenheitToCelsius( Float.parseFloat(
+                            currentFeelsLikeTemp.toString() ) ) ),
+                                WeatherLionApplication.DEGREES,
+                                    currentCondition );
+
+            displayCurrentHighTemp = String.format( "%s%s",
+                Math.round( UtilityMethod.fahrenheitToCelsius(
+                    Float.parseFloat( currentHigh.toString() ) ) ),
+                        WeatherLionApplication.DEGREES );
+
+            displayCurrentLowTemp = String.format( "%s%s",
+                Math.round(
+                    UtilityMethod.fahrenheitToCelsius( Float.parseFloat( currentLow.toString() ) ) ),
+                        WeatherLionApplication.DEGREES );
+
+            displayCurrentWindReading = String.format( "%s %s %s",
+                currentWindDirection, currentWindSpeed, "km/h" );
+
+            inputValue = (int) UtilityMethod.fahrenheitToCelsius( Integer.parseInt(
+                    currentTemp.toString().replaceAll( "\\D+","" ) ) );
+        }// end of if block
+        else
+        {
+            displayCurrentTemp = String.format( "%s%s",
+                currentTemp, WeatherLionApplication.DEGREES );
+
+            displayCurrentFeelsLike = String.format( "%s %s%s %s",
+                WidgetUpdateService.FEELS_LIKE,
+                    currentFeelsLikeTemp.toString(),
+                        WeatherLionApplication.DEGREES,
+                            currentCondition );
+
+            displayCurrentHighTemp = String.format( "%s%s",currentHigh.toString(), WeatherLionApplication.DEGREES );
+
+            displayCurrentLowTemp = String.format( "%s%s", currentLow.toString(), WeatherLionApplication.DEGREES );
+
+            displayCurrentWindReading = String.format( "%s %s %s",
+                    currentWindDirection, currentWindSpeed, "mph" );
+
+            inputValue = Integer.parseInt( currentTemp.toString().replaceAll( "\\D+","" ) );
+        }// end of else block
+
+        txvWindReading.setText( displayCurrentWindReading );
+        txvCurrentTemperature.setText( displayCurrentTemp );
+        txvFeelsLikeTemperature.setText( displayCurrentFeelsLike );
+        txvHighTemp.setText( displayCurrentHighTemp );
+        txvLowTemp.setText( displayCurrentLowTemp );
 
         // Update the color of the temperature label
+        int colour = UtilityMethod.temperatureColor( inputValue );
+
         txvCurrentTemperature.setTypeface( WeatherLionApplication.currentTypeface );
-        txvCurrentTemperature.setTextColor(
-                ( UtilityMethod.temperatureColor( Integer.parseInt(
-                        currentTemp.toString().replaceAll( "\\D+","" ) ) ) ) );
+        txvCurrentTemperature.setTextColor( colour );
     }// end of method updateTemps
 
     /**

@@ -119,7 +119,7 @@ public class WidgetUpdateService extends JobIntentService
     private final String CELSIUS = "\u00B0C";
     private final String DEGREES = "\u00B0";
     private final String FAHRENHEIT = "\u00B0F";
-    private static final String FEELS_LIKE = "Feels Like";
+    public static final String FEELS_LIKE = "Feels Like";
 
     private static StringBuilder currentCity = new StringBuilder();
     private static StringBuilder currentCountry = new StringBuilder();
@@ -254,8 +254,10 @@ public class WidgetUpdateService extends JobIntentService
         if( extras != null )
         {
             // if the unit in use is to be changed
-            unitChange = extras.getString( WEATHER_DATA_UNIT_CHANGED ) != null &&
-                Boolean.parseBoolean( extras.getString( WEATHER_DATA_UNIT_CHANGED ) );
+            if( extras.getString( WEATHER_DATA_UNIT_CHANGED ) != null )
+            {
+                unitChange = Boolean.parseBoolean( extras.getString( WEATHER_DATA_UNIT_CHANGED ) );
+            }// end of if block
 
             // the extra must be a string representation of a method
             callMethod = extras.getString( WeatherLionApplication.LAUNCH_METHOD_EXTRA );
@@ -307,8 +309,6 @@ public class WidgetUpdateService extends JobIntentService
             // If a location has not been set then the weather cannot be processed
             if( !locationSet ) return;
 
-            weatherUpdate = true;
-
             if( WeatherLionApplication.storedPreferences != null )
             {
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
@@ -329,32 +329,41 @@ public class WidgetUpdateService extends JobIntentService
                     currentCity.append( currentLocation );
                 }// ed of else block
 
-                String json;
-                float lat;
-                float lng;
-                strJSON = new ArrayList<>();
-                String wxDataProvider;
-
-                if( WeatherLionApplication.noAccessToStoredProvider )
+                // user only requires unit changes
+                if( unitChange )
                 {
-                    wxDataProvider = WeatherLionApplication.webAccessGranted.get( 0 );
+                    weatherUpdate = false;
+                    // update applicable widgets after the method call has completed
+                    updateAllAppWidgets( appWidgetManager );
                 }// end of if block
                 else
                 {
-                    wxDataProvider = WeatherLionApplication.storedPreferences.getProvider();
-                }// end of else block
+                    String json;
+                    float lat;
+                    float lng;
+                    strJSON = new ArrayList<>();
+                    String wxDataProvider;
 
-                boolean okToUse = UtilityMethod.okToUseService( wxDataProvider );
+                    weatherUpdate = true;
 
-                if( okToUse )
-                {
-                    if( !unitChange )
+                    if( WeatherLionApplication.noAccessToStoredProvider )
+                    {
+                        wxDataProvider = WeatherLionApplication.webAccessGranted.get( 0 );
+                    }// end of if block
+                    else
+                    {
+                        wxDataProvider = WeatherLionApplication.storedPreferences.getProvider();
+                    }// end of else block
+
+                    boolean okToUse = UtilityMethod.okToUseService( wxDataProvider );
+
+                    if( okToUse )
                     {
                         // Check the Internet connection availability
                         if( UtilityMethod.hasInternetConnection( this ) &&
                                 UtilityMethod.updateRequired( getApplicationContext() ) ||
                                 UtilityMethod.hasInternetConnection( this ) &&
-                                UtilityMethod.refreshRequestedBySystem ||
+                                        UtilityMethod.refreshRequestedBySystem ||
                                 UtilityMethod.refreshRequestedByUser )
                         {
                             wxUrl.setLength( 0 );
@@ -364,26 +373,38 @@ public class WidgetUpdateService extends JobIntentService
 
                             // if this location has already been used there is no need to query the
                             // web service as the location data has been stored locally
-                            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( WeatherLionApplication.wxLocation );
+                            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage(
+                                    WeatherLionApplication.currentWxLocation );
 
                             if( CityData.currentCityData == null )
                             {
                                 json =
-                                    UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
-                                        WeatherLionApplication.wxLocation );
+                                        UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                                                WeatherLionApplication.currentWxLocation );
                                 CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
 
                                 lat = CityData.currentCityData.getLatitude();
                                 lng = CityData.currentCityData.getLongitude();
 
-                                if(  WeatherLionApplication.currentLocationTimeZone == null)
+                                if( WeatherLionApplication.currentLocationTimeZone == null )
                                 {
                                     WeatherLionApplication.currentLocationTimeZone =
-                                        UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                                            UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                                }// end of if block
+
+                                // This data may have been corrupted due to a previous crash
+                                if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                                        .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                                {
+                                    WeatherLionApplication.storedData.getLocation().setTimezone(
+                                            CityData.currentCityData.getTimeZone() );
+
+                                    WeatherLionApplication.storedData.getLocation().setCountry(
+                                            CityData.currentCityData.getCountryName() );
                                 }// end of if block
 
                                 CityData.currentCityData.setTimeZone(
-                                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+                                        WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
                             }// end of if block
                             else
                             {
@@ -391,7 +412,7 @@ public class WidgetUpdateService extends JobIntentService
                                 lng = CityData.currentCityData.getLongitude();
 
                                 String today = new SimpleDateFormat( "MM/dd/yyyy",
-                                    Locale.ENGLISH ).format( new Date() );
+                                        Locale.ENGLISH ).format( new Date() );
 
                                 String sst = String.format( "%s %s", today,  WeatherLionApplication.currentSunsetTime.toString() );
                                 String srt = String.format( "%s %s", today,  WeatherLionApplication.currentSunriseTime.toString() );
@@ -400,7 +421,7 @@ public class WidgetUpdateService extends JobIntentService
                                 Date schedSunsetTime = null;
 
                                 SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
-                                    Locale.ENGLISH );
+                                        Locale.ENGLISH );
 
                                 try
                                 {
@@ -427,6 +448,17 @@ public class WidgetUpdateService extends JobIntentService
                                         UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ),
                                         schedSunriseTime,
                                         schedSunsetTime );
+
+                                // This data may have been corrupted due to a previous crash
+                                if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                                        .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                                {
+                                    WeatherLionApplication.storedData.getLocation().setTimezone(
+                                            CityData.currentCityData.getTimeZone() );
+
+                                    WeatherLionApplication.storedData.getLocation().setCountry(
+                                            CityData.currentCityData.getCountryName() );
+                                }// end of if block
                             }// end of else block
 
                             switch( wxDataProvider )
@@ -434,62 +466,62 @@ public class WidgetUpdateService extends JobIntentService
                                 case WeatherLionApplication.DARK_SKY:
                                     wxUrl.setLength( 0 );
                                     wxUrl.append( String.format( "https://api.darksky.net/forecast/%s/%s,%s",
-                                        darkSkyApiKey, lat, lng ) );
+                                            darkSkyApiKey, lat, lng ) );
 
                                     break;
                                 case WeatherLionApplication.OPEN_WEATHER:
                                     wxUrl.setLength( 0 );
                                     wxUrl.append(
-                                        String.format(
-                                            "https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=imperial"
-                                                , lat, lng, openWeatherMapApiKey ) );
+                                            String.format(
+                                                    "https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=imperial"
+                                                    , lat, lng, openWeatherMapApiKey ) );
 
                                     fxUrl.setLength( 0 );
                                     fxUrl.append(
-                                        String.format(
-                                            "https://api.openweathermap.org/data/2.5/forecast/daily?lat=%s&lon=%s&appid=%s&units=imperial"
-                                                , lat, lng, openWeatherMapApiKey ) );
+                                            String.format(
+                                                    "https://api.openweathermap.org/data/2.5/forecast/daily?lat=%s&lon=%s&appid=%s&units=imperial"
+                                                    , lat, lng, openWeatherMapApiKey ) );
 
                                     break;
                                 case WeatherLionApplication.HERE_MAPS:
                                     wxUrl.setLength( 0 );
                                     wxUrl.append(
-                                        String.format(
-                                            "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
-                                                , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "conditions" ),
+                                            String.format(
+                                                    "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
+                                                    , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "conditions" ),
                                                     UtilityMethod.escapeUriString( currentCity.toString() ) ) );
 
                                     fxUrl.setLength( 0 );
                                     fxUrl.append(
-                                        String.format(
-                                            "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
-                                                , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "forecast" ),
+                                            String.format(
+                                                    "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
+                                                    , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "forecast" ),
                                                     UtilityMethod.escapeUriString( currentCity.toString() ) ) );
 
                                     axUrl.setLength( 0 );
                                     axUrl.append(
-                                        String.format(
-                                            "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
-                                                , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "astronomy" ),
+                                            String.format(
+                                                    "https://weather.api.here.com/weather/1.0/report.json?app_id=%s&app_code=%s&product=%s&name=%s&metric=false"
+                                                    , hereAppId, hereAppCode, hereMapsWeatherProductKeys.get( "astronomy" ),
                                                     UtilityMethod.escapeUriString( currentCity.toString() ) ) );
                                     break;
                                 case WeatherLionApplication.WEATHER_BIT:
                                     wxUrl.setLength( 0 );
                                     wxUrl.append(
-                                        String.format( "https://api.weatherbit.io/v2.0/current?city=%s&units=I&key=%s",
-                                            UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
+                                            String.format( "https://api.weatherbit.io/v2.0/current?city=%s&units=I&key=%s",
+                                                    UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
 
                                     // 48 hour forecast data
                                     hxUrl.setLength( 0 );
                                     hxUrl.append(
-                                        String.format( "https://api.weatherbit.io/v2.0/forecast/hourly?city=%s&units=I&key=%s&hours=48",
-                                            UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
+                                            String.format( "https://api.weatherbit.io/v2.0/forecast/hourly?city=%s&units=I&key=%s&hours=48",
+                                                    UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
 
                                     // Sixteen day forecast will be used as it contains more relevant data
                                     fxUrl.setLength( 0 );
                                     fxUrl.append(
-                                        String.format( "https://api.weatherbit.io/v2.0/forecast/daily?city=%s&units=I&key=%s",
-                                            UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
+                                            String.format( "https://api.weatherbit.io/v2.0/forecast/daily?city=%s&units=I&key=%s",
+                                                    UtilityMethod.escapeUriString( currentCity.toString() ), weatherBitApiKey ) );
                                     break;
                                 case WeatherLionApplication.YAHOO_WEATHER:
                                     expectedJSONSize = 1;
@@ -617,14 +649,15 @@ public class WidgetUpdateService extends JobIntentService
                                 }// end of catch block
                             }// end of if block
                         }// end of if block
+
                     }// end of if block
-                }// end of if block
-                else
-                {
-                    Intent settingsIntent = new Intent( this, PrefsActivity.class );
-                    settingsIntent.putExtra( WeatherLionMain.LION_LIMIT_EXCEEDED_PAYLOAD, true );
-                    startActivity( settingsIntent );
-                }// end of else
+                    else
+                    {
+                        Intent settingsIntent = new Intent( this, PrefsActivity.class );
+                        settingsIntent.putExtra( WeatherLionMain.LION_LIMIT_EXCEEDED_PAYLOAD, true );
+                        startActivity( settingsIntent );
+                    }// end of else
+                }// end of else block
             }// end of if block
         }// end of else block
     }// end of method handleWeatherData
@@ -1558,7 +1591,7 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( darkSky.getCurrently().getSummary() ) ) );
 
         currentWindDirection.setLength( 0 );
-        currentWindDirection.append( UtilityMethod.compassDirection(darkSky.getCurrently().getWindBearing() ) );
+        currentWindDirection.append( UtilityMethod.compassDirection( darkSky.getCurrently().getWindBearing() ) );
 
         currentHumidity.setLength( 0 );
         currentHumidity.append( Math.round( darkSky.getCurrently().getHumidity() * 100 ) );
@@ -1624,7 +1657,7 @@ public class WidgetUpdateService extends JobIntentService
         // Five Hour Forecast
         int x = 1;
 
-        if( ZoneId.systemDefault().getId().toLowerCase().equals(
+        if( ZoneId.systemDefault().getId().equalsIgnoreCase(
                 WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
         {
             checkTime = LocalDateTime.now();
@@ -1637,7 +1670,7 @@ public class WidgetUpdateService extends JobIntentService
         LocalDateTime currentForecastHour;
         DateTimeFormatter hourlyFormat = DateTimeFormatter.ofPattern( "h:mm a" );
 
-        // clear any previous data stores
+        // clear any previous data stored
         currentFiveHourForecast.clear();
 
         // get and store hourly forecast
@@ -2333,7 +2366,7 @@ public class WidgetUpdateService extends JobIntentService
         // Five Hour Forecast
         float fTemp;    // forecasted hour temperature
 
-        if( ZoneId.systemDefault().getId().toLowerCase().equals(
+        if( ZoneId.systemDefault().getId().equalsIgnoreCase(
                 WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
         {
             checkTime = LocalDateTime.now();
@@ -2724,7 +2757,7 @@ public class WidgetUpdateService extends JobIntentService
 
         float fTemp;    // forecasted hour temperature
 
-        if( ZoneId.systemDefault().getId().toLowerCase().equals(
+        if( ZoneId.systemDefault().getId().equalsIgnoreCase(
                 WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
         {
             checkTime = LocalDateTime.now();
@@ -3060,7 +3093,7 @@ public class WidgetUpdateService extends JobIntentService
                     "h:mm a", Locale.ENGLISH ).format( nextAlarmDate );
             int hoursTilNextAlarm = UtilityMethod.getHoursDifference( new Date(), nextAlarmDate );
 
-            if( hoursTilNextAlarm <= 12 )
+            if( hoursTilNextAlarm <= 9 )
             {
                 largeWidgetRemoteViews.setViewVisibility( R.id.relNextAlarm, View.VISIBLE );
                 largeWidgetRemoteViews.setTextViewText( R.id.txvAlarmTime, alarmTime );
@@ -3194,7 +3227,7 @@ public class WidgetUpdateService extends JobIntentService
                     // Five Hour Forecast
                     int x = 1;
 
-                    if( ZoneId.systemDefault().getId().toLowerCase().equals(
+                    if( ZoneId.systemDefault().getId().equalsIgnoreCase(
                             WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
                     {
                         checkTime = LocalDateTime.now();
@@ -3632,7 +3665,7 @@ public class WidgetUpdateService extends JobIntentService
                     hourlyReading = new Hashtable<>();
                     float fTemp;    // forecasted hour temperature
 
-                    if( ZoneId.systemDefault().getId().toLowerCase().equals(
+                    if( ZoneId.systemDefault().getId().equalsIgnoreCase(
                             WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
                     {
                         checkTime = LocalDateTime.now();
@@ -3887,45 +3920,29 @@ public class WidgetUpdateService extends JobIntentService
 
                     break;
                 case WeatherLionApplication.YR_WEATHER:
+                    // Yr always outputs data using metric values which must always
+                    // be converted to imperial
                     currentWindDirection.setLength( 0 );
                     currentWindDirection.append(
                             yr.getForecast().get( 0 ).getWindDirCode() );
 
-                    if( WeatherLionApplication.storedPreferences.getUseMetric() )
-                    {
-                        currentTemp.setLength( 0 );
-                        currentTemp.append( yr.getForecast().get( 0 ).getTemperatureValue() );
+                    // convert units to imperial value
+                    currentTemp.setLength( 0 );
+                    currentTemp.append( Math.round(
+                            UtilityMethod.celsiusToFahrenheit(
+                                    yr.getForecast().get( 0 ).getTemperatureValue() ) ) );
 
-                        currentWindSpeed.setLength( 0 );
-                        currentWindSpeed.append(
-                                Math.round(
-                                        UtilityMethod.mpsToKmh( yr.getForecast().get( 0 ).getWindSpeedMps() ) ) );
+                    currentWindSpeed.setLength( 0 );
+                    currentWindSpeed.append(
+                            Math.round(
+                                UtilityMethod.mpsToMph( yr.getForecast().get( 0 ).getWindSpeedMps() ) ) );
 
-                        int feelsLike = UtilityMethod.calculateWindChill(
-                                Math.round( yr.getForecast().get( 0 ).getTemperatureValue() ),
-                                Integer.parseInt( currentWindSpeed.toString() ) );
+                    int feelsLike = UtilityMethod.calculateWindChill(
+                        Integer.parseInt( currentTemp.toString() ),
+                            Integer.parseInt( currentWindSpeed.toString() ) );
 
-                        currentFeelsLikeTemp.setLength( 0 );
-                        currentFeelsLikeTemp.append( feelsLike );
-                    }// end of if block
-                    else
-                    {
-                        currentTemp.setLength( 0 );
-                        currentTemp.append( Math.round(
-                                UtilityMethod.celsiusToFahrenheit(
-                                        yr.getForecast().get( 0 ).getTemperatureValue() ) ) );
-
-                        currentWindSpeed.setLength( 0 );
-                        currentWindSpeed.append(
-                                Math.round( UtilityMethod.mpsToMph( yr.getForecast().get( 0 ).getWindSpeedMps() ) ) );
-
-                        int feelsLike = UtilityMethod.calculateWindChill(
-                                Integer.parseInt( currentTemp.toString() ),
-                                Integer.parseInt( currentWindSpeed.toString() ) );
-
-                        currentFeelsLikeTemp.setLength( 0 );
-                        currentFeelsLikeTemp.append( feelsLike );
-                    }// end of else block
+                    currentFeelsLikeTemp.setLength( 0 );
+                    currentFeelsLikeTemp.append( feelsLike );
 
                     List< YrWeatherDataItem.Forecast > fdf = yr.getForecast();
                     List< YrWeatherDataItem.HourByHourForecast > fhf = yr.getHourlyForecast();
@@ -3935,7 +3952,7 @@ public class WidgetUpdateService extends JobIntentService
                     float lowestTempToday = ct;
                     float highestTempToday = ct;
 
-                    if( ZoneId.systemDefault().getId().toLowerCase().equals(
+                    if( ZoneId.systemDefault().getId().equalsIgnoreCase(
                             WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
                     {
                         checkTime = LocalDateTime.now();
@@ -4007,20 +4024,60 @@ public class WidgetUpdateService extends JobIntentService
                     currentLow.setLength( 0 );
                     currentLow.append( Math.round( lowestTempToday ) );
 
-                    // Display weather data on the large widget
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + tempUnits );
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, String.format(
-                            "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
-                            " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric()
-                            ? " km/h" : " mph" ) );
+                    if( WeatherLionApplication.storedPreferences.getUseMetric() )
+                    {
+                        String metricCurrentTemp = String.format( "%s%s",
+                                Math.round(
+                                        UtilityMethod.fahrenheitToCelsius(
+                                                Float.parseFloat( currentTemp.toString() ) ) ), tempUnits );
+                        String metricCurrentHigh = String.format( "%s%s",
+                                Math.round(
+                                        UtilityMethod.fahrenheitToCelsius(
+                                                Float.parseFloat( currentHigh.toString() ) ) ), DEGREES );
+                        String metricCurrentLow = String.format( "%s%s",
+                                Math.round(
+                                        UtilityMethod.fahrenheitToCelsius(
+                                                Float.parseFloat( currentLow.toString() ) ) ), DEGREES );
+                        String metricCurrentFeelsLike = String.format( "%s %s%s",
+                                FEELS_LIKE,
+                                Math.round(
+                                        UtilityMethod.fahrenheitToCelsius(
+                                                Float.parseFloat( currentFeelsLikeTemp.toString() ) ) ), DEGREES );
+                        String metricCurrentWindReading = String.format( "%s %s %s",
+                                currentWindDirection.toString(),
+                                currentWindSpeed,
+                                ( WeatherLionApplication.storedPreferences.getUseMetric()
+                                        ? "km/h" : "mph" ) );
 
-                    // Display weather data on the small widget
-                    smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
-                    smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
-                    smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
+                         // Display weather data on the large widget using metric values
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, metricCurrentTemp );
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, metricCurrentHigh );
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, metricCurrentLow );
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, metricCurrentFeelsLike );
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading, metricCurrentWindReading );
+
+                        // Display weather data on the small widget using metric values
+                        smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature,  metricCurrentTemp );
+                        smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, metricCurrentHigh );
+                        smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, metricCurrentLow );
+                    }// end of if block
+                    else
+                    {
+                        // Display weather data on the large widget using imperial values
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + tempUnits );
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, String.format(
+                                "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
+                                " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric()
+                                ? " km/h" : " mph" ) );
+
+                        // Display weather data on the small widget using imperial values
+                        smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
+                        smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
+                        smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
+                    }// end of else block
 
                     // Five Day Forecast
                     i = 1;
@@ -4092,29 +4149,31 @@ public class WidgetUpdateService extends JobIntentService
                     for ( Forecast wxForecast : fdf )
                     {
                         x++;
-
                         String fDate = df.format( wxForecast.getTimeFrom() );
+
+                        // data should already be in imperial values
+                        fHigh = dailyReading.get( fDate ) [ 0 ][ 0 ];
+                        fLow =  dailyReading.get( fDate ) [ 0 ][ 1 ];
 
                         // the first time period is always the current reading for this moment
                         if ( x == 1 )
                         {
-                            fHigh = dailyReading.get( fDate ) [ 0 ][ 0 ];
-                            fLow = dailyReading.get( fDate ) [ 0 ][ 1 ];
-
                             if( WeatherLionApplication.storedPreferences.getUseMetric() )
                             {
-                                largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, fHigh + DEGREES );
-                                largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, fLow + DEGREES );
+                                String metricForecastHigh = String.format( "%s%s",
+                                    Math.round(
+                                        UtilityMethod.fahrenheitToCelsius( fHigh ) ),
+                                            DEGREES );
+                                String metricForecastLow = String.format( "%s%s",
+                                    Math.round(
+                                        UtilityMethod.fahrenheitToCelsius( fLow ) ),
+                                            DEGREES );
 
-                                smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, fHigh + DEGREES );
-                                smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, fLow + DEGREES );
+                                largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, metricForecastHigh );
+                                largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow,  metricForecastLow );
 
-                                fHigh = Math.round(
-                                        UtilityMethod.celsiusToFahrenheit(
-                                                dailyReading.get( df.format( wxForecast.getTimeFrom() ) )[ 0 ][ 0 ] ) );
-                                fLow = Math.round(
-                                        UtilityMethod.celsiusToFahrenheit(
-                                                dailyReading.get( df.format( wxForecast.getTimeFrom() ) )[ 0 ][ 1 ] ) );
+                                smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, metricForecastHigh );
+                                smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, metricForecastLow );
 
                                 temps = String.format( "%s° %s°", (int) fLow, (int) fHigh );
 
@@ -4164,8 +4223,11 @@ public class WidgetUpdateService extends JobIntentService
                     break;
             }// end of switch block
         }// end of if block
-        else // if there is no Internet connection
+        else // if there is no Internet connection or just a unit change
         {
+            WeatherLionApplication.storedData =
+                    WeatherLionApplication.lastDataReceived.getWeatherData();
+
             tempUnits = WeatherLionApplication.storedPreferences.getUseMetric() ? CELSIUS : FAHRENHEIT;
 
             // populate the global variables
@@ -4178,65 +4240,80 @@ public class WidgetUpdateService extends JobIntentService
             currentHumidity.setLength( 0 );
             currentHumidity.append( WeatherLionApplication.storedData.getAtmosphere().getHumidity() );
 
+            currentTemp.setLength( 0 );
+            currentTemp.append( WeatherLionApplication.storedData.getCurrent().getTemperature() );
+
+            currentFeelsLikeTemp.setLength( 0 );
+            currentFeelsLikeTemp.append( Math.round(
+                    WeatherLionApplication.storedData.getCurrent().getFeelsLike() ) );
+
+            currentHigh.setLength( 0 );
+            currentHigh.append( Math.round(
+                    WeatherLionApplication.storedData.getCurrent().getHighTemperature() ) );
+
+            currentLow.setLength( 0 );
+            currentLow.append( Math.round(
+                    WeatherLionApplication.storedData.getCurrent().getLowTemperature() ) );
+
+            currentWindSpeed.setLength( 0 );
+            currentWindSpeed.append( Math.round(
+                    WeatherLionApplication.storedData.getWind().getWindSpeed() ) );
+
+            // Display weather data on the widgets according to the selected unit of measures
             if( WeatherLionApplication.storedPreferences.getUseMetric() )
             {
-                currentTemp.setLength( 0 );
-                currentTemp.append( Math.round( UtilityMethod.fahrenheitToCelsius(
-                        WeatherLionApplication.storedData.getCurrent().getTemperature() ) ) );
+                String metricCurrentTemp = String.format( "%s%s",
+                        Math.round(
+                                UtilityMethod.fahrenheitToCelsius(
+                                        Float.parseFloat( currentTemp.toString() ) ) ), tempUnits );
+                String metricCurrentHigh = String.format( "%s%s",
+                        Math.round(
+                                UtilityMethod.fahrenheitToCelsius(
+                                        Float.parseFloat( currentHigh.toString() ) ) ), DEGREES );
+                String metricCurrentLow = String.format( "%s%s",
+                        Math.round(
+                                UtilityMethod.fahrenheitToCelsius(
+                                        Float.parseFloat( currentLow.toString() ) ) ), DEGREES );
+                String metricCurrentFeelsLike = String.format( "%s %s%s",
+                        FEELS_LIKE,
+                        Math.round(
+                                UtilityMethod.fahrenheitToCelsius(
+                                        Float.parseFloat( currentFeelsLikeTemp.toString() ) ) ), DEGREES );
+                String metricCurrentWindReading = String.format( "%s %s %s",
+                        currentWindDirection.toString(),
+                        currentWindSpeed,
+                        ( WeatherLionApplication.storedPreferences.getUseMetric()
+                                ? "km/h" : "mph" ) );
 
-                currentFeelsLikeTemp.setLength( 0 );
-                currentFeelsLikeTemp.append( Math.round( UtilityMethod.fahrenheitToCelsius(
-                        WeatherLionApplication.storedData.getCurrent().getFeelsLike() ) ) );
+                // Display weather data on the large widget using metric values
+                largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, metricCurrentTemp );
+                largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, metricCurrentHigh );
+                largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, metricCurrentLow );
+                largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, metricCurrentFeelsLike );
+                largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading, metricCurrentWindReading );
 
-                currentHigh.setLength( 0 );
-                currentHigh.append( Math.round( UtilityMethod.fahrenheitToCelsius(
-                        WeatherLionApplication.storedData.getCurrent().getHighTemperature() ) ) );
-
-                currentLow.setLength( 0 );
-                currentLow.append( Math.round( UtilityMethod.fahrenheitToCelsius(
-                        WeatherLionApplication.storedData.getCurrent().getLowTemperature() ) ) );
-
-                currentWindSpeed.setLength( 0 );
-                currentWindSpeed.append(
-                        Math.round( UtilityMethod.mphToKmh( WeatherLionApplication.storedData.getWind().getWindSpeed() ) ) );
+                // Display weather data on the small widget using metric values
+                smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature,  metricCurrentTemp );
+                smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, metricCurrentHigh );
+                smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, metricCurrentLow );
             }// end of if block
             else
             {
-                currentTemp.setLength( 0 );
-                currentTemp.append( WeatherLionApplication.storedData.getCurrent().getTemperature() );
+                // Display weather data on the large widget using imperial values
+                largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + tempUnits );
+                largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
+                largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
+                largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, String.format(
+                        "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
+                largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
+                        " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric()
+                        ? " km/h" : " mph" ) );
 
-                currentFeelsLikeTemp.setLength( 0 );
-                currentFeelsLikeTemp.append( Math.round(
-                        WeatherLionApplication.storedData.getCurrent().getFeelsLike() ) );
-
-                currentHigh.setLength( 0 );
-                currentHigh.append( Math.round(
-                        WeatherLionApplication.storedData.getCurrent().getHighTemperature() ) );
-
-                currentLow.setLength( 0 );
-                currentLow.append( Math.round(
-                        WeatherLionApplication.storedData.getCurrent().getLowTemperature() ) );
-
-                currentWindSpeed.setLength( 0 );
-                currentWindSpeed.append( Math.round(
-                        WeatherLionApplication.storedData.getWind().getWindSpeed() ) );
+                // Display weather data on the small widget using imperial values
+                smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
+                smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
+                smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
             }// end of else block
-
-            // Display weather data on the large widget
-            largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + tempUnits );
-            largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, "Feels Like " +
-                    currentFeelsLikeTemp.toString() + DEGREES );
-            largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh.toString() + DEGREES );
-            largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow.toString() + DEGREES );
-
-            largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading, currentWindDirection +
-                    " " + currentWindSpeed + ( WeatherLionApplication.storedPreferences.getUseMetric()
-                    ? " km/h" : " mph" ) );
-
-            // Display weather data on the small widget
-            smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
-            smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
-            smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
             hl = new int[ 5 ][ 2 ];
 
@@ -4245,47 +4322,35 @@ public class WidgetUpdateService extends JobIntentService
                 LastWeatherData.WeatherData.DailyForecast.DayForecast wxDayForecast =
                         WeatherLionApplication.storedData.getDailyForecast().get( i );
                 String temps;
-                String fh;
-                String fLow;
+                int fHigh = wxDayForecast.getHighTemperature();
+                int fLow = wxDayForecast.getLowTemperature();
 
                 if( WeatherLionApplication.storedPreferences.getUseMetric() )
                 {
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, Math.round( UtilityMethod.fahrenheitToCelsius(
-                            wxDayForecast.getHighTemperature() ) ) + DEGREES );
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, Math.round( UtilityMethod.fahrenheitToCelsius(
-                            wxDayForecast.getLowTemperature() ) ) + DEGREES );
+                    String metricForecastHigh = String.format( "%s%s",
+                        Math.round(
+                            UtilityMethod.fahrenheitToCelsius( fHigh ) ),
+                                DEGREES );
+                    String metricForecastLow = String.format( "%s%s",
+                        Math.round(
+                            UtilityMethod.fahrenheitToCelsius( fLow ) ),
+                                DEGREES );
 
-                    smallWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, Math.round( UtilityMethod.fahrenheitToCelsius(
-                            wxDayForecast.getHighTemperature() ) ) + DEGREES );
-                    smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, Math.round( UtilityMethod.fahrenheitToCelsius(
-                            wxDayForecast.getLowTemperature() ) ) + DEGREES );
-
-                    fh = String.valueOf( Math.round( UtilityMethod.fahrenheitToCelsius( wxDayForecast.getHighTemperature() ) ) );
-                    fLow = String.valueOf( Math.round( UtilityMethod.fahrenheitToCelsius( wxDayForecast.getLowTemperature() ) ) );
-                    temps = String.format( "%s° %s°", ( int ) Float.parseFloat( fLow ), ( int ) Float.parseFloat( fh ) );
-
+                    temps = String.format( "%s %s", metricForecastHigh, metricForecastLow );
                 }// end of if block
                 else
                 {
-                    fh = String.valueOf( wxDayForecast.getHighTemperature() );
-                    fLow = String.valueOf( wxDayForecast.getLowTemperature() );
+                    fHigh = wxDayForecast.getHighTemperature();
+                    fLow = wxDayForecast.getLowTemperature();
 
-                    if( fh.equals( "" ) )
-                    {
-                        fh = "0";
-                    }// end of if block
-                    else if( fLow.equals( "" )  )
-                    {
-                        fLow = "0";
-                    }// end of if block
-
-                    temps = String.format( "%s° %s°", ( int ) Float.parseFloat( fLow ), ( int ) Float.parseFloat( fh ) );
+                    temps = String.format( "%s° %s°", fLow, fHigh );
                 }// end of else block
 
-                hl[i][0] = ( int ) Float.parseFloat( fh );
-                hl[i][1] = ( int ) Float.parseFloat( fLow );
+                hl[ i ][ 0 ] = fHigh;
+                hl[ i ][ 1 ] = fLow;
+                String viewIdName = "txvDay" + (i + 1) + "Temps";
 
-                int dayTemps = this.getResources().getIdentifier( "txvDay" + (i + 1) + "Temps",
+                int dayTemps = this.getResources().getIdentifier( viewIdName,
                         "id", this.getPackageName() );
 
                 largeWidgetRemoteViews.setTextViewText( dayTemps, temps );
@@ -4297,14 +4362,15 @@ public class WidgetUpdateService extends JobIntentService
             }// end of for loop
         }// end of else block
 
-        // Update the color of the temperature label
-        largeWidgetRemoteViews.setTextColor( R.id.txvCurrentTemperature,
-            ( UtilityMethod.temperatureColor( Integer.parseInt(
-                currentTemp.toString().replaceAll( "\\D+","" ) ) ) ) );
+        int inputValue = WeatherLionApplication.storedPreferences.getUseMetric()
+                ? (int) UtilityMethod.fahrenheitToCelsius( Integer.parseInt(
+                    currentTemp.toString().replaceAll( "\\D+","" ) ) )
+                : Integer.parseInt( currentTemp.toString().replaceAll( "\\D+","" ) );
+        int colour = UtilityMethod.temperatureColor( inputValue );
 
-        smallWidgetRemoteViews.setTextColor( R.id.txvCurrentTemperature,
-                ( UtilityMethod.temperatureColor( Integer.parseInt(
-                        currentTemp.toString().replaceAll( "\\D+","" ) ) ) ) );
+        // Update the color of the temperature label
+        largeWidgetRemoteViews.setTextColor( R.id.txvCurrentTemperature, colour );
+        smallWidgetRemoteViews.setTextColor( R.id.txvCurrentTemperature, colour );
     }// end of method updateTemps  
 
     /**

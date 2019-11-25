@@ -99,7 +99,15 @@ import javax.crypto.spec.SecretKeySpec;
 public class WeatherLionApplication extends Application
 {
     private static Context context;
+    private static List< String > keysMissing;
     private static String TAG = "WeatherLionApplication";
+
+    private int methodResponse = 0;
+
+    private BroadcastReceiver systemBroadcastReceiver = new SystemBroadcastReceiver();
+    private BroadcastReceiver appBroadcastReceiver = new AppBroadcastReceiver();
+
+    public static final int DAILY_CALL_LIMIT = 1000;
 
     public static final String LAUNCH_METHOD_EXTRA = "MethodToCall";
     public static final String EMPTY_JSON = "{}";
@@ -149,13 +157,60 @@ public class WeatherLionApplication extends Application
     public static final String YAHOO_WEATHER = "Yahoo! Weather";
     public static final String YR_WEATHER = "Norwegian Meteorological Institute";
     public static String[] providerNames = new String[] {
-            DARK_SKY, GEO_NAMES, HERE_MAPS, OPEN_WEATHER, WEATHER_BIT, YAHOO_WEATHER, YR_WEATHER };
+            DARK_SKY, GEO_NAMES, HERE_MAPS, OPEN_WEATHER,
+            WEATHER_BIT, YAHOO_WEATHER, YR_WEATHER };
 
-    public static final int DAILY_CALL_LIMIT = 1000;
+    public static final String DEFAULT_ICON_SET = "MIUI";
+    public static final String CELSIUS = "\u00B0C";
+    public static final String DEGREES = "\u00B0";
+    public static final String FAHRENHEIT = "\u00B0F";
+    public static final String UNIT_NOT_CHANGED = "false";
+    public static final String UNIT_CHANGED = "true";
+
+    public static String widBackgroundColor;
+    public static String currentWxLocation; // this location must always reflect the user's last selection
+    public static String iconSet = null; // To be updated
+    public static String systemLocation;
+    public static String selectedProvider;
+    public static String selectedKeyName;
+    public static String dataAccessKeyName;
+    public static String timeOfDayToUse;
+
+    public static StringBuilder currentSunriseTime = new StringBuilder();
+    public static StringBuilder currentSunsetTime = new StringBuilder();
+    public static StringBuilder previousWeatherProvider = new StringBuilder();
 
     public static String[] authorizedProviders;
+    public static String[] darkSkyRequiredKeys = new String[] { "api_key" };
+    public static String[] geoNamesRequiredKeys = new String[] { "username" };
+    public static String[] hereMapsRequiredKeys = new String[] { "app_id", "app_code" };
+    public static String[] openWeatherMapRequiredKeys = new String[] { "api_key" };
+    public static String[] weatherBitRequiredKeys = new String[] { "api_key" };
+    public static String[] yahooRequiredKeys = new String[] { "app_id", "consumer_key", "consumer_secret" };
 
-    public static LinkedHashMap<String, String> updateIntervalValues;
+    public static boolean geoNamesAccountLoaded;
+    public static boolean weatherLoadedFromProvider;
+    public static boolean noAccessToStoredProvider;
+    public static boolean connectedToInternet;
+    public static boolean locationSet = false;
+    public static boolean useSystemLocation = false;
+    public static boolean setCurrentCity = false;
+
+    public static Activity currentActivity;
+
+    public static ArrayList< String > webAccessGranted;
+
+    public static Color systemColor;
+
+    public static Date previousLastUpdate;
+
+    public static Drawable systemButtonDrawable;
+    public static Drawable widgetBackgroundDrawable;
+
+    public static File previousCitySearchFile = null;
+
+    public static LinkedHashMap< String, Typeface > fonts;
+    public static LinkedHashMap< String, String > updateIntervalValues;
     static
     {
         updateIntervalValues = new LinkedHashMap<>();
@@ -164,114 +219,37 @@ public class WeatherLionApplication extends Application
         updateIntervalValues.put( "3600000", "1 Hour" );
     }
 
-    public static String[] darkSkyRequiredKeys = new String[] { "api_key" };
-    public static String[] geoNamesRequiredKeys = new String[] { "username" };
-    public static String[] hereMapsRequiredKeys = new String[] { "app_id", "app_code" };
-    public static String[] openWeatherMapRequiredKeys = new String[] { "api_key" };
-    public static String[] weatherBitRequiredKeys = new String[] { "api_key" };
-    public static String[] yahooRequiredKeys = new String[] { "app_id", "consumer_key", "consumer_secret" };
-
-    // Default program icon set name
-    public static final String DEFAULT_ICON_SET = "MIUI";
-    public static String iconSet = null; // To be updated
-
-    // system location
-    public static String systemLocation;
-
-    // stored preferences
-    public static Preference storedPreferences;
-
-    // miscellaneous
-    public static CityData currentCityData;
-
-    // the program utilizes the services of
-    public static boolean geoNamesAccountLoaded;
-
-    // track whether the data was received from the provider or
-    // locally due to Internet connectivity
-    public static boolean weatherLoadedFromProvider;
-    public static boolean noAccessToStoredProvider;
-
-    public static boolean connectedToInternet;
+    public static LocalDateTime localDateTime;
 
     public static SharedPreferences spf = null;
 
-    public static boolean locationSet = false;
-    public static  boolean useSystemLocation = false;
-    public static boolean setCurrentCity = false;
-
-    public static Color systemColor;
-    public static Drawable systemButtonDrawable;
-    public static Drawable widgetBackgroundDrawable;
-
-    public static String widBackgroundColor;
     public static Typeface currentTypeface;
     public static Typeface helveticaNeue;
     public static Typeface productsSans;
     public static Typeface samsungSans;
 
-    public static LinkedHashMap<String, Typeface> fonts;
-
     public static boolean firstRun;
     public static boolean localWeatherDataAvailable;
-
     public static boolean changeWidgetUnit;
-
-    private static List< String > keysMissing;
-    public static LastWeatherData.WeatherData storedData;
-
-    public static ArrayList< String > webAccessGranted;
-
-    private BroadcastReceiver systemBroadcastReceiver = new SystemBroadcastReceiver();
-    private BroadcastReceiver appBroadcastReceiver = new AppBroadcastReceiver();
-
     public static boolean useGps;
     public static boolean useMetric;
-    public static String wxLocation;
-
-    public static Preference systemPreferences;
-
     public static boolean gpsRadioEnabled;
-
-    public static String selectedProvider;
-    public static String selectedKeyName;
-    public static String dataAccessKeyName;
-
-    private int methodResponse = 0;
-
-    public static StringBuilder currentSunriseTime = new StringBuilder();
-    public static StringBuilder currentSunsetTime = new StringBuilder();
-
-    //public static final String CELSIUS = "\u00B0C";
-    public static final String DEGREES = "\u00B0";
-    //public static final String FAHRENHEIT = "\u00B0F";
-
-    public static LastWeatherData lastDataReceived;
-    public static StringBuilder previousWeatherProvider = new StringBuilder();
-    public static Date previousLastUpdate;
-
-    public static boolean firstLaunchCompleted;
-
-    public static final String UNIT_NOT_CHANGED = "false";
-    public static final String UNIT_CHANGED = "true";
-
-    public static File previousCitySearchFile = null;
-    public static WeatherLionApplication thisClass;
 
     public static int[] largeWidgetIds;
     public static int[] smallWidgetIds;
 
+    public static boolean firstLaunchCompleted;
     public static boolean dataLoadedSuccessfully = false;
     public static boolean restoringWeatherData;
-
-    public static TimeZoneInfo currentLocationTimeZone;
-    public static String timeOfDayToUse;
-
-    public static LocalDateTime localDateTime;
-
-    public static Activity currentActivity;
-
     public static boolean mainWindowShowing = false;
+
+    public static CityData currentCityData;
+    public static LastWeatherData lastDataReceived;
+    public static LastWeatherData.WeatherData storedData;
+    public static Preference systemPreferences;
+    public static Preference storedPreferences;
+    public static TimeZoneInfo currentLocationTimeZone;
+    public static WeatherLionApplication thisClass;
 
     /**
      * Checks to see if the program is being run for the first time.
@@ -333,7 +311,7 @@ public class WeatherLionApplication extends Application
                 currentSunsetTime = new StringBuilder( storedData.getAstronomy().getSunset() );
 
                 // weather data might not have been saved as intended as change
-                if( !wxLocation.equals( storedData.getLocation().getCity() ) )
+                if( !currentWxLocation.equals( storedData.getLocation().getCity() ) )
                 {
                     String invoker = this.getClass().getSimpleName() + "::" +
                         Objects.requireNonNull(
@@ -641,7 +619,7 @@ public class WeatherLionApplication extends Application
     private void createServiceCallLog()
     {
         File callTracker = new File( this.getFileStreamPath( SERVICE_CALL_LOG ).toString() );
-        Map<String, Integer> exportedServiceMap = new HashMap<>();
+        Map< String, Integer > exportedServiceMap = new HashMap<>();
         exportedServiceMap.put( DARK_SKY, 0 );
         exportedServiceMap.put( HERE_MAPS, 0 );
         exportedServiceMap.put( OPEN_WEATHER, 0 );
@@ -901,7 +879,7 @@ public class WeatherLionApplication extends Application
      */
     public void loadAccessProviders()
     {
-        ArrayList<String> appKeys;
+        ArrayList< String > appKeys;
         webAccessGranted = new ArrayList<>();
 
         for ( String provider : providerNames )
@@ -920,7 +898,8 @@ public class WeatherLionApplication extends Application
 
                             if( Arrays.asList( darkSkyRequiredKeys ).contains( kv[ 0 ].toLowerCase() ) )
                             {
-                                WidgetUpdateService.darkSkyApiKey = decrypt( kv[ 1 ], kv[ 2 ] );
+                                WidgetUpdateService.darkSkyApiKey =
+                                    decrypt( kv[ 1 ], kv[ 2 ] );
                             }// end of if block
                         }// end of for each loop
 
@@ -1222,7 +1201,7 @@ public class WeatherLionApplication extends Application
         spf = PreferenceManager.getDefaultSharedPreferences( this );
         //spf = getSharedPreferences( "com.bushbungalo.weatherlion", MODE_PRIVATE );
 
-        wxLocation = spf.getString( CURRENT_LOCATION_PREFERENCE, Preference.DEFAULT_WEATHER_LOCATION );
+        currentWxLocation = spf.getString( CURRENT_LOCATION_PREFERENCE, Preference.DEFAULT_WEATHER_LOCATION );
         useGps = spf.getBoolean( USE_GPS_LOCATION_PREFERENCE, Preference.DEFAULT_USE_GPS );
         useMetric = spf.getBoolean( USE_METRIC_PREFERENCE, Preference.DEFAULT_USE_METRIC );
         widBackgroundColor = spf.getString( WIDGET_BACKGROUND_PREFERENCE, Preference.DEFAULT_WIDGET_BACKGROUND );
@@ -1259,7 +1238,7 @@ public class WeatherLionApplication extends Application
 
             // if this location has already been used there is no need to query the
             // web service as the location data has been stored locally
-            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( wxLocation );
+            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( currentWxLocation );
             String json;
             float lat;
             float lng;
@@ -1268,7 +1247,7 @@ public class WeatherLionApplication extends Application
             {
                 json =
                         UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
-                                wxLocation );
+                            currentWxLocation );
                 CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
 
                 lat = CityData.currentCityData.getLatitude();
@@ -1331,9 +1310,9 @@ public class WeatherLionApplication extends Application
         String uiFont = spf.getString( UI_FONT, Preference.DEFAULT_UI_FONT );
 
         // load system/user selected font
-        helveticaNeue = Typeface.createFromAsset( getAssets(), "fonts/helvetica_neue_lt_pro.otf");
-        productsSans = Typeface.createFromAsset( getAssets(), "fonts/product_sans.ttf");
-        samsungSans = Typeface.createFromAsset( getAssets(), "fonts/samsung_sans_regular.ttf");
+        helveticaNeue = Typeface.createFromAsset( getAssets(), "fonts/helvetica_neue_lt_pro.otf" );
+        productsSans = Typeface.createFromAsset( getAssets(), "fonts/product_sans.ttf" );
+        samsungSans = Typeface.createFromAsset( getAssets(), "fonts/samsung_sans_regular.ttf" );
 
         fonts = new LinkedHashMap<>();
         fonts.put( "Helvetica Neue", helveticaNeue );
@@ -1635,19 +1614,21 @@ public class WeatherLionApplication extends Application
         loadWeatherIcon( notificationLayout, R.id.weather_icon, fileName );
         loadWeatherIcon( notificationLayoutExpanded, R.id.weather_icon, fileName );
 
-        String temps = String.format( "%s° / %s°",
+        String temps = String.format( "%s%s / %s%s",
                 storedData.getCurrent().getHighTemperature(),
-                storedData.getCurrent().getLowTemperature() );
+                DEGREES,
+                storedData.getCurrent().getLowTemperature(),
+                DEGREES );
 
         notificationLayout.setTextViewText( R.id.txvCurrentTemp,
                 String.format(
-                        "%s°", storedData.getCurrent().getTemperature() ) );
+                        "%s%s", storedData.getCurrent().getTemperature(), DEGREES ) );
         notificationLayoutExpanded.setTextViewText( R.id.txvCurrentTemp,
                 String.format(
-                        "%s°", storedData.getCurrent().getTemperature() ) );
+                        "%s%s", storedData.getCurrent().getTemperature(), DEGREES ) );
 
         notificationLayout.setTextViewText( R.id.txvCurrentReadings,temps );
-        notificationLayoutExpanded.setTextViewText(R.id.txvCurrentReadings,temps );
+        notificationLayoutExpanded.setTextViewText (R.id.txvCurrentReadings, temps );
 
         notificationLayout.setTextViewText( R.id.notification_humidity,
                 String.format( "%s %%", storedData.getAtmosphere().getHumidity() ) );
@@ -1668,9 +1649,9 @@ public class WeatherLionApplication extends Application
 
         PendingIntent pIntent = PendingIntent.getActivity( this, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT );
-        String tickerText = String.format( "Current temperature in %s is %s° and %s",
+        String tickerText = String.format( "Current temperature in %s is %s%s and %s",
                 storedData.getLocation().getCity(), storedData.getCurrent().getTemperature(),
-                storedData.getCurrent().getCondition() );
+                DEGREES, storedData.getCurrent().getCondition() );
 
         // Apply the layouts to the notification
         NotificationCompat.Builder customNotificationBuilder = new NotificationCompat.Builder( context,
@@ -1838,97 +1819,6 @@ public class WeatherLionApplication extends Application
     {
         return context;
     }
-
-    /**
-     * This broadcast receiver listens for local broadcasts within the program
-     */
-    private class AppBroadcastReceiver extends BroadcastReceiver
-    {
-        @Override
-        public void onReceive( Context context, Intent intent )
-        {
-            final String action = Objects.requireNonNull( intent.getAction() );
-
-            switch( action )
-            {
-                case GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE:
-                    String cityMessage = intent.getStringExtra( GeoLocationService.GEO_LOCATION_SERVICE_PAYLOAD );
-                    setCityName( cityMessage );
-                    locationSet = storedPreferences.getLocation() != null;
-
-                    break;
-                case WeatherLionMain.KEY_UPDATE_MESSAGE:
-                    String methodToCall = intent.getStringExtra( WeatherLionMain.KEY_UPDATE_PAYLOAD );
-
-                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                            "Reloading access keys...", TAG + "::keyUpdateReceiver" );
-
-                    callMethodByName( this, methodToCall,
-                            null, null );
-
-                    // Load only the providers who have access keys assigned to them
-                    ArrayList<String> wxOnly = webAccessGranted;
-
-                    Collections.sort( wxOnly );    // sort the list
-
-                    // GeoNames is not a weather provider so it cannot be select here
-                    wxOnly.remove( "GeoNames" );
-
-                    authorizedProviders = wxOnly.toArray( new String[0] );
-
-                    break;
-                case WidgetUpdateService.WEATHER_XML_SERVICE_MESSAGE:
-                    // start xml storage service
-                    String xmlJSON = intent.getStringExtra( WidgetUpdateService.WEATHER_XML_SERVICE_PAYLOAD );
-                    Intent weatherXMLIntent = new Intent( WeatherLionApplication.this,
-                            WeatherDataXMLService.class );
-                    weatherXMLIntent.putExtra( WidgetUpdateService.WEATHER_XML_SERVICE_PAYLOAD, xmlJSON );
-                    WeatherDataXMLService.enqueueWork( context, weatherXMLIntent );
-
-                    break;
-                case WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE:
-                    if( new File( WeatherLionApplication.this.getFileStreamPath( WEATHER_DATA_XML ).toString() ).exists() )
-                    {
-                        // refresh the xml data stored after the last update
-                        lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
-                            UtilityMethod.readAll(
-                                context.getFileStreamPath( WEATHER_DATA_XML ).toString() )
-                                    .replaceAll( "\t", "" ).trim() );
-
-                        storedData = lastDataReceived.getWeatherData();
-                        DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
-
-                        try
-                        {
-                            UtilityMethod.lastUpdated = df.parse(
-                                    storedData.getProvider().getDate() );
-                        }// end of try block
-                        catch ( ParseException e )
-                        {
-                            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
-                                    TAG + "::onCreate [line: " +
-                                            e.getStackTrace()[1].getLineNumber()+ "]" );
-                        }// end of catch block
-
-                        currentSunriseTime = new StringBuilder(
-                                storedData.getAstronomy().getSunrise() );
-                        currentSunsetTime = new StringBuilder(
-                                storedData.getAstronomy().getSunset() );
-
-                        // send a heads up notification if the main windows is
-                        // not in the foreground after an update
-                        if( !mainWindowShowing )
-                        {
-                            callMethodByName( null,
-                                    "sendWeatherNotification",null,
-                                    null );
-                        }// end of if block
-                    }// end of if block
-
-                    break;
-            }// end of switch block
-        }// end of method onReceive
-    }// end of class AppBroadcastReceiver
 
     /**
      * Set the details for the user's location using the json data returned from the web service
@@ -2100,9 +1990,100 @@ public class WeatherLionApplication extends Application
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,"Weather icon " +
                     imageFile + " could not be loaded!", TAG + "::loadWeatherIcon [line: " +
-                    e.getStackTrace()[1].getLineNumber()+ "]" );
+                    e.getStackTrace()[1].getLineNumber() + "]" );
         }// end of catch block
     }// end of method loadWeatherIcon
+
+    /**
+     * This broadcast receiver listens for local broadcasts within the program
+     */
+    private class AppBroadcastReceiver extends BroadcastReceiver
+    {
+        @Override
+        public void onReceive( Context context, Intent intent )
+        {
+            final String action = Objects.requireNonNull( intent.getAction() );
+
+            switch( action )
+            {
+                case GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE:
+                    String cityMessage = intent.getStringExtra( GeoLocationService.GEO_LOCATION_SERVICE_PAYLOAD );
+                    setCityName( cityMessage );
+                    locationSet = storedPreferences.getLocation() != null;
+
+                    break;
+                case WeatherLionMain.KEY_UPDATE_MESSAGE:
+                    String methodToCall = intent.getStringExtra( WeatherLionMain.KEY_UPDATE_PAYLOAD );
+
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            "Reloading access keys...", TAG + "::keyUpdateReceiver" );
+
+                    callMethodByName( this, methodToCall,
+                            null, null );
+
+                    // Load only the providers who have access keys assigned to them
+                    ArrayList<String> wxOnly = webAccessGranted;
+
+                    Collections.sort( wxOnly );    // sort the list
+
+                    // GeoNames is not a weather provider so it cannot be select here
+                    wxOnly.remove( GEO_NAMES );
+
+                    authorizedProviders = wxOnly.toArray( new String[ 0 ] );
+
+                    break;
+                case WidgetUpdateService.WEATHER_XML_SERVICE_MESSAGE:
+                    // start xml storage service
+                    String xmlJSON = intent.getStringExtra( WidgetUpdateService.WEATHER_XML_SERVICE_PAYLOAD );
+                    Intent weatherXMLIntent = new Intent( WeatherLionApplication.this,
+                            WeatherDataXMLService.class );
+                    weatherXMLIntent.putExtra( WidgetUpdateService.WEATHER_XML_SERVICE_PAYLOAD, xmlJSON );
+                    WeatherDataXMLService.enqueueWork( context, weatherXMLIntent );
+
+                    break;
+                case WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE:
+                    if( new File( WeatherLionApplication.this.getFileStreamPath( WEATHER_DATA_XML ).toString() ).exists() )
+                    {
+                        // refresh the xml data stored after the last update
+                        lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                                UtilityMethod.readAll(
+                                        context.getFileStreamPath( WEATHER_DATA_XML ).toString() )
+                                        .replaceAll( "\t", "" ).trim() );
+
+                        storedData = lastDataReceived.getWeatherData();
+                        DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
+
+                        try
+                        {
+                            UtilityMethod.lastUpdated = df.parse(
+                                    storedData.getProvider().getDate() );
+                        }// end of try block
+                        catch ( ParseException e )
+                        {
+                            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                                    TAG + "::onCreate [line: " +
+                                            e.getStackTrace()[1].getLineNumber()+ "]" );
+                        }// end of catch block
+
+                        currentSunriseTime = new StringBuilder(
+                                storedData.getAstronomy().getSunrise() );
+                        currentSunsetTime = new StringBuilder(
+                                storedData.getAstronomy().getSunset() );
+
+                        // send a heads up notification if the main windows is
+                        // not in the foreground after an update
+                        if( !mainWindowShowing )
+                        {
+                            callMethodByName( null,
+                                    "sendWeatherNotification",null,
+                                    null );
+                        }// end of if block
+                    }// end of if block
+
+                    break;
+            }// end of switch block
+        }// end of method onReceive
+    }// end of class AppBroadcastReceiver
 
     /**
      * Receives broadcasts sent by the operating system.
@@ -2116,7 +2097,7 @@ public class WeatherLionApplication extends Application
         public void onReceive( Context context, Intent intent )
         {
             final String action = Objects.requireNonNull( intent.getAction() );
-            String invoker = this.getClass().getSimpleName() + "::onReceive";
+            String invoker = "WeatherLionApplication::SystemBroadcastReceiver::onReceive";
             Bundle extras;
 
             switch ( action )
@@ -2124,15 +2105,15 @@ public class WeatherLionApplication extends Application
                 case ConnectivityManager.CONNECTIVITY_ACTION:
                     // if the last weather update is null then the program has just been launched
                     // an the system will always imply that the connection state has changed.
-                    if ( UtilityMethod.lastUpdated != null )
+                    if( UtilityMethod.lastUpdated != null )
                     {
-                        if (UtilityMethod.updateRequired( getAppContext() ) &&
+                        if( UtilityMethod.updateRequired( getAppContext() ) &&
                                 UtilityMethod.hasInternetConnection( getAppContext() ) )
                         {
                             UtilityMethod.refreshRequestedBySystem = true;
                             UtilityMethod.refreshRequestedByUser = false;
 
-                            callMethodByName(WeatherLionApplication.class,
+                            callMethodByName( WeatherLionApplication.class,
                                     "refreshWeather",
                                     new Class[]{ String.class }, new Object[]{ invoker } );
                         }// end of if block
@@ -2169,8 +2150,7 @@ public class WeatherLionApplication extends Application
                             wakeUpAlarmIntent );
 
                     break;
-
             }// end of switch block
-        }
+        }// end of method onReceive
     }// end of class SystemBroadcastReceiver
 }// end of class WeatherLionApplication
