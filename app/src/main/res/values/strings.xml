@@ -304,4 +304,7 @@
     <string name="title_activity_scrolling">ScrollingActivity</string>
     <string name="astronomy">ASTRONOMY</string>
     <string name="sunrise">SUNRISE</string>
+    <string name="sunset">SUNSET</string>
+    <string name="tomorrow_day">Tomorrow</string>
+    <string name="today_day">Today</string>
 </resources>

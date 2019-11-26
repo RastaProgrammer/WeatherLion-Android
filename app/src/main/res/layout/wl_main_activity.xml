@@ -298,7 +298,7 @@
                                         android:layout_height="wrap_content"
                                         android:layout_marginBottom="6dip"
                                         android:gravity="center_horizontal"
-                                        android:text="@string/sunrise"
+                                        android:text="@string/sunset"
                                         android:textColor="#FFFFFF"
                                         android:textSize="14sp" />
 

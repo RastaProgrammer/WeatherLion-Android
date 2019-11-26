@@ -1,5 +1,6 @@
 package com.bushbungalo.weatherlion.custom;
 
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -116,15 +117,13 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
 
             if( today.equals( dayFormat.format( forecastDate ) ) )
             {
-                holder.txvDayDate.setText( String.format( "Today, %s",
-                    dayFormat.format( forecastDate ) ) );
+                holder.txvDayDate.setText( WeatherLionApplication.getAppContext().getString(R.string.today_day) );
 
                  fConditionIcon = UtilityMethod.getConditionIcon( new StringBuilder( fCondition ), new Date() );
             }// end of if block
             else if( tomorrow.equals( dayFormat.format( forecastDate ) ) )
             {
-                holder.txvDayDate.setText( String.format( "Tomorrow, %s",
-                        dayFormat.format( forecastDate ) ) );
+                holder.txvDayDate.setText( WeatherLionApplication.getAppContext().getString(R.string.tomorrow_day) );
             }// end of else if block
             else
             {
@@ -139,15 +138,16 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
             holder.txvDayConditions.setText( fCondition );
             holder.imvDayConditionImage.setImageDrawable( d );
 
-//            if( position % 2 == 0 )
-//            {
-//                holder.itemView.setBackgroundColor( Color.parseColor( "#1AFFFFFF" ) );
-//            }// end of if block
+            if( position % 2 == 0 )
+            {
+                holder.itemView.setBackgroundColor(
+                    UtilityMethod.addOpacity( Color.WHITE, 5 )  );
+            }// end of if block
 
         }// end of try block
         catch ( IOException e )
         {
-            UtilityMethod.logMessage(UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
             TAG + "::getView [line: " +
                     e.getStackTrace()[1].getLineNumber()+ "]" );
         }// end of catch block

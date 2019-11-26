@@ -1901,22 +1901,30 @@ public class WeatherLionMain extends AppCompatActivity
             @Override
             public void onClick( View v )
             {
-                String keyName = null;
+                String keyName;
                 String keyValue = null;
+                String message;
 
                 if( edtKeyName.getVisibility() == View.VISIBLE )
                 {
+                    keyName = edtKeyName.getText().toString().replaceAll( "_", " " );
+
                     if( edtKeyName == null || edtKeyName.getText().toString().length() == 0
                             || edtKeyName.getText().toString().equals( "" ) )
                     {
-                        UtilityMethod.butteredToast( mContext,"Please enter a valid key name as given by the provider!",
-                                2, Toast.LENGTH_LONG );
+                        message = String.format( "Please enter the name of the key as given by %s!",
+                                WeatherLionApplication.selectedProvider );
+
+                        UtilityMethod.butteredToast( mContext, message,2, Toast.LENGTH_LONG );
                         edtKeyName.requestFocus();
                     }// end of if block
                     else if( pwdKeyValue == null || pwdKeyValue.getText().toString().length() == 0
                             || pwdKeyValue.getText().toString().equals( "" ) )
                     {
-                        UtilityMethod.butteredToast( mContext,"Please enter a valid key value as given by the provider!",
+                        message = String.format( "Please enter the %s supplied by %s!", keyName,
+                            WeatherLionApplication.selectedProvider );
+
+                        UtilityMethod.butteredToast( mContext,message,
                                 2, Toast.LENGTH_LONG );
                         pwdKeyValue.requestFocus();
 
@@ -1933,8 +1941,11 @@ public class WeatherLionMain extends AppCompatActivity
                     if( pwdKeyValue == null || pwdKeyValue.getText().toString().length() == 0
                             || pwdKeyValue.getText().toString().equals( "" ) )
                     {
-                        UtilityMethod.butteredToast( mContext,"Please enter a valid key value as given by the provider!",
-                                2, Toast.LENGTH_LONG );
+                        keyName = edtKeyName.getText().toString().replaceAll( "_", " " );
+                        message = String.format( "Please enter the %s supplied by %s!", keyName,
+                                WeatherLionApplication.selectedProvider );
+
+                        UtilityMethod.butteredToast( mContext, message, 2, Toast.LENGTH_LONG );
                         pwdKeyValue.requestFocus();
 
                         return;

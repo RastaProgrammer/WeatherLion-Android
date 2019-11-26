@@ -19,20 +19,24 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="246dip"
-        android:paddingTop="8dip"
-        android:paddingBottom="8dip"
-        android:paddingStart="10dip"
+        android:paddingTop="6dip"
+        android:paddingBottom="0dip"
+        android:paddingStart="6dip"
         android:paddingEnd="8dip"
         android:layout_marginStart="4dip">
+
+    <RelativeLayout
+        android:id="@+id/rlWidgetUpper"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="-4dip">
 
         <RelativeLayout
             android:id="@+id/relNextAlarm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignTop="@+id/imvCurrentCondition"
-            android:layout_alignParentStart="true"
-            android:layout_marginTop="-4dip"
-            android:layout_marginEnd="6dip"
+            android:layout_centerInParent="true"
             android:visibility="invisible" >
 
             <ImageView
@@ -40,6 +44,7 @@
                 android:layout_width="14dip"
                 android:layout_height="14dip"
                 android:layout_marginEnd="4dip"
+                android:layout_marginTop="6dip"
                 android:src="@drawable/wl_alarm"
                 android:contentDescription="@string/weather_provider_logo"/>
 
@@ -49,6 +54,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:layout_centerInParent="true"
+                android:paddingTop="5dip"
                 android:layout_toEndOf="@+id/imvAlarmClock"
                 android:fontFamily="sans-serif-condensed"
                 android:text="@string/default_alarm"
@@ -57,6 +63,66 @@
                 android:textSize="14sp" />
         </RelativeLayout>
 
+        <ImageView
+            android:id="@+id/imvOffline"
+            android:layout_width="20dip"
+            android:layout_height="23dip"
+            android:layout_toStartOf="@id/imvRefresh"
+            android:adjustViewBounds="false"
+            android:contentDescription="@string/refresh_weather_data"
+            android:scaleType="fitXY"
+            android:src="@drawable/wl_offline"
+            android:visibility="invisible" />
+
+        <ViewFlipper
+            android:id="@+id/view_flipper"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="10dip"
+            android:layout_marginEnd="6dip"
+            android:visibility="invisible"
+            android:inAnimation="@anim/rotate"
+            android:autoStart="true">
+
+            <ImageView
+                android:id="@+id/imvRefreshing"
+                android:layout_width="20dip"
+                android:layout_height="20dip"
+                android:adjustViewBounds="false"
+                android:contentDescription="@string/refresh_weather_data"
+                android:src="@drawable/wl_refresh_anim" />
+        </ViewFlipper>
+
+        <ImageView
+            android:id="@+id/imvRefresh"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="10dip"
+            android:layout_marginEnd="6dip"
+            android:layout_marginTop="3dip"
+            android:adjustViewBounds="false"
+            android:contentDescription="@string/refresh_weather_data"
+            android:src="@drawable/wl_refresh" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rlWidgetLower"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rlWidgetUpper">
+
+        <ImageView
+            android:id="@+id/imvCurrentCondition"
+            android:layout_width="92dip"
+            android:layout_height="92dip"
+            android:layout_centerHorizontal="true"
+            android:scaleType="centerInside"
+            android:contentDescription="@string/current_reading_icon"
+            android:src="@drawable/clear" />
+
         <TextView
             android:id="@+id/txvCurrentLocation"
             android:layout_width="wrap_content"
@@ -64,8 +130,8 @@
             android:ellipsize="end"
             android:singleLine="true"
             android:layout_alignStart="@id/forecastGrid"
-            android:layout_marginTop="24dip"
             android:layout_marginStart="1dp"
+            android:layout_alignTop="@+id/imvCurrentCondition"
             android:layout_toStartOf="@+id/imvCurrentCondition"
             android:fontFamily="sans-serif-condensed"
             android:text="@string/current_location"
@@ -92,7 +158,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/txvFeelsLike"
             android:layout_alignTop="@+id/relWind"
-            android:layout_alignStart="@+id/txvCurrentTemperature" >
+            android:layout_alignStart="@+id/txvFeelsLike" >
 
             <ImageView
                 android:id="@+id/imvMoisture"
@@ -129,16 +195,6 @@
                 android:textSize="14sp" />
         </RelativeLayout>
 
-        <ImageView
-            android:id="@+id/imvCurrentCondition"
-            android:layout_width="wrap_content"
-            android:layout_height="100dip"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="8dip"
-            android:scaleType="centerInside"
-            android:contentDescription="@string/current_reading_icon"
-            android:src="@drawable/clear" />
-
         <TextView
             android:id="@+id/txvCurrentTemperature"
             android:includeFontPadding="false"
@@ -148,8 +204,7 @@
             android:layout_alignTop="@+id/imvCurrentCondition"
             android:fontFamily="sans-serif"
             android:gravity="bottom"
-            android:layout_marginStart="2dip"
-            android:layout_marginTop="10dip"
+            android:layout_marginStart="0dip"
             android:text="@string/no_reading"
             android:textColor="#FFFFFF"
             android:textSize="40sp"
@@ -160,8 +215,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/txvCurrentLocation"
-            android:layout_below="@+id/imvRefresh"
-            android:layout_marginTop="2dip"
+            android:layout_marginTop="4dip"
             android:layout_marginStart="10dp"
             android:gravity="center|bottom"
             android:layout_toEndOf="@+id/txvCurrentTemperature">
@@ -193,7 +247,7 @@
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/txvLastUpdated"
             android:layout_toEndOf="@id/imvCurrentCondition"
-            android:layout_alignStart="@+id/txvCurrentTemperature"
+            android:layout_marginStart="4dip"
             android:fontFamily="sans-serif-condensed"
             android:text="@string/feels_like_widget"
             android:textColor="#FFFFFF"
@@ -214,7 +268,7 @@
             android:id="@+id/relWind"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/imvCurrentCondition"
+            android:layout_below="@+id/txvLastUpdated"
             android:layout_alignStart="@+id/txvCurrentLocation" >
 
             <ImageView
@@ -254,56 +308,6 @@
                 android:textColor="#FFFFFF"
                 android:textSize="14sp" />
         </RelativeLayout>
-
-
-        <ImageView
-            android:id="@+id/imvOffline"
-            android:layout_width="20dip"
-            android:layout_height="23dip"
-            android:layout_alignTop="@+id/imvCurrentCondition"
-            android:layout_marginTop="-9dip"
-            android:layout_marginBottom="1dip"
-            android:layout_toStartOf="@id/imvRefresh"
-            android:adjustViewBounds="false"
-            android:contentDescription="@string/refresh_weather_data"
-            android:scaleType="fitXY"
-            android:src="@drawable/wl_offline"
-            android:visibility="invisible" />
-
-        <ViewFlipper
-            android:id="@+id/view_flipper"
-            android:layout_width="20dip"
-            android:layout_height="20dip"
-            android:layout_alignTop="@+id/imvCurrentCondition"
-            android:layout_alignParentEnd="true"
-            android:layout_marginStart="10dip"
-            android:layout_marginTop="-6dip"
-            android:layout_marginEnd="6dip"
-            android:visibility="invisible"
-            android:inAnimation="@anim/rotate"
-            android:autoStart="true">
-
-            <ImageView
-                android:id="@+id/imvRefreshing"
-                android:layout_width="20dip"
-                android:layout_height="20dip"
-                android:adjustViewBounds="false"
-                android:contentDescription="@string/refresh_weather_data"
-                android:src="@drawable/wl_refresh_anim" />
-        </ViewFlipper>
-
-        <ImageView
-            android:id="@+id/imvRefresh"
-            android:layout_width="20dip"
-            android:layout_height="20dip"
-            android:layout_alignTop="@+id/imvCurrentCondition"
-            android:layout_alignParentEnd="true"
-            android:layout_marginStart="10dip"
-            android:layout_marginTop="-6dip"
-            android:layout_marginEnd="6dip"
-            android:adjustViewBounds="false"
-            android:contentDescription="@string/refresh_weather_data"
-            android:src="@drawable/wl_refresh" />
 
         <RelativeLayout
             android:id="@+id/astronomyGrid"
@@ -656,5 +660,9 @@
                 android:textColor="#FFFFFF"
                 android:textSize="14sp" />
         </RelativeLayout>
+
+    </RelativeLayout>
+
+
     </RelativeLayout>
 </FrameLayout>

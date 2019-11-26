@@ -821,8 +821,6 @@ public class WidgetUpdateService extends JobIntentService
 
     private void dataRetrievalError( final String provider, Exception e )
     {
-        strJSON = null;
-
         // inform all receivers that there was a error obtaining weather details
         broadcastLoadingError();
 
@@ -845,7 +843,7 @@ public class WidgetUpdateService extends JobIntentService
         }// end of if block
         else
         {
-            message = e.getMessage();
+            message = provider + " returned " + e.getMessage();
         }// end of else block
 
         handler.post( new Runnable()
