@@ -3,11 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.bushbungalo.weatherlion"
     tools:ignore="GoogleAppIndexingWarning">
+
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
     <application
         android:name=".WeatherLionApplication"
@@ -20,25 +21,22 @@
 
         <activity
             android:name=".WeatherLionMain"
-            android:screenOrientation="portrait"
-            android:noHistory="false">
-
+            android:noHistory="false"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ConfigureWidget"
             android:label="@string/app_settings"
             android:screenOrientation="portrait">
-
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".PrefsActivity"
             android:label="@string/app_settings"
@@ -50,7 +48,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".WeatherLionMain" />
         </activity>
-
         <activity
             android:name=".AboutActivity"
             android:label="@string/app_about"
@@ -63,36 +60,32 @@
                 android:value=".WeatherLionMain" />
         </activity>
 
-        <receiver android:name=".alarms.UpdateAlarmBroadcastReceiver"
+        <receiver
+            android:name=".alarms.UpdateAlarmBroadcastReceiver"
             android:exported="false">
-
             <intent-filter>
                 <action android:name="UpdateAlarm" />
             </intent-filter>
         </receiver>
-
-        <receiver android:name=".alarms.SunriseAlarmBroadcastReceiver"
+        <receiver
+            android:name=".alarms.SunriseAlarmBroadcastReceiver"
             android:exported="false">
-
             <intent-filter>
                 <action android:name="SunriseAlarm" />
             </intent-filter>
         </receiver>
-
-        <receiver android:name=".alarms.SunsetAlarmBroadcastReceiver"
+        <receiver
+            android:name=".alarms.SunsetAlarmBroadcastReceiver"
             android:exported="false">
-
             <intent-filter>
                 <action android:name="SunsetAlarm" />
             </intent-filter>
         </receiver>
-
         <receiver android:name=".BootCompleteReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-
         <receiver android:name=".providers.LargeWeatherWidgetProvider">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -102,7 +95,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/large_weather_widget_info" />
         </receiver>
-
         <receiver android:name=".providers.SmallWeatherWidgetProvider">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -116,28 +108,23 @@
         <service
             android:name=".services.CityDataService"
             android:exported="false" />
-
         <service
             android:name=".services.CityStorageService"
             android:exported="false" />
-
         <service
             android:name=".services.GeoLocationService"
             android:exported="false" />
-
         <service
             android:name=".services.LocationTrackerService"
             android:exported="false" />
-
         <service
             android:name=".services.WeatherDataXMLService"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-
         <service
             android:name=".services.WidgetUpdateService"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-
     </application>
+
 </manifest>

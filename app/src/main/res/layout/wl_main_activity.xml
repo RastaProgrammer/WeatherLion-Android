@@ -19,7 +19,7 @@
                 android:background="@drawable/wl_bottom_line_border"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_alignParentTop="true">
 
                 <TextView
                     android:id="@+id/txvCurrentWeatherLocation"
@@ -70,7 +70,7 @@
                 <RelativeLayout
                     android:id="@+id/rlRefreshChildren"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="match_parent">
 
                     <RelativeLayout
                         android:id="@+id/rlToday"
@@ -79,7 +79,7 @@
                         android:layout_marginTop="4dip"
                         android:layout_marginBottom="7dip"
                         android:paddingTop="8dip"
-                        android:paddingBottom="8dip">
+                        android:background="@drawable/wl_light_bottom_border">
 
                         <RelativeLayout
                             android:id="@+id/rlLocalTime"
@@ -224,13 +224,96 @@
                         </RelativeLayout>
                     </RelativeLayout>
 
-                    <LinearLayout
-                        android:id="@+id/rlForecast"
+                    <ScrollView
+                        android:id="@+id/scrDetails"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@+id/rlToday"
-                        android:layout_marginBottom="0dp"
-                        android:orientation="vertical">
+                        android:layout_height="match_parent"
+                        android:layout_below="@+id/rlToday">
+
+                        <LinearLayout
+                            android:id="@+id/rlForecast"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="0dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/txvAstronomyTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="6dip"
+                                android:gravity="center_horizontal"
+                                android:text="@string/astronomy"
+                                android:textColor="#FFFFFF"
+                                android:textSize="16sp" />
+
+                            <LinearLayout
+                                android:id="@+id/astronomyChild"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:baselineAligned="false"
+                                android:orientation="horizontal">
+
+                                <LinearLayout
+                                    android:id="@+id/llSunrise"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical"
+                                    android:padding="8dip">
+
+                                    <TextView
+                                        android:id="@+id/txvSunriseTitle"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginBottom="6dip"
+                                        android:gravity="center_horizontal"
+                                        android:text="@string/sunrise"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="14sp" />
+
+                                    <TextView
+                                        android:id="@+id/txvSunriseTime"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginBottom="6dip"
+                                        android:gravity="center_horizontal"
+                                        android:text="@string/sunrise_placeholder"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="18sp" />
+
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/llSunset"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical"
+                                    android:padding="8dip">
+
+                                    <TextView
+                                        android:id="@+id/txvSunsetTitle"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginBottom="6dip"
+                                        android:gravity="center_horizontal"
+                                        android:text="@string/sunrise"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="14sp" />
+
+                                    <TextView
+                                        android:id="@+id/txvSunsetTime"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginBottom="6dip"
+                                        android:gravity="center_horizontal"
+                                        android:text="@string/sunset_placeholder"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="18sp" />
+
+                                </LinearLayout>
+                            </LinearLayout>
 
                         <LinearLayout
                             android:id="@+id/hourlyForecastParent"
@@ -266,7 +349,7 @@
                             </LinearLayout>
                         </LinearLayout>
 
-                        <LinearLayout
+                        <RelativeLayout
                             android:id="@+id/dailyForecastParent"
                             android:background="@drawable/wl_light_top_border"
                             android:layout_width="match_parent"
@@ -287,17 +370,22 @@
                                 android:textColor="#FFFFFF"
                                 android:textSize="16sp" />
 
-                                <android.support.v7.widget.RecyclerView
-                                    android:id="@+id/lstDayForecast"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:divider="#CBCBCB"
-                                    android:dividerHeight="0.5dip"
-                                    android:scrollbars="vertical"
-                                    android:fadeScrollbars="true"/>
+                            <android.support.v7.widget.RecyclerView
+                                android:id="@+id/lstDayForecast"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@+id/txvDailyTitle"
+                                android:divider="#CBCBCB"
+                                android:dividerHeight="0.5dip" />
 
-                        </LinearLayout>
+                            <!--android:scrollbars="vertical"
+                                android:fadeScrollbars="true" -->
+
+                        </RelativeLayout>
                     </LinearLayout>
+
+
+                    </ScrollView>
                 </RelativeLayout>
             </android.support.v4.widget.SwipeRefreshLayout>
 

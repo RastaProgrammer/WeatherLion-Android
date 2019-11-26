@@ -301,4 +301,7 @@
     <string name="hourly">HOURLY</string>
     <string name="daily">DAILY</string>
     <string name="default_alarm">3:05 AM</string>
+    <string name="title_activity_scrolling">ScrollingActivity</string>
+    <string name="astronomy">ASTRONOMY</string>
+    <string name="sunrise">SUNRISE</string>
 </resources>

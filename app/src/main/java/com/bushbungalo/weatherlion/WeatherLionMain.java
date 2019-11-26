@@ -36,6 +36,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -52,6 +53,7 @@ import android.widget.LinearLayout;
 import android.widget.ListPopupWindow;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextClock;
 import android.widget.TextView;
@@ -426,6 +428,12 @@ public class WeatherLionMain extends AppCompatActivity
         StringBuilder sunsetTime = new StringBuilder(
                 WeatherLionApplication.storedData.getAstronomy().getSunset() );
 
+        TextView txvSunriseTime = findViewById( R.id.txvSunriseTime );
+        TextView txvSunsetTime = findViewById( R.id.txvSunsetTime );
+
+        txvSunriseTime.setText( sunriseTime.toString() );
+        txvSunsetTime.setText( sunsetTime.toString() );
+
         LinearLayout hourlyForecast = findViewById( R.id.hourlyForecastParent );
 
         // if an hourly forecast is present then show it
@@ -521,7 +529,7 @@ public class WeatherLionMain extends AppCompatActivity
                             WeatherLionApplication.storedData.getHourlyForecast().get(
                                 Integer.parseInt( v.getTag().toString() ) );
 
-                        String message = String.format( "The forecast for %s should be %s with a high temperature of %s°.",
+                        String message = String.format( "At %s it is forecasted to be %s with a high temperature of %s°.",
                                 selectHourForecast.getTime().toLowerCase(),
                                 selectHourForecast.getCondition().toLowerCase(),
                                 selectHourForecast.getTemperature() );
@@ -546,7 +554,37 @@ public class WeatherLionMain extends AppCompatActivity
         WeeklyForecastAdapter weeklyForecastAdapter = new WeeklyForecastAdapter( fiveDayForecastList );
         forecastRecyclerView.setAdapter( weeklyForecastAdapter );
 
+        final ScrollView detailsScroll = findViewById( R.id.scrDetails );
+
+        detailsScroll.post(
+            new Runnable()
+            {
+                public void run()
+                {
+                    detailsScroll.fullScroll( View.FOCUS_UP );
+                }// end of method run
+            });
+
+        // only enable the swipe refresh if the scroll view is at the top
+        detailsScroll.getViewTreeObserver().addOnScrollChangedListener(
+            new ViewTreeObserver.OnScrollChangedListener()
+            {
+                @Override
+                public void onScrollChanged()
+                {
+                    if ( detailsScroll.getScrollY() == 0 )
+                    {
+                        appRefresh.setEnabled( true );
+                    }// end of if block
+                    else
+                    {
+                        appRefresh.setEnabled( false );
+                    }// end of else block
+                }// end of method onScrollChanged
+            });
+
         appRefresh = findViewById( R.id.swlRefresh );
+        appRefresh.setRefreshing( false );
 
         appRefresh.setColorSchemeResources(
                 R.color.aqua,
