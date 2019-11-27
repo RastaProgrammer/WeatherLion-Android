@@ -1565,8 +1565,8 @@ public class WidgetUpdateService extends JobIntentService
         alarmManager.setExact( AlarmManager.RTC, updateTime, alarmIntent );
 
         UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Next update scheduled for " +
-                        new SimpleDateFormat( "h:mm:ss a", Locale.ENGLISH ).format( c.getTime() ) + ".",
-                TAG + "::scheduleNextUpdate" );
+            new SimpleDateFormat( "h:mm:ss a", Locale.ENGLISH ).format( c.getTime() ) + ".",
+        TAG + "::scheduleNextUpdate" );
 
         // Test Area
 //        int seconds = 120;
@@ -3095,14 +3095,16 @@ public class WidgetUpdateService extends JobIntentService
             {
                 largeWidgetRemoteViews.setViewVisibility( R.id.relNextAlarm, View.VISIBLE );
                 largeWidgetRemoteViews.setTextViewText( R.id.txvAlarmTime, alarmTime );
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Next Alarm Due",
+                String message = String.format( Locale.ENGLISH, "System clock alarm set for %s which is %d %s from now.",
+                        alarmTime.toLowerCase(), hoursTilNextAlarm, ( hoursTilNextAlarm > 1 ? "hours" : "hour" ) );
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, message,
                         TAG + "::updateUserSetAlarm");
             }// end of if block
             else
             {
                 largeWidgetRemoteViews.setViewVisibility( R.id.relNextAlarm, View.INVISIBLE );
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "No Alarm Due",
-                        TAG + "::updateUserSetAlarm");
+                        TAG + "::updateUserSetAlarm" );
             }// end of else block
         }// end of if block
         else

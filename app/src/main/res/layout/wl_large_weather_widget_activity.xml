@@ -21,9 +21,9 @@
         android:layout_height="246dip"
         android:paddingTop="6dip"
         android:paddingBottom="0dip"
-        android:paddingStart="6dip"
+        android:paddingStart="8dip"
         android:paddingEnd="8dip"
-        android:layout_marginStart="4dip">
+        android:layout_marginStart="0dip">
 
     <RelativeLayout
         android:id="@+id/rlWidgetUpper"
@@ -41,8 +41,8 @@
 
             <ImageView
                 android:id="@+id/imvAlarmClock"
-                android:layout_width="14dip"
-                android:layout_height="14dip"
+                android:layout_width="12dip"
+                android:layout_height="12dip"
                 android:layout_marginEnd="4dip"
                 android:layout_marginTop="6dip"
                 android:src="@drawable/wl_alarm"
@@ -60,13 +60,13 @@
                 android:text="@string/default_alarm"
                 android:textAlignment="textStart"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp" />
+                android:textSize="12sp" />
         </RelativeLayout>
 
         <ImageView
             android:id="@+id/imvOffline"
-            android:layout_width="20dip"
-            android:layout_height="23dip"
+            android:layout_width="18dip"
+            android:layout_height="21dip"
             android:layout_toStartOf="@id/imvRefresh"
             android:adjustViewBounds="false"
             android:contentDescription="@string/refresh_weather_data"
@@ -76,19 +76,20 @@
 
         <ViewFlipper
             android:id="@+id/view_flipper"
-            android:layout_width="20dip"
-            android:layout_height="20dip"
+            android:layout_width="18dip"
+            android:layout_height="18dip"
             android:layout_alignParentEnd="true"
             android:layout_marginStart="10dip"
-            android:layout_marginEnd="6dip"
-            android:visibility="invisible"
+            android:layout_marginEnd="2dip"
+            android:layout_marginTop="3dip"
             android:inAnimation="@anim/rotate"
-            android:autoStart="true">
+            android:autoStart="true"
+            android:visibility="invisible">
 
             <ImageView
                 android:id="@+id/imvRefreshing"
-                android:layout_width="20dip"
-                android:layout_height="20dip"
+                android:layout_width="18dip"
+                android:layout_height="18dip"
                 android:adjustViewBounds="false"
                 android:contentDescription="@string/refresh_weather_data"
                 android:src="@drawable/wl_refresh_anim" />
@@ -96,11 +97,11 @@
 
         <ImageView
             android:id="@+id/imvRefresh"
-            android:layout_width="20dip"
-            android:layout_height="20dip"
+            android:layout_width="18dip"
+            android:layout_height="18dip"
             android:layout_alignParentEnd="true"
             android:layout_marginStart="10dip"
-            android:layout_marginEnd="6dip"
+            android:layout_marginEnd="2dip"
             android:layout_marginTop="3dip"
             android:adjustViewBounds="false"
             android:contentDescription="@string/refresh_weather_data"
@@ -641,8 +642,8 @@
 
             <ImageView
                 android:id="@+id/imvWeatherProviderLogo"
-                android:layout_width="20dip"
-                android:layout_height="20dip"
+                android:layout_width="18dip"
+                android:layout_height="18dip"
                 android:layout_marginEnd="4dip"
                 android:src="@drawable/wl_norwegian_meteorological_institute"
                 android:contentDescription="@string/weather_provider_logo"/>
@@ -658,7 +659,7 @@
                 android:text="@string/provider_placeholder"
                 android:textAlignment="textStart"
                 android:textColor="#FFFFFF"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
         </RelativeLayout>
 
     </RelativeLayout>
