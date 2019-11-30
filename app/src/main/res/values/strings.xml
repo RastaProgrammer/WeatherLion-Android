@@ -307,4 +307,5 @@
     <string name="sunset">SUNSET</string>
     <string name="tomorrow_day">Tomorrow</string>
     <string name="today_day">Today</string>
+    <string name="gps_status">Using Gps indicator</string>
 </resources>

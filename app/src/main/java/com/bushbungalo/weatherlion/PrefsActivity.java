@@ -464,6 +464,11 @@ public class PrefsActivity extends AppCompatActivity
                     // update global value
                     WeatherLionApplication.storedPreferences.setUseSystemLocation( isEnabled );
 
+                    String invoker = TAG + "::useGpsSwitch.setOnPreferenceChangeListener";
+                    WeatherLionApplication.callMethodByName( null,
+                            "geolocationIndication",
+                            new Class[]{ String.class }, new Object[]{ invoker } );
+
                     return gpsReady;
                 }
             });

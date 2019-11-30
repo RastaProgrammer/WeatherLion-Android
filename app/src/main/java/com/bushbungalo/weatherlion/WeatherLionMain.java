@@ -417,9 +417,6 @@ public class WeatherLionMain extends AppCompatActivity
                 WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
         }// end of else block
 
-        // load the applicable typeface in use
-        UtilityMethod.loadCustomFont( rootView );
-
         WeatherLionApplication.storedData =
                 WeatherLionApplication.lastDataReceived.getWeatherData();
 
@@ -779,6 +776,9 @@ public class WeatherLionMain extends AppCompatActivity
         {
            noInternetAlert( rootView );
         }// end of if block
+
+        // load the applicable typeface in use
+        UtilityMethod.loadCustomFont( rootView );
     }// end of method loadMainActivityWeather
 
     /**

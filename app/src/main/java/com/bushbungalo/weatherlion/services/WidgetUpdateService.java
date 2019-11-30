@@ -702,12 +702,12 @@ public class WidgetUpdateService extends JobIntentService
                             WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" ) )
                     {
                         currentConditionIcon =
-                                UtilityMethod.weatherImages.get(
-                                        WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" );
+                            UtilityMethod.weatherImages.get(
+                                WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" );
 
                         UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                "Switching to sunset icon to " + currentConditionIcon,
-                                TAG + "::astronomyChange" );
+                    "Switching to sunset icon to " + currentConditionIcon,
+                        TAG + "::astronomyChange" );
                     }// end of if block
                     else
                     {
@@ -725,7 +725,7 @@ public class WidgetUpdateService extends JobIntentService
         }// end of switch block
 
         // Load applicable icon based on the time of day
-        String imageFile = String.format( "WEATHER_IMAGES_ROOT%s/weather_%s", WeatherLionApplication.iconSet
+        String imageFile = String.format( "%s%s/weather_%s", WEATHER_IMAGES_ROOT, WeatherLionApplication.iconSet
                 , currentConditionIcon );
 
         largeWidgetRemoteViews = new RemoteViews(
@@ -749,8 +749,6 @@ public class WidgetUpdateService extends JobIntentService
         {
             UtilityMethod.butteredToast( WeatherLionApplication.getAppContext(), e.toString(), 2, Toast.LENGTH_SHORT );
         }// end of catch block
-
-
     }// end of method astronomyChange
 
     /**
@@ -856,6 +854,24 @@ public class WidgetUpdateService extends JobIntentService
             }
         });
     }// end of method dataRetrievalError
+
+    /**
+     * Indicate that the location was supplied by the GPS radio
+     */
+    private void geolocationIndication()
+    {
+        boolean useSystemLocation = spf.getBoolean( WeatherLionApplication.USE_GPS_LOCATION_PREFERENCE,
+                Preference.DEFAULT_USE_GPS );
+
+        if( useSystemLocation )
+        {
+            largeWidgetRemoteViews.setImageViewBitmap( R.id.imvUsingGps, getBitmap( R.drawable.wl_geolocation_on ) );
+        }// end of if block
+        else
+        {
+            largeWidgetRemoteViews.setImageViewBitmap( R.id.imvUsingGps, getBitmap( R.drawable.wl_geolocation_off ) );
+        }// end of else block
+    }// end of method  geolocationIndication()
 
     /**
      * Update all running widgets for this application
@@ -3088,15 +3104,16 @@ public class WidgetUpdateService extends JobIntentService
             long nextAlarmTime = alarmManager.getNextAlarmClock().getTriggerTime();
             Date nextAlarmDate = new Date( nextAlarmTime );
             String alarmTime = new SimpleDateFormat(
-                    "h:mm a", Locale.ENGLISH ).format( nextAlarmDate );
+                    "E, h:mm a", Locale.ENGLISH ).format( nextAlarmDate ).toUpperCase();
             int hoursTilNextAlarm = UtilityMethod.getHoursDifference( new Date(), nextAlarmDate );
 
-            if( hoursTilNextAlarm <= 9 )
+            if( hoursTilNextAlarm <= 12 )
             {
                 largeWidgetRemoteViews.setViewVisibility( R.id.relNextAlarm, View.VISIBLE );
                 largeWidgetRemoteViews.setTextViewText( R.id.txvAlarmTime, alarmTime );
-                String message = String.format( Locale.ENGLISH, "System clock alarm set for %s which is %d %s from now.",
-                        alarmTime.toLowerCase(), hoursTilNextAlarm, ( hoursTilNextAlarm > 1 ? "hours" : "hour" ) );
+                String message = String.format( Locale.ENGLISH, "System clock alarm set for %s which is %s from now.",
+                    alarmTime.toLowerCase(),
+                        UtilityMethod.getDetailedTimeDifference( nextAlarmDate, new Date() ) );
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, message,
                         TAG + "::updateUserSetAlarm");
             }// end of if block

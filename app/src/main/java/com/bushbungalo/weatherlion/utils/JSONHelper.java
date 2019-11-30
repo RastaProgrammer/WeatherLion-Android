@@ -301,11 +301,10 @@ public class JSONHelper
     private static JsonObject toJSONObject( String strJSON )
     {
         JsonObject json = null;
-        JsonParser parser = new JsonParser();
 
         try
         {
-            json = parser.parse( strJSON ).getAsJsonObject();
+            json = JsonParser.parseString( strJSON ).getAsJsonObject();
         }// end of try block
         catch ( Exception e )
         {
@@ -325,11 +324,10 @@ public class JSONHelper
     public static JsonArray toJSONArray( String strJSON )
     {
         JsonArray json = null;
-        JsonParser parser = new JsonParser();
 
         try
         {
-            json = parser.parse( strJSON) .getAsJsonArray();
+            json = JsonParser.parseString( strJSON ) .getAsJsonArray();
         }// end of try block
         catch ( Exception e )
         {

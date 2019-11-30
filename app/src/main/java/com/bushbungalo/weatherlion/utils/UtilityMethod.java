@@ -3789,6 +3789,71 @@ public abstract class UtilityMethod
     }// end of method readAll
 
     /**
+     * Subtracts two dates and return a {@code String} of the time remaining
+     *
+     **@param firstDate The first date that will do the subtracting.
+     * @param secondDate The second date that will be subtracted.
+     * @return  A {@code String} representing the time frame that has passed.
+     */
+    public static String getDetailedTimeDifference( Date firstDate, Date secondDate )
+    {
+        //milliseconds
+        long difference = Math.abs( firstDate.getTime() - secondDate.getTime() );
+        long timeLeftInMilliseconds;
+
+        int hours;
+        int mins;
+        int secs;
+
+        StringBuilder timeElapsed = new StringBuilder();
+
+        hours = (int) difference / 3600000;
+        timeLeftInMilliseconds = difference - ( hours * 3600000 );
+
+        mins = (int) timeLeftInMilliseconds / 60000;
+        timeLeftInMilliseconds = timeLeftInMilliseconds - ( mins * 60000 );
+
+        secs = (int) timeLeftInMilliseconds / 1000;
+        //timeLeftInMilliseconds = timeLeftInMilliseconds - ( secs * 1000 );
+
+        if( hours > 0 )
+        {
+            timeElapsed.append( String.format( Locale.ENGLISH,
+                    "%d %s", hours, ( hours > 1 ? "hours" : "hour" ) ) );
+        }// end of if block
+
+        if( mins > 0 )
+        {
+            if( timeElapsed.length() > 0 )
+            {
+                timeElapsed.append( String.format( Locale.ENGLISH,
+                        ", %d %s", mins, ( mins > 1 ? "mins" : "min" ) ) );
+            }// end of if block
+            else
+            {
+                timeElapsed.append( String.format( Locale.ENGLISH,
+                        "%d %s", mins, ( mins > 1 ? "mins" : "min" ) ) );
+            }// end of else block
+        }// end of if block
+
+        if( secs > 0 )
+        {
+            if( timeElapsed.length() > 0 )
+            {
+                timeElapsed.append( String.format( Locale.ENGLISH,
+                        " and %d %s", secs, ( secs > 1 ? "secs" : "secs" ) ) );
+            }// end of if block
+            else
+            {
+                timeElapsed.append( String.format( Locale.ENGLISH,
+                        "%d %s", secs, ( secs > 1 ? "secs" : "secs" ) ) );
+            }// end of else block
+        }// end of if block
+
+        return timeElapsed.toString();
+    }// end of method getDetailedTimeDifference
+
+    /**
      * Subtracts two dates and return a hour value
      *
      **@param firstDate The first date that will do the subtracting.

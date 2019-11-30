@@ -2046,9 +2046,9 @@ public class WeatherLionApplication extends Application
                     {
                         // refresh the xml data stored after the last update
                         lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
-                                UtilityMethod.readAll(
-                                        context.getFileStreamPath( WEATHER_DATA_XML ).toString() )
-                                        .replaceAll( "\t", "" ).trim() );
+                            UtilityMethod.readAll(
+                                context.getFileStreamPath( WEATHER_DATA_XML ).toString() )
+                                    .replaceAll( "\t", "" ).trim() );
 
                         storedData = lastDataReceived.getWeatherData();
                         DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
