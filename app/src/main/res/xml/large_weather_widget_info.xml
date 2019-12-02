@@ -5,7 +5,7 @@
     android:minWidth="250dp"
     android:updatePeriodMillis="60000"
     android:previewImage="@drawable/large_preview"
-    android:initialLayout="@layout/wl_large_weather_widget_activity"
+    android:initialLayout="@layout/wl_large_weather_widget_activity_alternate"
     android:configure="com.bushbungalo.weatherlion.ConfigureWidget"
     android:resizeMode="horizontal|vertical"
     android:minResizeHeight="180dp"

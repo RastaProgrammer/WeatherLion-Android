@@ -341,8 +341,12 @@ public class PrefsActivity extends AppCompatActivity
                             case WeatherLionApplication.WEATHER_SOURCE_PREFERENCE:
                                 WeatherLionApplication.storedPreferences.setProvider( stringValue );
                                 summary = WeatherLionApplication.storedPreferences.getProvider();
-                                UtilityMethod.refreshRequestedByUser = true;
-                                UtilityMethod.refreshRequestedBySystem  = false;
+
+                                String invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
+                                WeatherLionApplication.callMethodByName( null,
+                                        "refreshWeather",
+                                        new Class[]{ String.class }, new Object[]{ invoker } );
+
                                 break;
                             case WeatherLionApplication.UPDATE_INTERVAL:
                                 WeatherLionApplication.storedPreferences.setInterval( stringValue );
@@ -369,19 +373,27 @@ public class PrefsActivity extends AppCompatActivity
                     }// end of if block
                     else
                     {
+                        String invoker;
+
                         switch( preference.getKey() )
                         {
                             case WeatherLionApplication.CURRENT_LOCATION_PREFERENCE:
                                 WeatherLionApplication.storedPreferences.setLocation( stringValue );
                                 WeatherLionApplication.currentWxLocation = stringValue;
                                 summary = WeatherLionApplication.storedPreferences.getLocation();
+
+                                invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
+                                WeatherLionApplication.callMethodByName( null,
+                                        "refreshWeather",
+                                        new Class[]{ String.class }, new Object[]{ invoker } );
+
                                 break;
                             case WeatherLionApplication.ICON_SET_PREFERENCE:
                                 WeatherLionApplication.iconSet = stringValue;
                                 WeatherLionApplication.storedPreferences.setIconSet( WeatherLionApplication.iconSet );
                                 summary = WeatherLionApplication.storedPreferences.getIconSet();
 
-                                String invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
+                                invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
                                 Bundle extras = new Bundle();
                                 extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
                                 extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,

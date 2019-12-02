@@ -3201,15 +3201,10 @@ public abstract class UtilityMethod
 
         //milliseconds
         long difference = Math.abs( new Date().getTime() - lastUpdated.getTime() );
-
-        long secondsInMilli = 1000;
-        long minutesInMilli = secondsInMilli * 60;
-
-        long elapsedMinutes = difference / minutesInMilli;
-        //difference = difference % minutesInMilli;
+        long elapsedMinutes = difference / 60000;
 
         // the system might send back-to-back requests dependent on the situation
-        // so only one instance must be allowed in the space of a minute
+        // so only one update should be allowed within a minute interval
         if( refreshRequestedBySystem && elapsedMinutes > 1 )
         {
             return true;
@@ -3219,8 +3214,8 @@ public abstract class UtilityMethod
             if( refreshRequestedBySystem )
             {
                 logMessage( LogLevel.WARNING,
-                        "Simultaneous updates by the system were rejected!",
-                        TAG + "::updateRequired" );
+            "Simultaneous updates by the system were rejected!",
+                TAG + "::updateRequired" );
 
                 return false;
             }// end of if block

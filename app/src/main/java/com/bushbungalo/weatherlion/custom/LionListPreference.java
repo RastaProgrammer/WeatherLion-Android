@@ -333,7 +333,10 @@ public class LionListPreference extends DialogPreference
         if( positiveResult && selectedEntry.length() != 0 )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "User selected: " + selectedEntry.toString(), "List Preference" );
+            "User selected: " + selectedEntry.toString(), "LionListPreference::onDialogClosed" );
+
+            UtilityMethod.refreshRequestedByUser = true;
+            UtilityMethod.refreshRequestedBySystem  = false;
 
             switch( getKey() )
             {

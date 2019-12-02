@@ -8,6 +8,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 
@@ -148,16 +149,15 @@ public class JSONHelper
             if( file.exists() )
             {
                 reader = new FileReader( file );
-
                 Gson gson = new Gson();
 
                 // convert the file JSON into a list of objects
                 fileData = gson.fromJson( reader,
-                    new TypeToken<LinkedTreeMap<String, Object>>() {}.getType() );
+                    new TypeToken<LinkedTreeMap<String, Object>>(){}.getType() );
             }// end of if block
 
         }// end of try block
-        catch ( FileNotFoundException e )
+        catch ( FileNotFoundException | JsonSyntaxException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
         TAG + "::importPreviousLogs [line: " +

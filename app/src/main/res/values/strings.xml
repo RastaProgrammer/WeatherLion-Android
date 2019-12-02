@@ -34,7 +34,7 @@
     <string name="current_time">Mon, Jan 01, 7:30 AM</string>
     <string name="last_updated">Mon, Jan 01, 7:00 AM</string>
     <string name="current_reading_icon">Current Reading Icon</string>
-    <string name="feels_like_main">Feels Like 0° Mostly Sunny</string>
+    <string name="feels_like_main">Feels Like 0°</string>
     <string name="feels_like_widget">Feels Like 0°</string>
     <string name="no_reading">0°F</string>
     <string name="no_reading_e">0°/0°</string>
@@ -66,15 +66,9 @@
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
 
-    <string name="pref_title_social_recommendations">Enable social recommendations</string>
-    <string name="pref_description_social_recommendations">Recommendations for people to contact
-        based on your message history
-    </string>
 
-    <string name="pref_title_display_name">Display name</string>
-    <string name="pref_default_display_name">John Smith</string>
-    <string name="default_wind">E 7 mph</string>
-    <string name="default_humidity">0%</string>
+    <string name="default_wind">Wind: E 7 mph</string>
+    <string name="default_humidity">Humidity: 0%</string>
     <string name="city_finder_title">City Locator</string>
     <string name="icon_set_dialog_title">Icon set</string>
     <string name="city_finder_hint">Enter a location</string>
@@ -300,7 +294,7 @@
     <string name="notification_current_temperature">Notification Current Temperature</string>
     <string name="hourly">HOURLY</string>
     <string name="daily">DAILY</string>
-    <string name="default_alarm">3:05 AM</string>
+    <string name="default_alarm">No Alarm Due</string>
     <string name="title_activity_scrolling">ScrollingActivity</string>
     <string name="astronomy">ASTRONOMY</string>
     <string name="sunrise">SUNRISE</string>

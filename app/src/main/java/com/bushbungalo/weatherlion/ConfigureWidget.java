@@ -138,7 +138,7 @@ public class ConfigureWidget extends AppCompatActivity
         if( widgetProvider.equals( WeatherLionApplication.LARGE_WIDGET ) )
         {
            widgetView = new RemoteViews( mContext.getPackageName(),
-                   R.layout.wl_large_weather_widget_activity );
+                   R.layout.wl_large_weather_widget_activity_alternate);
            largeWidget = true;
            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                     "Using large widget layout...",
@@ -859,6 +859,9 @@ public class ConfigureWidget extends AppCompatActivity
                     0, mainActivityIntent, 0 );
 
             widgetView.setOnClickPendingIntent( R.id.imvCurrentCondition, pMainActivityIntent );
+
+            // when using the alternate large widget layout
+            widgetView.setOnClickPendingIntent( R.id.rlWeatherData, pMainActivityIntent );
 
             // clock intent
             Intent openClockIntent = new Intent( AlarmClock.ACTION_SHOW_ALARMS );

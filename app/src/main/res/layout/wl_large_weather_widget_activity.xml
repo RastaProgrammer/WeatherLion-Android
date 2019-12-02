@@ -191,22 +191,10 @@
                 android:src="@drawable/wl_humidity_1" />
 
             <TextView
-                android:id="@+id/txvHumid"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@+id/imvMoisture"
-                android:fontFamily="sans-serif-condensed"
-                android:layout_marginEnd="4dip"
-                android:text="@string/humidity"
-                android:textAlignment="textStart"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp" />
-
-            <TextView
                 android:id="@+id/txvHumidity"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toEndOf="@+id/txvHumid"
+                android:layout_toEndOf="@+id/imvMoisture"
                 android:fontFamily="sans-serif-condensed"
                 android:text="@string/default_humidity"
                 android:textAlignment="textStart"
@@ -303,23 +291,11 @@
                 android:layout_alignParentStart="true"/>
 
             <TextView
-                android:id="@+id/txvWind"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@+id/imvFlag"
-                android:fontFamily="sans-serif-condensed"
-                android:text="@string/wind"
-                android:layout_marginEnd="4dip"
-                android:textAlignment="textStart"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp" />
-
-            <TextView
                 android:id="@+id/txvWindReading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="2dip"
-                android:layout_toEndOf="@+id/txvWind"
+                android:layout_toEndOf="@+id/imvFlag"
                 android:fontFamily="sans-serif-condensed"
                 android:text="@string/default_wind"
                 android:layout_marginEnd="4dip"

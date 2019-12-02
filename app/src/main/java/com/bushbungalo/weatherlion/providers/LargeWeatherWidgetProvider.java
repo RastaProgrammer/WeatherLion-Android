@@ -67,7 +67,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     {
         ComponentName largeWidget = new ComponentName( context, LargeWeatherWidgetProvider.class );
         largeWidgetRemoteViews = new RemoteViews( context.getPackageName(),
-                R.layout.wl_large_weather_widget_activity );
+                R.layout.wl_large_weather_widget_activity_alternate);
 
         int[] allWidgetIds = appWidgetManager.getAppWidgetIds( largeWidget );
 
@@ -83,9 +83,13 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             UtilityMethod.refreshRequestedBySystem = true;
             UtilityMethod.refreshRequestedByUser = false;
 
-            String invoker = this.getClass().getSimpleName() + "::onUpdate";
-            WeatherLionApplication.callMethodByName( null, "refreshWeather",
-                    new Class[]{ String.class }, new Object[]{ invoker } );
+            // avoid bottle neck requests
+            if( UtilityMethod.updateRequired( context ) )
+            {
+                String invoker = this.getClass().getSimpleName() + "::onUpdate";
+                WeatherLionApplication.callMethodByName( null, "refreshWeather",
+                        new Class[]{ String.class }, new Object[]{ invoker } );
+            }// end of if block
 
             // set the click listener for the refresh image
             PendingIntent refreshIntent = PendingIntent.getBroadcast( context,
@@ -109,6 +113,14 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
 
             largeWidgetRemoteViews.setOnClickPendingIntent(
                     R.id.imvCurrentCondition,
+                    getPendingSelfIntent( context, LAUNCH_MAIN )
+            );
+
+            // when using the alternate large widget layout
+            largeWidgetRemoteViews.setOnClickPendingIntent( R.id.rlWeatherData, mainIntent );
+
+            largeWidgetRemoteViews.setOnClickPendingIntent(
+                    R.id.rlWeatherData,
                     getPendingSelfIntent( context, LAUNCH_MAIN )
             );
 
@@ -152,7 +164,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance( context );
         largeWidgetRemoteViews = new RemoteViews( context.getPackageName(),
-                R.layout.wl_large_weather_widget_activity );
+                R.layout.wl_large_weather_widget_activity_alternate );
         String updateExtra = intent.getStringExtra( WIDGET_UPDATE_MESSAGE );
         int[] appWidgetIds = AppWidgetManager.getInstance( context )
                 .getAppWidgetIds( new ComponentName( context,
@@ -242,7 +254,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             if( ICON_REFRESH_MESSAGE.equals( updateExtra ) )
             {
                 ComponentName watchWidget = new ComponentName( context, LargeWeatherWidgetProvider.class );
-                largeWidgetRemoteViews = new RemoteViews( context.getPackageName(), R.layout.wl_large_weather_widget_activity);
+                largeWidgetRemoteViews = new RemoteViews( context.getPackageName(), R.layout.wl_large_weather_widget_activity_alternate);
                 appWidgetManager.updateAppWidget( watchWidget, largeWidgetRemoteViews);
             }// end of if block
         }// end of if block

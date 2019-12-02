@@ -114,6 +114,8 @@ public class HttpHelper
         }// end of try block
         catch ( IOException e )
         {
+            broadcastServiceResponse( WeatherLionApplication.EMPTY_JSON );
+
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
                 "HttpHelper::downloadUrl [line: " +
                     e.getStackTrace()[1].getLineNumber()+ "]" );
@@ -212,7 +214,7 @@ public class HttpHelper
         }// end of if block
         else
         {
-            dataReturned = null;
+            dataReturned = WeatherLionApplication.EMPTY_JSON;
         }// end of else block
 
         broadcastServiceResponse( dataReturned );

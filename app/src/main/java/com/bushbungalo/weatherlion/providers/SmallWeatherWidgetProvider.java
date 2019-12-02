@@ -83,9 +83,13 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
             UtilityMethod.refreshRequestedBySystem = true;
             UtilityMethod.refreshRequestedByUser = false;
 
-            String invoker = this.getClass().getSimpleName() + "::onUpdate";
-            WeatherLionApplication.callMethodByName( null,"refreshWeather",
-                    new Class[]{ String.class }, new Object[]{ invoker } );
+            // avoid bottle neck requests
+            if( UtilityMethod.updateRequired( context ) )
+            {
+                String invoker = this.getClass().getSimpleName() + "::onUpdate";
+                WeatherLionApplication.callMethodByName( null, "refreshWeather",
+                        new Class[]{ String.class }, new Object[]{ invoker } );
+            }// end of if block
 
             // set the click listener for the refresh image
             PendingIntent refreshIntent = PendingIntent.getBroadcast( context,

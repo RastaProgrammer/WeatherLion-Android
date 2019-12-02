@@ -192,10 +192,6 @@ public class WeatherLionMain extends AppCompatActivity
                 UtilityMethod.getGPSCityLocation( false );
             }// end of if block
         }// end of else if block
-
-        // find the widget view and update it's fonts face
-        View widget = View.inflate( WeatherLionApplication.getAppContext(), R.layout.wl_large_weather_widget_activity,null );
-        UtilityMethod.loadCustomFont( (RelativeLayout) widget.findViewById( R.id.rlWidgetBody ) );
     }// end of method accessLoaded
 
     /**
@@ -407,6 +403,8 @@ public class WeatherLionMain extends AppCompatActivity
         String shortTZ = TimeZoneInfo.timeZoneCodes.get(
             WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
 
+        TextView txvCurrentCondition = findViewById( R.id.txvClimateConditions );
+
         if( shortTZ != null )
         {
             txvTimezone.setText( shortTZ );
@@ -526,10 +524,15 @@ public class WeatherLionMain extends AppCompatActivity
                             WeatherLionApplication.storedData.getHourlyForecast().get(
                                 Integer.parseInt( v.getTag().toString() ) );
 
-                        String message = String.format( "At %s it is forecasted to be %s with a high temperature of %s°.",
+                        String message = String.format( "Expect %s skies at %s with a high of %s%s.",
+                                ( selectHourForecast.getCondition().toLowerCase().contains( "sky" ) ?
+                                    selectHourForecast.getCondition().toLowerCase().replace( "sky",
+                                    "" ).trim() : selectHourForecast.getCondition().toLowerCase() ),
                                 selectHourForecast.getTime().toLowerCase(),
-                                selectHourForecast.getCondition().toLowerCase(),
-                                selectHourForecast.getTemperature() );
+                                selectHourForecast.getTemperature(),
+                                ( WeatherLionApplication.storedPreferences.getUseMetric() ?
+                                        WeatherLionApplication.CELSIUS : WeatherLionApplication.FAHRENHEIT
+                                ) );
 
                         UtilityMethod.showMessageDialog( message, "Hour Forecast", mContext );
                     }// end of method onClick
@@ -628,6 +631,8 @@ public class WeatherLionMain extends AppCompatActivity
         // Icon updater will need these values to be set
         WeatherLionApplication.currentSunriseTime = sunriseTime;
         WeatherLionApplication.currentSunsetTime = sunsetTime;
+
+        txvCurrentCondition.setText( currentCondition.toString() );
 
         updateTemps(); // call update temps here
 
@@ -1032,8 +1037,6 @@ public class WeatherLionMain extends AppCompatActivity
                         RecyclerView.ItemDecoration dividerItemDecoration = new DividerItemDecoration( dividerDrawable );
                         forecastRecyclerView.addItemDecoration( dividerItemDecoration );
 
-                        TextView txvLocalTime = findViewById( R.id.txvLocalTime );
-                        txvLocalTime.setTypeface( WeatherLionApplication.currentTypeface );
                         txcLocalTime = findViewById( R.id.tcLocalTime );
                         txcLocalTime.setTypeface( WeatherLionApplication.currentTypeface );
                     }// end of if block
@@ -2205,7 +2208,7 @@ public class WeatherLionMain extends AppCompatActivity
         TextView txvCurrentTemperature = findViewById( R.id.txvCurrentTemperature );
         txvCurrentTemperature.setTypeface( WeatherLionApplication.currentTypeface );
 
-        TextView txvFeelsLikeTemperature = findViewById( R.id.txvClimateConditions);
+        TextView txvFeelsLikeTemperature = findViewById( R.id.txvFeelsLikeTemperature );
         txvFeelsLikeTemperature.setTypeface( WeatherLionApplication.currentTypeface );
 
         TextView txvHighTemp  = findViewById( R.id.txvHighTemp );
@@ -2279,9 +2282,8 @@ public class WeatherLionMain extends AppCompatActivity
         String displayCurrentHighTemp;
         String displayCurrentLowTemp;
         String displayCurrentWindReading;
-        // Update the color of the temperature label
-        int inputValue;
 
+        int inputValue;
 
         if( WeatherLionApplication.storedPreferences.getUseMetric() )
         {
@@ -2290,13 +2292,12 @@ public class WeatherLionMain extends AppCompatActivity
                     UtilityMethod.fahrenheitToCelsius( Float.parseFloat( currentTemp.toString() ) ) ),
                         WeatherLionApplication.DEGREES );
 
-            displayCurrentFeelsLike = String.format( "%s %s%s %s",
+            displayCurrentFeelsLike = String.format( "%s %s%s",
                 WidgetUpdateService.FEELS_LIKE,
                     Math.round(
                         UtilityMethod.fahrenheitToCelsius( Float.parseFloat(
                             currentFeelsLikeTemp.toString() ) ) ),
-                                WeatherLionApplication.DEGREES,
-                                    currentCondition );
+                                WeatherLionApplication.DEGREES );
 
             displayCurrentHighTemp = String.format( "%s%s",
                 Math.round( UtilityMethod.fahrenheitToCelsius(
@@ -2319,11 +2320,10 @@ public class WeatherLionMain extends AppCompatActivity
             displayCurrentTemp = String.format( "%s%s",
                 currentTemp, WeatherLionApplication.DEGREES );
 
-            displayCurrentFeelsLike = String.format( "%s %s%s %s",
+            displayCurrentFeelsLike = String.format( "%s %s%s",
                 WidgetUpdateService.FEELS_LIKE,
                     currentFeelsLikeTemp.toString(),
-                        WeatherLionApplication.DEGREES,
-                            currentCondition );
+                        WeatherLionApplication.DEGREES );
 
             displayCurrentHighTemp = String.format( "%s%s",currentHigh.toString(), WeatherLionApplication.DEGREES );
 

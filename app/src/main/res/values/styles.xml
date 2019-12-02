@@ -69,5 +69,4 @@
     <style name="AquaTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AquaTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-
 </resources>
