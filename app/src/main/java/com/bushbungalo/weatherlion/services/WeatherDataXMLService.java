@@ -99,6 +99,8 @@ public class WeatherDataXMLService extends JobIntentService
 		String wxData = WeatherLionApplication.getAppContext().getFileStreamPath(
 				WeatherLionApplication.WEATHER_DATA_XML ).toString();
 
+		String noDate = "Thu Jan 01 00:00:00 EST 1970";
+
 		try
 		{
 			Element weatherData;
@@ -182,6 +184,20 @@ public class WeatherDataXMLService extends JobIntentService
 						forecast.getForecastCondition() ) ) );
 				forecastData.addContent( new Element( "LowTemperature" ).setText( forecast.getForecastLowTemp() ) );
 				forecastData.addContent( new Element( "HighTemperature" ).setText( forecast.getForecastHighTemp() ) );
+
+				forecastData.addContent( new Element( "DewPoint" ).setText( String.valueOf( forecast.getDewPoint() ) ) );
+				forecastData.addContent( new Element( "Humidity" ).setText( String.valueOf( forecast.getHumidity() ) ) );
+				forecastData.addContent( new Element( "Pressure" ).setText( String.valueOf( forecast.getPressure() ) ) );
+				forecastData.addContent( new Element( "WindBearing" ).setText( String.valueOf( forecast.getWindBearing() ) ) );
+				forecastData.addContent( new Element( "WindSpeed" ).setText( String.valueOf( forecast.getWindSpeed() ) ) );
+				forecastData.addContent( new Element( "WindDirection" ).setText( forecast.getWindDirection() ) );
+				forecastData.addContent( new Element( "UvIndex" ).setText( String.valueOf( forecast.getUvIndex() ) ) );
+				forecastData.addContent( new Element( "Visibility" ).setText( String.valueOf( forecast.getVisibility() ) ) );
+				forecastData.addContent( new Element( "Ozone" ).setText( String.valueOf( forecast.getOzone() ) ) );
+				forecastData.addContent( new Element( "Sunrise" ).setText(
+						forecast.getSunrise() == null ? noDate : forecast.getSunrise().toString() ) );
+				forecastData.addContent( new Element( "Sunset" ).setText(
+						forecast.getSunset() == null ? noDate : forecast.getSunset().toString() ) );
 				forecastList.addContent( forecastData );
 			}// end of for each loop
 

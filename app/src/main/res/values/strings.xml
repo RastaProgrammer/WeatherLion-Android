@@ -302,4 +302,16 @@
     <string name="tomorrow_day">Tomorrow</string>
     <string name="today_day">Today</string>
     <string name="gps_status">Using Gps indicator</string>
+    <string name="column_1">Column 1</string>
+    <string name="column_2">Column 2</string>
+    <string name="no_additional_details">Weather Provider does not provide additional details</string>
+    <string name="dew_point">Dew Point</string>
+    <string name="forecast_humidity">Humidity</string>
+    <string name="forecast_pressure">Pressure</string>
+    <string name="forecast_wind">Wind</string>
+    <string name="forecast_uv_index">UV Index</string>
+    <string name="forecast_astronomy">Sunrise/Sunset</string>
+    <string name="forecast_ozone">Ozone</string>
+    <string name="forecast_precipitation">Precipitation</string>
+    <string name="no_data">No Data</string>
 </resources>

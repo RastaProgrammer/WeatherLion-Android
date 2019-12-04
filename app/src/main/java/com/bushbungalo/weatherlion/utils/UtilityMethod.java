@@ -114,6 +114,9 @@ public abstract class UtilityMethod
         "W", "WNW", "NW", "NNW"
     };
 
+    // List of compass sectors
+    public static List<String> compassSectorsList = Arrays.asList( compassSectors );
+
     // Maps a cardinal point to its name
     public static LinkedHashMap<String, String> cardinalPoints;
     static
@@ -1826,6 +1829,30 @@ public abstract class UtilityMethod
 
     /**
      * Accepts a numeric value of type float that represents
+     * a measurement in hectopascal and converts it to inch of mercury [0 °C].
+     *
+     * @param hpa The measurement in hectopascal units
+     * @return  The converted value in inch of mercury [0 °C].
+     */
+    public static float hpaToInHg( float hpa )
+    {
+        return (float) ( hpa * 0.02953 );
+    }// end of method hpaToInHg
+
+    /**
+     * Accepts a numeric value of type float that represents
+     * a measurement in inch of mercury [0 °C] and converts it to hectopascal.
+     *
+     * @param inHg The measurement in inch of mercury [0 °C] units
+     * @return  The converted value in hectopascals.
+     */
+    public static float inHgToHpa( float inHg )
+    {
+        return (float) ( inHg * 33.86389 );
+    }// end of method inHgToHpa
+
+    /**
+     * Accepts a numeric value of type float that represents
      * a temperature in Kelvin and converts it to Celsius.
      *
      * @param kelvin  The temperature in Fahrenheit.
@@ -2273,9 +2300,9 @@ public abstract class UtilityMethod
      */
     public static String compassDirection( float degrees )
     {
-        int index = (int)( ( degrees / 22.5 ) + 0.5 );
+        double index = ( degrees / 22.5 ) + 0.5;
 
-        return compassSectors[ index % 16 ];
+        return compassSectors[ (int) index % compassSectors.length ];
     }// end of method compassDirection
 
     /**
@@ -3313,8 +3340,8 @@ public abstract class UtilityMethod
         boolean ok = false;
 
         Map<String, Object> importedServiceLog = JSONHelper.importPreviousLogs(
-                getAppContext().getFileStreamPath(
-                        WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
+            getAppContext().getFileStreamPath(
+                WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
 
         // ensure that data is loaded
         if( importedServiceLog != null )
@@ -3353,11 +3380,24 @@ public abstract class UtilityMethod
             else
             {
                 WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
-                        null, null );
+                null, null );
 
                 ok = true;
             }// end of else block
         }// end of if block
+        else
+        {
+            // if the log could not be imported, go ahead and use the
+            // service and recreate the log file
+
+            UtilityMethod.logMessage( LogLevel.INFO,
+        "Recreating log file that could not be imported.", "::okToUseService" );
+
+            WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
+    null, null );
+
+            ok = true;
+        }// end of else block
 
         return ok;
     }// end of method okToUseService

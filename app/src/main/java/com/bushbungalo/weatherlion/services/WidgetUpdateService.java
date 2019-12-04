@@ -1763,7 +1763,12 @@ public class WidgetUpdateService extends JobIntentService
 
             currentFiveDayForecast.add(
                 new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
-                    String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition ) );
+                    String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
+                    wxForecast.getDewPoint(), wxForecast.getHumidity(),
+                    wxForecast.getPressure(), wxForecast.getWindBearing(),
+                    wxForecast.getWindSpeed(),
+                    UtilityMethod.compassDirection( wxForecast.getWindBearing() ),
+                    0f, 0f, 0f, null, null ) );
 
             if ( i == 5 )
             {
@@ -1928,7 +1933,14 @@ public class WidgetUpdateService extends JobIntentService
 
                 currentFiveDayForecast.add(
                         new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
-                                String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition ) );
+                                String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
+                                Float.parseFloat( wxForecast.getDewPoint() ),
+                                Float.parseFloat( wxForecast.getHumidity() ),
+                                0, 0,
+                                Float.parseFloat( wxForecast.getWindSpeed() ),
+                                wxForecast.getWindDirection(),
+                                Float.parseFloat( wxForecast.getUvIndex() ),
+                                0f, 0f, null, null ) );
 
                 if ( i == 5 )
                 {
@@ -2070,8 +2082,14 @@ public class WidgetUpdateService extends JobIntentService
 
                 currentFiveDayForecast.add(
                         new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
-                                String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition ) );
-
+                                String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
+                                0f, wxForecast.getHumidity(),
+                                wxForecast.getPressure(), wxForecast.getDeg(),
+                                wxForecast.getSpeed(),
+                                UtilityMethod.compassDirection( wxForecast.getDeg() ),
+                                0f,0f, 0f,
+                                UtilityMethod.getDateTime( wxForecast.getSunrise() ),
+                                UtilityMethod.getDateTime( wxForecast.getSunset() ) ) );
                 if ( i == 5 )
                 {
                     break;
@@ -2417,6 +2435,7 @@ public class WidgetUpdateService extends JobIntentService
         // clear any previous data stores
         currentFiveHourForecast.clear();
 
+        // Five Hour Forecast
         for ( WeatherBitWeatherDataItem.FortyEightHourForecastData.Data wxHourlyForecast : wFhf )
         {
             currentForecastHour = LocalDateTime.parse(
@@ -2506,7 +2525,14 @@ public class WidgetUpdateService extends JobIntentService
 
                     currentFiveDayForecast.add(
                             new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
-                                    String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition ) );
+                                    String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
+                                    (float) wxForecast.getDewpt(), 0f,
+                                    (float) wxForecast.getPres(), 0f,
+                                    (float) wxForecast.getWindSpd(),
+                                    UtilityMethod.compassDirection( (float) wxForecast.getWindDir() ),
+                                    0f,0f, (float) wxForecast.getOzone(),
+                                    UtilityMethod.getDateTime( wxForecast.getSunriseTs() ),
+                                    UtilityMethod.getDateTime( wxForecast.getSunsetTs() ) ) );
 
                     i++; // increment sentinel
 
@@ -2852,9 +2878,12 @@ public class WidgetUpdateService extends JobIntentService
         List< YrWeatherDataItem.Forecast > fdf = yr.getForecast();
         currentFiveDayForecast.clear(); // ensure that this list is clean
 
+        List< YrWeatherDataItem.Forecast > fiveDays = new ArrayList<>();
+
         int i = 1;
         x = 0;
 
+        // Five Day Forecast
         for ( Forecast wxDailyForecast : fdf )
         {
             x++;
@@ -2882,11 +2911,8 @@ public class WidgetUpdateService extends JobIntentService
                 loadWeatherIcon( largeWidgetRemoteViews, fIcon,
                         WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
-                currentFiveDayForecast.add(
-                        new FiveDayForecast( forecastDate, String.valueOf(
-                                Math.round( dailyReading.get( df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 0 ] ) ),
-                                String.valueOf( Math.round( dailyReading.get(
-                                        df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 1 ] ) ), fCondition ) );
+                fiveDays.add( wxDailyForecast );
+
                 if( i == 5 )
                 {
                     break;
@@ -2899,6 +2925,26 @@ public class WidgetUpdateService extends JobIntentService
             {
                 x = 0;
             }// end of if block
+        }// end of for loop
+
+        for( Forecast wxDailyForecast : fiveDays )
+        {
+            Date forecastDate = wxDailyForecast.getTimeFrom();
+            // Load current forecast condition weather image
+            String fCondition = UtilityMethod.toProperCase(
+                    UtilityMethod.validateCondition( wxDailyForecast.getSymbolName() ) );
+
+            currentFiveDayForecast.add(
+                new FiveDayForecast( forecastDate, String.valueOf(
+                    Math.round( dailyReading.get( df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 0 ] ) ),
+                        String.valueOf( Math.round( dailyReading.get(
+                                df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 1 ] ) ), fCondition,
+                        0f, 0f,
+                        UtilityMethod.hpaToInHg( wxDailyForecast.getPressureValue() ), 0f,
+                        UtilityMethod.mpsToMph( wxDailyForecast.getWindSpeedMps() ),
+                        wxDailyForecast.getWindDirCode(),
+                        0f,0f, wxDailyForecast.getPrecipValue(),
+                        null,null ) );
         }// end of for loop
 
         // if the code gets to here then all was loaded successfully
@@ -3677,8 +3723,9 @@ public class WidgetUpdateService extends JobIntentService
                         currentTemp.append( Math.round( UtilityMethod.fahrenheitToCelsius( (float) fl ) ) );
 
                         currentFeelsLikeTemp.setLength( 0 );
-                        currentFeelsLikeTemp.append( Math.round(
-                                UtilityMethod.fahrenheitToCelsius( (float) weatherBitWx.getData().get( 0 ).getAppTemp() ) ) );
+                        currentFeelsLikeTemp.append(
+                                UtilityMethod.calculateWindChill( Math.round( UtilityMethod.fahrenheitToCelsius( (float) fl ) ),
+                                (int) Math.round( UtilityMethod.mphToKmh( weatherBitWx.getData().get( 0 ).getWindSpeed() ) ) ) );
 
                         // not supplied by provider
                         currentHigh.setLength( 0 );
@@ -3696,6 +3743,11 @@ public class WidgetUpdateService extends JobIntentService
                     {
                         currentTemp.setLength( 0 );
                         currentTemp.append( Math.round( (float) weatherBitWx.getData().get( 0 ).getTemp() ) );
+
+                        currentFeelsLikeTemp.setLength( 0 );
+                        currentFeelsLikeTemp.append(
+                                UtilityMethod.calculateWindChill( Math.round( (float) fl ),
+                                        (int) Math.round( weatherBitWx.getData().get( 0 ).getWindSpeed() ) ) );
 
                         // not supplied by provider
                         currentHigh.setLength( 0 );
@@ -4120,9 +4172,7 @@ public class WidgetUpdateService extends JobIntentService
                                                 Float.parseFloat( currentFeelsLikeTemp.toString() ) ) ), DEGREES );
                         String metricCurrentWindReading = String.format( "%s %s %s",
                                 currentWindDirection.toString(),
-                                currentWindSpeed,
-                                ( WeatherLionApplication.storedPreferences.getUseMetric()
-                                        ? "km/h" : "mph" ) );
+                                currentWindSpeed, "km/h" );
 
                          // Display weather data on the large widget using metric values
                         largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, metricCurrentTemp );

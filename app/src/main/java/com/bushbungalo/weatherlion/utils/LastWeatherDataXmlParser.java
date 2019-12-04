@@ -266,6 +266,40 @@ public class LastWeatherDataXmlParser
                                 case "LowTemperature":
                                     dayForecast.setLowTemperature( (int) Float.parseFloat( tagText ) );
                                     break;
+
+                                case "DewPoint":
+                                    dayForecast.setDewPoint( (int) Float.parseFloat( tagText ) );
+                                    break;
+                                case "Humidity":
+                                    dayForecast.setHumidity( (int) Float.parseFloat( tagText ) );
+                                    break;
+                                case "Pressure":
+                                    dayForecast.setPressure( (int) Float.parseFloat( tagText ) );
+                                    break;
+                                case "WindBearing":
+                                    dayForecast.setWindBearing( (int) Float.parseFloat( tagText ) );
+                                    break;
+                                case "WindSpeed":
+                                    dayForecast.setWindSpeed( (int) Float.parseFloat( tagText ) );
+                                    break;
+                                case "WindDirection":
+                                    dayForecast.setWindDirection( tagText );
+                                    break;
+                                case "UvIndex":
+                                    dayForecast.setUvIndex( (int) Float.parseFloat( tagText ) );
+                                    break;
+                                case "Visibility":
+                                    dayForecast.setVisibility( (int) Float.parseFloat( tagText ) );
+                                    break;
+                                case "Ozone":
+                                    dayForecast.setOzone( (int) Float.parseFloat( tagText ) );
+                                    break;
+                                case "Sunrise":
+                                    dayForecast.setSunrise( tagText );
+                                    break;
+                                case "Sunset":
+                                    dayForecast.setSunset( tagText );
+                                    break;
                             }// end of switch block
                         }// end of else if block
 

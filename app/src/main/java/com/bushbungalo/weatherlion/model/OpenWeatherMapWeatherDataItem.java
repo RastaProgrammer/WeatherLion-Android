@@ -12,7 +12,7 @@ import java.util.List;
  * 11/20/17
  */
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class OpenWeatherMapWeatherDataItem 
 {
 	static OpenWeatherMapWeatherDataItem.WeatherData owmWxWeatherData;
@@ -609,8 +609,12 @@ public class OpenWeatherMapWeatherDataItem
         public class Data
         {
             private long dt;
-            private Temperature temp;
-            private List<Weather> weather;
+			private long sunrise;
+            private long sunset;
+			private Temperature temp;
+			private List<Weather> weather;
+			private float pressure;
+            private float humidity;
             private float speed;
             private int deg;
             private int clouds;
@@ -624,6 +628,24 @@ public class OpenWeatherMapWeatherDataItem
 			public void setDt(long dt)
 			{
 				this.dt = dt;
+			}
+
+			public long getSunrise()
+			{
+				return sunrise;
+			}
+
+			public void setSunrise(long sunrise)
+			{
+				this.sunrise = sunrise;
+			}
+
+			public long getSunset() {
+				return sunset;
+			}
+
+			public void setSunset(long sunset) {
+				this.sunset = sunset;
 			}
 
 			public Temperature getTemp() 
@@ -644,6 +666,26 @@ public class OpenWeatherMapWeatherDataItem
 			public void setWeather(List<Weather> weather)
 			{
 				this.weather = weather;
+			}
+
+			public float getPressure()
+			{
+				return pressure;
+			}
+
+			public void setPressure( float pressure )
+			{
+				this.pressure = pressure;
+			}
+
+			public float getHumidity()
+			{
+				return humidity;
+			}
+
+			public void setHumidity( float humidity )
+			{
+				this.humidity = humidity;
 			}
 
 			public float getSpeed() 
