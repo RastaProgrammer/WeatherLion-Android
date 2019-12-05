@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:drawable/screen_background_dark_transparent"
-        android:padding="10dip" >
+        android:padding="6dip" >
 
         <RelativeLayout
             android:id="@+id/rlWelcomeTitleBar"
@@ -65,10 +65,11 @@
 
             <ScrollView
                 android:id="@+id/scrMessage"
-                android:layout_width="fill_parent"
-                android:layout_height="350dip"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:scrollbars="vertical"
                 android:fillViewport="true"
+                android:background="#33000000"
                 android:layout_below="@id/imvAppLogo"
                 android:layout_marginTop="10dip"
                 android:fadeScrollbars="false" >
@@ -84,20 +85,29 @@
                     android:textSize="16sp"
                     android:textStyle="normal" />
             </ScrollView>
-
-            <TextView
-                android:id="@+id/txvAppName"
-                android:gravity="center"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/scrMessage"
-                android:layout_marginTop="40dip"
-                android:textAppearance="?android:attr/textAppearance"
-                android:text="@string/app_slogan"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
         </RelativeLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rlWelcomeFooter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:animateLayoutChanges="true"
+        android:background="#D932557F"
+        android:paddingTop="4dip"
+        android:paddingBottom="14dip">
+
+        <TextView
+            android:id="@+id/txvAppName"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearance"
+            android:text="@string/app_slogan"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
     </RelativeLayout>
 </RelativeLayout>

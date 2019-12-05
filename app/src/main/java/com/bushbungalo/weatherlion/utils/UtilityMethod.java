@@ -1840,6 +1840,17 @@ public abstract class UtilityMethod
     }// end of method hpaToInHg
 
     /**
+     * Converts inches to millimeters.
+     *
+     * @param inches  The number of inches to be converted.
+     * @return  The converted measurement value.
+     */
+    public static int inchesToMillimeters( int inches )
+    {
+        return (int) Math.round( inches * 25.4 );
+    }// end of method inchesToMillimeters
+
+    /**
      * Accepts a numeric value of type float that represents
      * a measurement in inch of mercury [0 °C] and converts it to hectopascal.
      *
@@ -1878,6 +1889,17 @@ public abstract class UtilityMethod
 
         return Float.parseFloat( new DecimalFormat( "##.00" ).format( fahrenheit ) );
     }// end of method kelvinToFahrenheit
+
+    /**
+     * Converts millimeters to inches.
+     *
+     * @param millimeters  The number of millimeters to be converted.
+     * @return  The converted measurement value.
+     */
+    public static int millimetersToInches( int millimeters )
+    {
+        return (int) Math.round( millimeters * 0.0393701 );
+    }// end of method millimetersToInches
 
     /**
      * Converts milliseconds to minutes.
@@ -4146,7 +4168,7 @@ public abstract class UtilityMethod
 
         Calendar rightNow = Calendar.getInstance();
 
-        if ( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
+        if ( WeatherLionApplication.storedData != null )
         {
             if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
                     WeatherLionApplication.storedData.getLocation().getTimezone() ) )
@@ -4154,6 +4176,14 @@ public abstract class UtilityMethod
                 rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
             }// end of if block
         }// end of if block
+        else
+        {
+            if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
+                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+            {
+                rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
+            }// end of if block
+        }// end of else block
 
         Calendar nightFall = Calendar.getInstance();
         Calendar sunUp = Calendar.getInstance();

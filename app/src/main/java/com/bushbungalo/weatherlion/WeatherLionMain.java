@@ -11,6 +11,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -113,6 +114,10 @@ public class WeatherLionMain extends AppCompatActivity
     public static final String KEY_UPDATE_MESSAGE = "loadAccessProviders";
     private final static String TAG = "WeatherLionMain";
 
+    public final static String RECYCLER_ITEM_CLICK = "RecyclerViewClicked";
+    public final static String RECYCLER_ITEM_LOCATION = "RecyclerItemLocation";
+    public final static String RECYCLER_ITEM_POSITION = "RecyclerItemPosition";
+
     public Context mContext;
 
     // Data Access
@@ -135,8 +140,6 @@ public class WeatherLionMain extends AppCompatActivity
 
     private static ArrayAdapter requiredKeysAdapter;
 
-    private SwipeRefreshLayout appRefresh;
-
     private RecyclerView forecastRecyclerView;
     List< LastWeatherData.WeatherData.HourlyForecast.HourForecast > hourlyForecastList;
     List< LastWeatherData.WeatherData.DailyForecast.DayForecast > fiveDayForecastList;
@@ -145,17 +148,22 @@ public class WeatherLionMain extends AppCompatActivity
     private TextClock txcLocalTime;
     private ImageView imvShowPreviousSearches;
     private TextView txvLastUpdated;
+    private ScrollView detailsScroll;
+
     private static ListPopupWindow popupWindow;
     private static PopupMenu popupMenu;
     private static String[] listItems;
     private static String selectedCity;
     private StringBuilder currentLocation;
 
+    private SwipeRefreshLayout appRefresh;
+
     private View internetCafeView;
 
     private AlertDialog loadingDialog;
     private AnimationDrawable loadingAnimation;
 
+    private Rect scrollViewRect;
     private BroadcastReceiver  systemEventsBroadcastReceiver = new SystemBroadcastReceiver();
     private BroadcastReceiver appBroadcastReceiver = new AppBroadcastReceiver();
 
@@ -554,7 +562,9 @@ public class WeatherLionMain extends AppCompatActivity
         WeeklyForecastAdapter weeklyForecastAdapter = new WeeklyForecastAdapter( fiveDayForecastList );
         forecastRecyclerView.setAdapter( weeklyForecastAdapter );
 
-        final ScrollView detailsScroll = findViewById( R.id.scrDetails );
+        detailsScroll = findViewById( R.id.scrDetails );
+        scrollViewRect = new Rect();
+        detailsScroll.getHitRect( scrollViewRect );
 
         detailsScroll.post(
             new Runnable()
@@ -912,13 +922,11 @@ public class WeatherLionMain extends AppCompatActivity
         this.getWindow().setFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN,
         WindowManager.LayoutParams.FLAG_FULLSCREEN ); //enable full screen
 
-        TextView txvMessage;
-
         // create and register the local application broadcast receiver
         IntentFilter appBroadcastFilter = new IntentFilter();
         appBroadcastFilter.addAction( WidgetUpdateService.WEATHER_LOADING_ERROR_MESSAGE );
-        appBroadcastFilter.addAction( PrefsActivity.FONT_SWITCH );
         appBroadcastFilter.addAction( PrefsActivity.ICON_SWITCH );
+        appBroadcastFilter.addAction( RECYCLER_ITEM_CLICK );
         appBroadcastFilter.addAction( WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE );
         LocalBroadcastManager.getInstance( this ).registerReceiver( appBroadcastReceiver,
                 appBroadcastFilter );
@@ -933,19 +941,7 @@ public class WeatherLionMain extends AppCompatActivity
         if( WeatherLionApplication.firstRun &&
                 !WeatherLionApplication.localWeatherDataAvailable )
         {
-            setContentView( R.layout.wl_welcome_activity );
-
-            // load the applicable typeface in use
-            UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container ) );
-
-            txvMessage = findViewById( R.id.txvMessage );
-            txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
-            View welcomeActivity = findViewById( R.id.weather_main_container );
-
-            if( !UtilityMethod.hasInternetConnection( this ) )
-            {
-                noInternetAlert( welcomeActivity );
-            }// end of if block
+            initializeWelcomeWindow();
 
             if( checkGeoAccess() )
             {
@@ -1018,27 +1014,7 @@ public class WeatherLionMain extends AppCompatActivity
                     }// end of if block
                     else
                     {
-                        setContentView( R.layout.wl_main_activity );
-                        View mainActivity = findViewById( R.id.main_window );
-
-                        if( !UtilityMethod.hasInternetConnection( this ) )
-                        {
-                            noInternetAlert( mainActivity );
-                        }// end of if block
-
-                        forecastRecyclerView = findViewById( R.id.lstDayForecast );
-                        forecastRecyclerView.setHasFixedSize( true );
-
-                        // use a linear layout manager
-                        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager( this );
-                        forecastRecyclerView.setLayoutManager( layoutManager );
-
-                        Drawable dividerDrawable = getDrawable( R.drawable.wl_forecast_list_divider );
-                        RecyclerView.ItemDecoration dividerItemDecoration = new DividerItemDecoration( dividerDrawable );
-                        forecastRecyclerView.addItemDecoration( dividerItemDecoration );
-
-                        txcLocalTime = findViewById( R.id.tcLocalTime );
-                        txcLocalTime.setTypeface( WeatherLionApplication.currentTypeface );
+                        initializeMainWindow();
                     }// end of if block
 
                     if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
@@ -1046,8 +1022,7 @@ public class WeatherLionMain extends AppCompatActivity
                         noGpsAlert();
                     }// end of if block
 
-                    doGlimpseRotation( findViewById( R.id.imvBlade ) );
-
+                    initializeMainWindow();
                     loadMainActivityWeather();
                 }// end of if block
             }// end of if block
@@ -1071,44 +1046,72 @@ public class WeatherLionMain extends AppCompatActivity
                         WeatherLionApplication.callMethodByName( null,"refreshWeather",
                                 new Class[]{ String.class }, new Object[]{ invoker } );
 
+                        showLoadingDialog( "Refreshing Data..." );
+                        initializeWelcomeWindow();
                         // Have a loading screen displayed in the mean time
                     }// end of if block
                 }// end of if block
                 else
                 {
-                    setContentView( R.layout.wl_welcome_activity );
-                    WeatherLionApplication.restoringWeatherData = true;
-
-                    UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container) );
-
-                    txvMessage = findViewById( R.id.txvMessage );
-                    txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
-                    View welcomeActivity = findViewById( R.id.weather_main_container );
-
-                    if( !UtilityMethod.hasInternetConnection( this ) )
-                    {
-                        noInternetAlert( welcomeActivity );
-                    }// end of if block
+                    initializeWelcomeWindow();
                 }//end of else block
 
             }// end of else if block
             else
             {
-                setContentView( R.layout.wl_welcome_activity );
-
-                UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container) );
-
-                txvMessage = findViewById( R.id.txvMessage );
-                txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
-                View welcomeActivity = findViewById( R.id.weather_main_container);
-
-                if( !UtilityMethod.hasInternetConnection( this ) )
-                {
-                    noInternetAlert( welcomeActivity );
-                }// end of if block
+                initializeWelcomeWindow();
             }//end of else block
         }// end of else block
     }// end of method onCreate
+
+    /**
+     * Prepare the main window for activity
+     */
+    private void initializeMainWindow()
+    {
+        setContentView( R.layout.wl_main_activity );
+        View mainActivity = findViewById( R.id.main_window );
+
+        if( !UtilityMethod.hasInternetConnection( this ) )
+        {
+            noInternetAlert( mainActivity );
+        }// end of if block
+
+        forecastRecyclerView = findViewById( R.id.lstDayForecast );
+        forecastRecyclerView.setHasFixedSize( true );
+
+        // use a linear layout manager
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager( this );
+        forecastRecyclerView.setLayoutManager( layoutManager );
+
+        Drawable dividerDrawable = getDrawable( R.drawable.wl_forecast_list_divider );
+        RecyclerView.ItemDecoration dividerItemDecoration = new DividerItemDecoration( dividerDrawable );
+        forecastRecyclerView.addItemDecoration( dividerItemDecoration );
+
+        txcLocalTime = findViewById( R.id.tcLocalTime );
+        txcLocalTime.setTypeface( WeatherLionApplication.currentTypeface );
+
+        doGlimpseRotation( findViewById( R.id.imvBlade ) );
+    }// end of method initializeMainWindow
+
+    /**
+     * Prepare the welcome window for activity
+     */
+    private void initializeWelcomeWindow()
+    {
+        setContentView( R.layout.wl_welcome_activity );
+
+        UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container) );
+
+        TextView txvMessage = findViewById(R.id.txvMessage);
+        txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
+        View welcomeActivity = findViewById( R.id.weather_main_container);
+
+        if( !UtilityMethod.hasInternetConnection( this ) )
+        {
+            noInternetAlert( welcomeActivity );
+        }// end of if block
+    }// end of method initializeWelcomeWindow
 
     /**
      * {@inheritDoc}
@@ -1196,11 +1199,11 @@ public class WeatherLionMain extends AppCompatActivity
 
         if( WeatherLionApplication.lastDataReceived != null )
         {
-            if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation() != null )
+            if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity() != null )
             {
                 if( !findViewById( R.id.weather_main_container ).getTag().equals( "main_screen" ) )
                 {
-                    setContentView( R.layout.wl_main_activity );
+                    initializeMainWindow();
                     doGlimpseRotation( findViewById( R.id.imvBlade ) );
                     loadMainActivityWeather();
                 }// end of if block
@@ -2107,7 +2110,8 @@ public class WeatherLionMain extends AppCompatActivity
         if( loadingDialog.getWindow() != null )
         {
             loadingDialog.getWindow().setLayout( 500, 500 );
-            loadingDialog.getWindow().setBackgroundDrawable( new ColorDrawable( Color.TRANSPARENT ) );
+            loadingDialog.getWindow().setBackgroundDrawable( new ColorDrawable(
+                    Color.TRANSPARENT ) );
         }// end of if block
 
         startLoading();
@@ -2348,6 +2352,29 @@ public class WeatherLionMain extends AppCompatActivity
         txvCurrentTemperature.setTextColor( colour );
     }// end of method updateTemps
 
+    private void scrollToView( final int[] itemLocation, final int itemPosition )
+    {
+        detailsScroll.post(
+            new Runnable()
+            {
+                public void run()
+                {
+                    View lastRowInView = forecastRecyclerView.getChildAt(
+                            itemPosition ).findViewById( R.id.txvRow4Col1 );
+
+                    boolean partiallyVisible = !lastRowInView.getLocalVisibleRect(scrollViewRect) ||
+                            scrollViewRect.height() < lastRowInView.getHeight();
+
+                    // only scroll if we can't see the entire last row in the view
+                    if( partiallyVisible )
+                    {
+                        detailsScroll.smoothScrollTo( itemLocation[ 0 ], itemLocation[ 1 ] );
+                        //detailsScroll.fullScroll(View.FOCUS_DOWN);
+                    }// end of if block
+                }// end of method run
+            } );
+    }// end of method scrollToView
+
     /**
      * This broadcast receiver listens for local broadcasts within the program
      */
@@ -2368,6 +2395,8 @@ public class WeatherLionMain extends AppCompatActivity
                         appRefresh.setRefreshing( false );
                     }// end of if block
 
+                    stopLoading();
+
                     break;
                 case PrefsActivity.FONT_SWITCH:
                 case PrefsActivity.ICON_SWITCH:
@@ -2379,6 +2408,7 @@ public class WeatherLionMain extends AppCompatActivity
                                         context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
                                         .replaceAll( "\t", "" ).trim() );
 
+                        initializeMainWindow();
                         loadMainActivityWeather();
                     }// end of if block
 
@@ -2439,6 +2469,7 @@ public class WeatherLionMain extends AppCompatActivity
                         WeatherLionApplication.currentSunsetTime = new StringBuilder(
                                 WeatherLionApplication.storedData.getAstronomy().getSunset() );
 
+                        initializeMainWindow();
                         // reload main activity
                         loadMainActivityWeather();
                     }// end of if block
@@ -2453,6 +2484,26 @@ public class WeatherLionMain extends AppCompatActivity
                     {
                         stopLoading();
                         loadingDialog.dismiss();
+                    }// end of if block
+
+                    break;
+                case RECYCLER_ITEM_CLICK:
+
+                    Bundle extras = intent.getExtras();
+                    int[] location;
+                    int position;
+
+                    if ( extras != null )
+                    {
+                        // the position of the row that was clicked
+                        if( extras.getIntArray( RECYCLER_ITEM_LOCATION ) != null &&
+                                extras.getInt( RECYCLER_ITEM_POSITION ) != -1 )
+                        {
+                            location = extras.getIntArray( RECYCLER_ITEM_LOCATION );
+                            position = extras.getInt( RECYCLER_ITEM_POSITION );
+
+                           scrollToView( location, position );
+                        }// end of if block
                     }// end of if block
 
                     break;

@@ -1,12 +1,16 @@
 package com.bushbungalo.weatherlion.custom;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -22,6 +26,7 @@ import android.widget.TextView;
 
 import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
+import com.bushbungalo.weatherlion.WeatherLionMain;
 import com.bushbungalo.weatherlion.model.LastWeatherData;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
@@ -49,6 +54,8 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
     private TextView txvDayHighTemp;
     private TextView txvDayLowTemp;
     private View layout;
+
+    private int mPosition;
 
     public WeeklyForecastAdapter( List<LastWeatherData.WeatherData.DailyForecast.DayForecast> forecast )
     {
@@ -97,7 +104,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
     public void onBindViewHolder( @NonNull final ViewHolder holder, final int position )
     {
         forecast = mWeeklyForecast.get( position );
-        
+
         try
         {
             Date forecastDate = null;
@@ -186,7 +193,6 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
         Point size = new Point();
         display.getSize( size );
         final int displayHeight = size.y;
-
         final boolean extendedDataPresent = loadExtendedData( holder.itemView );
 
         // If we were using a List view, this adapter class would not be necessary.
@@ -204,6 +210,8 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
             @Override
             public void onClick( final View v )
             {
+                mPosition = holder.getAdapterPosition();
+
                 // get the calculated height of the view that will not be visible on screen
                 // but it's visibility is set to View.VISIBLE
                 TableLayout extendedTable = holder.itemView.findViewById( R.id.tblExtendedDetails );
@@ -282,6 +290,19 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                         }
                     });
 
+                resizeAnimator.addListener( new AnimatorListenerAdapter()
+                {
+                    @Override
+                    public void onAnimationEnd( Animator animation )
+                    {
+                        super.onAnimationEnd( animation );
+
+                        int[] location = new int[ 2 ];
+                        holder.itemView.getLocationOnScreen( location );
+                        broadcastItemClick( location );
+                    }
+                });
+
                 AnimatorSet animationSet = new AnimatorSet();
                 animationSet.setInterpolator( new AccelerateDecelerateInterpolator() );
                 animationSet.play( resizeAnimator );
@@ -289,6 +310,16 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
             }// end of method  onClick
         });
     }// end of method onBindViewHolder
+
+    private void broadcastItemClick( int[] screenCoordinates )
+    {
+        Intent itemClickIntent = new Intent( WeatherLionMain.RECYCLER_ITEM_CLICK );
+        itemClickIntent.putExtra( WeatherLionMain.RECYCLER_ITEM_LOCATION, screenCoordinates );
+        itemClickIntent.putExtra( WeatherLionMain.RECYCLER_ITEM_POSITION, mPosition );
+        LocalBroadcastManager manager =
+                LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );
+        manager.sendBroadcast( itemClickIntent );
+    }// end of method broadcastItemClick
 
     @Override
     public int getItemCount()
@@ -390,7 +421,6 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                     windDirection = forecast.getWindDirection();
                     windSpeed = forecast.getWindSpeed();
                     uvIndex = forecast.getUvIndex();
-
 
                     if( WeatherLionApplication.storedPreferences.getUseMetric() )
                     {
@@ -570,8 +600,8 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                     if( WeatherLionApplication.storedPreferences.getUseMetric() )
                     {
                         txvRow1Col1.setText( context.getString( R.string.forecast_precipitation ) );
-                        txvRow1Col2.setText( String.format( Locale.ENGLISH, "%d%%",
-                                Math.round( ozone ) ) );
+                        txvRow1Col2.setText( String.format( Locale.ENGLISH, "%d mm",
+                            Math.round( UtilityMethod.inchesToMillimeters( (int) ozone ) ) ) );
 
                         txvRow2Col1.setText( context.getString( R.string.forecast_pressure ) );
                         txvRow2Col2.setText( String.format( Locale.ENGLISH, "%d hPa",
@@ -585,7 +615,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                     else
                     {
                         txvRow1Col1.setText( context.getString( R.string.forecast_precipitation ) );
-                        txvRow1Col2.setText( String.format( Locale.ENGLISH, "%d%%",
+                        txvRow1Col2.setText( String.format( Locale.ENGLISH, "%d in",
                                 Math.round( ozone ) ) );
 
                         txvRow2Col1.setText( context.getString( R.string.forecast_pressure ) );

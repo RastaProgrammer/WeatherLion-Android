@@ -30,6 +30,8 @@ public class LastWeatherData
         private List<HourlyForecast.HourForecast> hourlyForecast;
         private List<DailyForecast.DayForecast> dailyForecast;
 
+        public WeatherData(){}
+
         public Wind getWind ()
         {
             return wind;

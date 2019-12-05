@@ -61,7 +61,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -282,6 +284,27 @@ public class WeatherLionApplication extends Application
     {
         if( new File( this.getFileStreamPath( WEATHER_DATA_XML ).toString() ).exists() )
         {
+            try
+            {
+                BufferedReader br = new BufferedReader( new FileReader( this.getFileStreamPath( WEATHER_DATA_XML ).toString() ) );
+
+                if( br.readLine() == null )
+                {
+                    // if the file is empty then it doesn't exists
+                    return false;
+                }// end of if block
+            }// end ot try block
+            catch ( IOException e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+            "Unable to read last weather data file.",
+                TAG + "::onCreate [line: " +
+                            e.getStackTrace()[ 1 ].getLineNumber()+ "]" );
+
+                // if the file is corrupt then it doesn't exists
+                return false;
+            }// end of catch block
+
             // If the weather data xml file exists, that means the program has previously received
             // data from a web service. The data must then be loaded into memory.
             lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
@@ -310,7 +333,7 @@ public class WeatherLionApplication extends Application
                 currentSunriseTime = new StringBuilder( storedData.getAstronomy().getSunrise() );
                 currentSunsetTime = new StringBuilder( storedData.getAstronomy().getSunset() );
 
-                // weather data might not have been saved as intended as change
+                // weather data might not have been saved as intended
                 if( !currentWxLocation.equals( storedData.getLocation().getCity() ) )
                 {
                     String invoker = this.getClass().getSimpleName() + "::" +
@@ -1234,73 +1257,83 @@ public class WeatherLionApplication extends Application
         }// end of if block
         else
         {
-            checkForStoredWeatherData();
-
-            // if this location has already been used there is no need to query the
-            // web service as the location data has been stored locally
-            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( currentWxLocation );
-            String json;
-            float lat;
-            float lng;
-
-            if( CityData.currentCityData == null )
+            if( checkForStoredWeatherData() )
             {
-                json =
-                        UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
-                            currentWxLocation );
-                CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
+                // if this location has already been used there is no need to query the
+                // web service as the location data has been stored locally
+                CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( currentWxLocation );
+                String json;
+                float lat;
+                float lng;
 
-                lat = CityData.currentCityData.getLatitude();
-                lng = CityData.currentCityData.getLongitude();
-
-                if( currentLocationTimeZone == null)
+                if( CityData.currentCityData == null )
                 {
-                    currentLocationTimeZone =
-                            UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
-                }// end of if block
+                    json =
+                            UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                                    currentWxLocation );
+                    CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
 
-                CityData.currentCityData.setTimeZone(
-                        currentLocationTimeZone.getTimezoneId() );
+                    lat = CityData.currentCityData.getLatitude();
+                    lng = CityData.currentCityData.getLongitude();
+
+                    if( currentLocationTimeZone == null)
+                    {
+                        currentLocationTimeZone =
+                                UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                    }// end of if block
+
+                    CityData.currentCityData.setTimeZone(
+                            currentLocationTimeZone.getTimezoneId() );
+                }// end of if block
+                else
+                {
+                    String today = new SimpleDateFormat( "MM/dd/yyyy",
+                            Locale.ENGLISH ).format( new Date() );
+
+                    String sst = String.format( "%s %s", today, currentSunsetTime.toString() );
+                    String srt = String.format( "%s %s", today, currentSunriseTime.toString() );
+
+                    Date schedSunriseTime = null;
+                    Date schedSunsetTime = null;
+
+                    SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
+                            Locale.ENGLISH );
+
+                    try
+                    {
+                        schedSunsetTime = sdf.parse( sst );
+                        schedSunriseTime = sdf.parse( srt );
+                    } // end of try block
+                    catch ( ParseException e )
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                                TAG + "::onCreate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                    }// end of catch block
+
+                    localDateTime = new Date().toInstant().atZone(
+                            ZoneId.of( CityData.currentCityData.getTimeZone()
+                            ) ).toLocalDateTime();
+
+                    // Load the time zone info for the current city
+                    currentLocationTimeZone = new TimeZoneInfo(
+                            CityData.currentCityData.getCountryCode(),
+                            CityData.currentCityData.getCountryName(),
+                            CityData.currentCityData.getLatitude(),
+                            CityData.currentCityData.getLongitude(),
+                            CityData.currentCityData.getTimeZone(),
+                            UtilityMethod.getDateTime( localDateTime ),
+                            schedSunriseTime,
+                            schedSunsetTime );
+                }// end of else block
             }// end of if block
             else
             {
-                String today = new SimpleDateFormat( "MM/dd/yyyy",
-                        Locale.ENGLISH ).format( new Date() );
-
-                String sst = String.format( "%s %s", today, currentSunsetTime.toString() );
-                String srt = String.format( "%s %s", today, currentSunriseTime.toString() );
-
-                Date schedSunriseTime = null;
-                Date schedSunsetTime = null;
-
-                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
-                        Locale.ENGLISH );
-
-                try
+                // weather data might not have been saved as intended
+                if( storedPreferences.getLocation() != null )
                 {
-                    schedSunsetTime = sdf.parse( sst );
-                    schedSunriseTime = sdf.parse( srt );
-                } // end of try block
-                catch ( ParseException e )
-                {
-                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                            TAG + "::scheduleAstronomyUpdate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-                }// end of catch block
-
-                localDateTime = new Date().toInstant().atZone(
-                        ZoneId.of( CityData.currentCityData.getTimeZone()
-                        ) ).toLocalDateTime();
-
-                // Load the time zone info for the current city
-                currentLocationTimeZone = new TimeZoneInfo(
-                        CityData.currentCityData.getCountryCode(),
-                        CityData.currentCityData.getCountryName(),
-                        CityData.currentCityData.getLatitude(),
-                        CityData.currentCityData.getLongitude(),
-                        CityData.currentCityData.getTimeZone(),
-                        UtilityMethod.getDateTime( localDateTime ),
-                        schedSunriseTime,
-                        schedSunsetTime );
+                    invoker = TAG + "::onCreate()";
+                    refreshWeather( invoker );
+                }// end of if block
             }// end of else block
         }// end of else block
 
@@ -1415,7 +1448,8 @@ public class WeatherLionApplication extends Application
             if( checkForStoredWeatherData() )
             {
                 // run the weather service and  call the method that loads the previous weather data
-                actionWeatherService( UNIT_NOT_CHANGED, WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
+                actionWeatherService( UNIT_NOT_CHANGED,
+                        WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
             }// end of if block
 
             if( UtilityMethod.updateRequired( this ) )
@@ -2120,7 +2154,7 @@ public class WeatherLionApplication extends Application
                     }// end of if block
 
                     extras = new Bundle();
-                    extras.putString (WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                    extras.putString ( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
                     extras.putString( LAUNCH_METHOD_EXTRA,
                             "updateConnectivity" );
                     extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,

@@ -111,8 +111,8 @@
                 The program will be able to display weather from Yr.no (Norwegian Meteorological Institute) as they don\'t require a key.
             </p>
             <p>
-                <span style=\'color: #BE0000;\'><b>**Access must be supplied for any the specified weather providers and a username for use
-                with the geonames website (<a href=\"http://www.geonames.org/\">http://www.geonames.org/</a>) for city search.</b></span>
+                <span style=\'color: #FF0000;\'><b>**Access must be supplied for any the specified weather providers and a username for use
+                with the geonames website </span></b>(<span style=\'color: #FFFFFF;\'><a href=\"http://www.geonames.org/\">http://www.geonames.org/</a></span>)<span style=\'color: #FF0000;\'><b> for city search.</b></span>
             </p>
         ]]>
     </string>

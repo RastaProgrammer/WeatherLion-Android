@@ -410,6 +410,40 @@ public class WidgetUpdateService extends JobIntentService
                                 lat = CityData.currentCityData.getLatitude();
                                 lng = CityData.currentCityData.getLongitude();
 
+                                if( WeatherLionApplication.currentSunriseTime.length() == 0 )
+                                {
+                                    if( WeatherLionApplication.currentLocationTimeZone == null )
+                                    {
+                                        WeatherLionApplication.currentLocationTimeZone =
+                                                UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+
+                                        WeatherLionApplication.currentSunriseTime = new StringBuilder();
+                                        WeatherLionApplication.currentSunsetTime = new StringBuilder();
+
+                                        WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
+                                            Locale.ENGLISH ).format(
+                                                WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                                        WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
+                                            Locale.ENGLISH ).format(
+                                                WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+
+                                    }// end of if block
+                                    else
+                                    {
+                                        WeatherLionApplication.currentSunriseTime = new StringBuilder();
+                                        WeatherLionApplication.currentSunsetTime = new StringBuilder();
+
+                                        WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
+                                                Locale.ENGLISH ).format(
+                                                WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                                        WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
+                                                Locale.ENGLISH ).format(
+                                                WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+                                    }// end of else block
+                                }// end of if block
+
                                 String today = new SimpleDateFormat( "MM/dd/yyyy",
                                         Locale.ENGLISH ).format( new Date() );
 
@@ -430,11 +464,11 @@ public class WidgetUpdateService extends JobIntentService
                                 catch ( ParseException e )
                                 {
                                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                                            TAG + "::scheduleAstronomyUpdate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                                    TAG + "::scheduleAstronomyUpdate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
                                 }// end of catch block
 
                                 WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
-                                        ZoneId.of( CityData.currentCityData.getTimeZone()
+                                    ZoneId.of( CityData.currentCityData.getTimeZone()
                                         ) ).toLocalDateTime();
 
                                 // Load the time zone info for the current city
@@ -448,16 +482,27 @@ public class WidgetUpdateService extends JobIntentService
                                         schedSunriseTime,
                                         schedSunsetTime );
 
-                                // This data may have been corrupted due to a previous crash
-                                if( !WeatherLionApplication.storedData.getLocation().getTimezone()
-                                        .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
-                                {
-                                    WeatherLionApplication.storedData.getLocation().setTimezone(
-                                            CityData.currentCityData.getTimeZone() );
-
-                                    WeatherLionApplication.storedData.getLocation().setCountry(
-                                            CityData.currentCityData.getCountryName() );
-                                }// end of if block
+//                                // no previous weather data exists
+//                                if( WeatherLionApplication.storedData == null )
+//                                {
+//                                    // all we need for now is the timezone and country name for the location
+//                                    WeatherLionApplication.storedData.getLocation().setTimezone(
+//                                            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+//
+//                                    WeatherLionApplication.storedData.getLocation().setCountry(
+//                                            WeatherLionApplication.currentLocationTimeZone.getCountryName() );
+//                                }// end of if block
+//                                else if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+//                                        .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+//                                {
+//                                    // This data may have been corrupted due to a previous crash
+//
+//                                    WeatherLionApplication.storedData.getLocation().setTimezone(
+//                                            CityData.currentCityData.getTimeZone() );
+//
+//                                    WeatherLionApplication.storedData.getLocation().setCountry(
+//                                            CityData.currentCityData.getCountryName() );
+//                                }// end of else if block
                             }// end of else block
 
                             switch( wxDataProvider )
@@ -1029,6 +1074,8 @@ public class WidgetUpdateService extends JobIntentService
                     {
                         UtilityMethod.lastUpdated = WeatherLionApplication.previousLastUpdate;
                     }// end of if block
+
+                    broadcastLoadingError();
 
                 }// end of catch block
 
@@ -1765,10 +1812,13 @@ public class WidgetUpdateService extends JobIntentService
                 new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
                     String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
                     wxForecast.getDewPoint(), wxForecast.getHumidity(),
-                    wxForecast.getPressure(), wxForecast.getWindBearing(),
-                    wxForecast.getWindSpeed(),
+                    UtilityMethod.hpaToInHg( wxForecast.getPressure() ),
+                    wxForecast.getWindBearing(), wxForecast.getWindSpeed(),
                     UtilityMethod.compassDirection( wxForecast.getWindBearing() ),
-                    0f, 0f, 0f, null, null ) );
+                    wxForecast.getUvIndex(),  wxForecast.getVisibility(),
+                    wxForecast.getOzone(),
+                    UtilityMethod.getDateTime( wxForecast.getSunriseTime() ),
+                    UtilityMethod.getDateTime( wxForecast.getSunsetTime() ) ) );
 
             if ( i == 5 )
             {
@@ -2524,15 +2574,15 @@ public class WidgetUpdateService extends JobIntentService
                 WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
 
                     currentFiveDayForecast.add(
-                            new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
-                                    String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
-                                    (float) wxForecast.getDewpt(), 0f,
-                                    (float) wxForecast.getPres(), 0f,
-                                    (float) wxForecast.getWindSpd(),
-                                    UtilityMethod.compassDirection( (float) wxForecast.getWindDir() ),
-                                    0f,0f, (float) wxForecast.getOzone(),
-                                    UtilityMethod.getDateTime( wxForecast.getSunriseTs() ),
-                                    UtilityMethod.getDateTime( wxForecast.getSunsetTs() ) ) );
+                        new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
+                            String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
+                            (float) wxForecast.getDewpt(), 0f,
+                            (float) wxForecast.getPres(), 0f,
+                            (float) wxForecast.getWindSpd(),
+                            UtilityMethod.compassDirection( (float) wxForecast.getWindDir() ),
+                            0f,0f, (float) wxForecast.getOzone(),
+                            UtilityMethod.getDateTime( wxForecast.getSunriseTs() ),
+                            UtilityMethod.getDateTime( wxForecast.getSunsetTs() ) ) );
 
                     i++; // increment sentinel
 

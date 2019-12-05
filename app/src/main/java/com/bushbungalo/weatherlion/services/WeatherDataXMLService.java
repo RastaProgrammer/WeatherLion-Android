@@ -99,7 +99,7 @@ public class WeatherDataXMLService extends JobIntentService
 		String wxData = WeatherLionApplication.getAppContext().getFileStreamPath(
 				WeatherLionApplication.WEATHER_DATA_XML ).toString();
 
-		String noDate = "Thu Jan 01 00:00:00 EST 1970";
+		String noDate = "Wed Dec 31 19:00:00 EST 1969";
 
 		try
 		{
