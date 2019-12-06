@@ -1,5 +1,7 @@
 package com.bushbungalo.weatherlion;
 
+import android.animation.AnimatorSet;
+import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -40,6 +42,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
@@ -163,9 +166,10 @@ public class WeatherLionMain extends AppCompatActivity
     private AlertDialog loadingDialog;
     private AnimationDrawable loadingAnimation;
 
-    private Rect scrollViewRect;
     private BroadcastReceiver  systemEventsBroadcastReceiver = new SystemBroadcastReceiver();
     private BroadcastReceiver appBroadcastReceiver = new AppBroadcastReceiver();
+
+    public static final int LIST_ANIMATION_DURATION = 300;
 
     /**
      * Method to be called after the required data accesses have be obtained.
@@ -424,7 +428,7 @@ public class WeatherLionMain extends AppCompatActivity
         }// end of else block
 
         WeatherLionApplication.storedData =
-                WeatherLionApplication.lastDataReceived.getWeatherData();
+            WeatherLionApplication.lastDataReceived.getWeatherData();
 
         StringBuilder sunriseTime = new StringBuilder(
                 WeatherLionApplication.storedData.getAstronomy().getSunrise() );
@@ -563,15 +567,15 @@ public class WeatherLionMain extends AppCompatActivity
         forecastRecyclerView.setAdapter( weeklyForecastAdapter );
 
         detailsScroll = findViewById( R.id.scrDetails );
-        scrollViewRect = new Rect();
-        detailsScroll.getHitRect( scrollViewRect );
 
         detailsScroll.post(
             new Runnable()
             {
                 public void run()
                 {
-                    detailsScroll.fullScroll( View.FOCUS_UP );
+                    // scroll to the top of the scroll view
+                    detailsScroll.smoothScrollTo( 0, 0 );
+                    //detailsScroll.fullScroll( View.FOCUS_UP );
                 }// end of method run
             });
 
@@ -737,13 +741,14 @@ public class WeatherLionMain extends AppCompatActivity
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
         ImageView imvCurrentConditionImage = findViewById( R.id.imvCurrentCondition );
-        String imageFile = "weather_images/" + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon;
+        String imageFile = String.format( "weather_images/%s/weather_%s",
+            WeatherLionApplication.iconSet, currentConditionIcon );
 
         loadWeatherIcon( imvCurrentConditionImage, imageFile );
 
-        //RelativeLayout rlBackdrop = findViewById( R.id.weather_main_container);
-        String backdropFile = "weather_backgrounds/background_" +
-            Objects.requireNonNull( currentConditionIcon ).replace(".png", ".jpg" );
+        String backdropFile = String.format( "weather_backgrounds/background_%s",
+            Objects.requireNonNull( currentConditionIcon )
+                .replace(".png", ".jpg" ) );
 
         loadWeatherBackdrop( rootView, backdropFile );
 
@@ -926,6 +931,7 @@ public class WeatherLionMain extends AppCompatActivity
         IntentFilter appBroadcastFilter = new IntentFilter();
         appBroadcastFilter.addAction( WidgetUpdateService.WEATHER_LOADING_ERROR_MESSAGE );
         appBroadcastFilter.addAction( PrefsActivity.ICON_SWITCH );
+        appBroadcastFilter.addAction( WidgetUpdateService.ASTRONOMY_CHANGE );
         appBroadcastFilter.addAction( RECYCLER_ITEM_CLICK );
         appBroadcastFilter.addAction( WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE );
         LocalBroadcastManager.getInstance( this ).registerReceiver( appBroadcastReceiver,
@@ -2124,7 +2130,10 @@ public class WeatherLionMain extends AppCompatActivity
 
     public void stopLoading()
     {
-        loadingAnimation.stop();
+        if( loadingAnimation != null )
+        {
+            loadingAnimation.stop();
+        }// end of if block
     }// end of method stopLoading
 
     /**
@@ -2201,6 +2210,80 @@ public class WeatherLionMain extends AppCompatActivity
                 ViewGroup.LayoutParams.WRAP_CONTENT );
         dialogWindow.setGravity( Gravity.CENTER );
     }// end of method showMessageDialog
+
+    /**
+     * Updates the windows appearance based on the time of day
+     */
+    private void updateAstronomy( String timeOfDay )
+    {
+        WeatherLionApplication.storedData =
+            WeatherLionApplication.lastDataReceived.getWeatherData();
+        String currentConditionIcon = null;
+
+        switch( timeOfDay )
+        {
+            case WidgetUpdateService.SUNRISE:
+                currentConditionIcon = UtilityMethod.weatherImages.get(
+                    WeatherLionApplication.storedData.getCurrent().
+                        getCondition().toLowerCase() );
+
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                    String.format( "Switching main activity to sunrise icon %s!",
+                        currentConditionIcon ),TAG + "::updateAstronomy" );
+                break;
+            case WidgetUpdateService.SUNSET:
+                if (  WeatherLionApplication.storedData.getCurrent().
+                        getCondition().toLowerCase().contains( "(night)" ) )
+                {
+                    currentConditionIcon = UtilityMethod.weatherImages.get(
+                        WeatherLionApplication.storedData.getCurrent().
+                            getCondition().toLowerCase() );
+                }// end of if block
+                else
+                {
+                    if ( UtilityMethod.weatherImages.containsKey(
+                            WeatherLionApplication.storedData.getCurrent().
+                                getCondition().toLowerCase() + " (night)" ) )
+                    {
+                        currentConditionIcon =
+                            UtilityMethod.weatherImages.get(
+                                WeatherLionApplication.storedData.getCurrent().
+                                    getCondition().toLowerCase() + " (night)" );
+
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                    "Switching main activity to sunset icon to " + currentConditionIcon,
+                        TAG + "::updateAstronomy" );
+                    }// end of if block
+                    else
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            String.format( "No night icon exists for %s!",
+                                WeatherLionApplication.storedData.getCurrent().
+                                            getCondition() ),
+                                TAG + "::updateAstronomy" );
+
+                        // there will most likely be a day icon but not a night one so exit here
+                        return;
+                    }// end of else block
+                }// end of else block
+
+                break;
+        }// end of switch block
+
+        // Load applicable icon based on the time of day
+        ImageView imvCurrentConditionImage = findViewById( R.id.imvCurrentCondition );
+        String imageFile = String.format( "weather_images/%s/weather_%s",
+            WeatherLionApplication.iconSet, currentConditionIcon );
+
+        loadWeatherIcon( imvCurrentConditionImage, imageFile );
+
+        String backdropFile = String.format( "weather_backgrounds/background_%s",
+            Objects.requireNonNull( currentConditionIcon )
+                .replace(".png", ".jpg" ) );
+
+        ViewGroup rootView = findViewById( R.id.weather_main_container );
+        loadWeatherBackdrop( rootView, backdropFile );
+    }// end of method updateAstronomy
 
     /***
      * Update the numerical values displayed on the widget
@@ -2359,17 +2442,42 @@ public class WeatherLionMain extends AppCompatActivity
             {
                 public void run()
                 {
-                    View lastRowInView = forecastRecyclerView.getChildAt(
-                            itemPosition ).findViewById( R.id.txvRow4Col1 );
+                    ValueAnimator scrollAnimator;
 
-                    boolean partiallyVisible = !lastRowInView.getLocalVisibleRect(scrollViewRect) ||
-                            scrollViewRect.height() < lastRowInView.getHeight();
+                    View target = forecastRecyclerView.getChildAt( itemPosition );
+                    Rect scrollViewRect = new Rect();
+                    detailsScroll.getDrawingRect( scrollViewRect );
+
+                    boolean partiallyVisible = !target.getLocalVisibleRect(
+                        scrollViewRect) || scrollViewRect.height() < target.getHeight();
 
                     // only scroll if we can't see the entire last row in the view
                     if( partiallyVisible )
                     {
-                        detailsScroll.smoothScrollTo( itemLocation[ 0 ], itemLocation[ 1 ] );
-                        //detailsScroll.fullScroll(View.FOCUS_DOWN);
+                        //detailsScroll.smoothScrollTo( 0, scrollTo );
+                        //detailsScroll.setSmoothScrollingEnabled( true );
+                        //target.getParent().requestChildFocus( target, target );
+                        int scrollTo = target.getBottom() - 64;
+
+                        scrollAnimator = ValueAnimator
+                            .ofInt( detailsScroll.getScrollY(), scrollTo )
+                                .setDuration( LIST_ANIMATION_DURATION );
+
+                        scrollAnimator.addUpdateListener(
+                            new ValueAnimator.AnimatorUpdateListener()
+                            {
+                                @Override
+                                public void onAnimationUpdate( ValueAnimator animation )
+                                {
+                                    detailsScroll.setScrollY ((Integer) animation.getAnimatedValue() );
+                                    detailsScroll.requestLayout();
+                                }
+                            });
+
+                        AnimatorSet animationSet = new AnimatorSet();
+                        animationSet.setInterpolator( new AccelerateDecelerateInterpolator() );
+                        animationSet.play( scrollAnimator );
+                        animationSet.start();
                     }// end of if block
                 }// end of method run
             } );
@@ -2387,6 +2495,25 @@ public class WeatherLionMain extends AppCompatActivity
 
             switch( action )
             {
+                case WidgetUpdateService.ASTRONOMY_CHANGE:
+                    Bundle extras = intent.getExtras();
+                    String timeOfDay;
+
+                    if ( extras != null )
+                    {
+                        // the current time of day
+                        if( extras.getString( WidgetUpdateService.ASTRONOMY_PAYLOAD ) != null )
+                        {
+                            timeOfDay = extras.getString( WidgetUpdateService.ASTRONOMY_PAYLOAD );
+
+                            if( timeOfDay != null )
+                            {
+                                updateAstronomy( timeOfDay );
+                            }// end of if block
+                        }// end of if block
+                    }// end of if block
+
+                    break;
                 case WidgetUpdateService.WEATHER_LOADING_ERROR_MESSAGE:
                     // cancel the Visual indication of a refresh
                     if( appRefresh != null )
@@ -2489,7 +2616,7 @@ public class WeatherLionMain extends AppCompatActivity
                     break;
                 case RECYCLER_ITEM_CLICK:
 
-                    Bundle extras = intent.getExtras();
+                    extras = intent.getExtras();
                     int[] location;
                     int position;
 

@@ -94,6 +94,8 @@ public class WidgetUpdateService extends JobIntentService
     public static final String WEATHER_XML_SERVICE_MESSAGE = "WeatherXmlServiceMessage";
     public static final String WEATHER_XML_SERVICE_PAYLOAD = "WeatherXmlServicePayload";
     public static final String WEATHER_LOADING_ERROR_MESSAGE = "WidgetLoadingErrorMessage";
+    public static final String ASTRONOMY_MESSAGE = "UpdateAstronomy";
+    public static final String ASTRONOMY_PAYLOAD = "TimeOfDay";
     
     public static final String WEATHER_IMAGES_ROOT = "weather_images/";
     public static final String WIDGET_BACKGROUNDS_PREVIEW_ROOT = "backgrounds/";
@@ -714,32 +716,33 @@ public class WidgetUpdateService extends JobIntentService
     private void astronomyChange( String timeOfDay, AppWidgetManager appWidgetManager )
     {
         String currentConditionIcon = null;
+        broadcastAstronomyChange( timeOfDay ); // inform the rest of the application
 
         switch( timeOfDay )
         {
             case SUNRISE:
                 currentConditionIcon = UtilityMethod.weatherImages.get(
-                        WidgetUpdateService.currentCondition.toString().toLowerCase() );
+                        currentCondition.toString().toLowerCase() );
 
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                         String.format( "Switching to sunrise icon %s!", currentConditionIcon ),
                         TAG + "::astronomyChange" );
                 break;
             case SUNSET:
-                if ( WidgetUpdateService.currentCondition.toString().toLowerCase().contains( "(night)" ) )
+                if ( currentCondition.toString().toLowerCase().contains( "(night)" ) )
                 {
                     currentConditionIcon = UtilityMethod.weatherImages.get(
-                            WidgetUpdateService.currentCondition.toString().toLowerCase() );
+                            currentCondition.toString().toLowerCase() );
                 }// end of if block
                 else
                 {
                     // Yahoo has a habit of having sunny nights
-                    if ( WidgetUpdateService.currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                    if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
                     {
-                        WidgetUpdateService.currentCondition.setLength( 0 );
-                        WidgetUpdateService.currentCondition.append( "Clear" );
+                        currentCondition.setLength( 0 );
+                        currentCondition.append( "Clear" );
                         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
-                                WidgetUpdateService.currentCondition.toString() );
+                                currentCondition.toString() );
                     }// end of if block
 
                     if ( UtilityMethod.weatherImages.containsKey(
@@ -747,7 +750,7 @@ public class WidgetUpdateService extends JobIntentService
                     {
                         currentConditionIcon =
                             UtilityMethod.weatherImages.get(
-                                WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" );
+                                currentCondition.toString().toLowerCase() + " (night)" );
 
                         UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                     "Switching to sunset icon to " + currentConditionIcon,
@@ -756,8 +759,8 @@ public class WidgetUpdateService extends JobIntentService
                     else
                     {
                         UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                                String.format( "No night icon exists for %s!",
-                                        WidgetUpdateService.currentCondition.toString() ),
+                            String.format( "No night icon exists for %s!",
+                                currentCondition.toString() ),
                                 TAG + "::astronomyChange" );
 
                         // there will most likely be a day icon but not a night one so exit here
@@ -769,15 +772,16 @@ public class WidgetUpdateService extends JobIntentService
         }// end of switch block
 
         // Load applicable icon based on the time of day
-        String imageFile = String.format( "%s%s/weather_%s", WEATHER_IMAGES_ROOT, WeatherLionApplication.iconSet
+        String imageFile = String.format( "%s%s/weather_%s",
+            WEATHER_IMAGES_ROOT, WeatherLionApplication.iconSet
                 , currentConditionIcon );
 
         largeWidgetRemoteViews = new RemoteViews(
-                WeatherLionApplication.getAppContext().getPackageName(),
+            WeatherLionApplication.getAppContext().getPackageName(),
                 R.layout.wl_large_weather_widget_activity_alternate);
 
         smallWidgetRemoteViews = new RemoteViews(
-                WeatherLionApplication.getAppContext().getPackageName(),
+            WeatherLionApplication.getAppContext().getPackageName(),
                 R.layout.wl_small_weather_widget_activity );
 
         try( InputStream is = WeatherLionApplication.getAppContext().getAssets().open( imageFile ) )
@@ -794,6 +798,18 @@ public class WidgetUpdateService extends JobIntentService
             UtilityMethod.butteredToast( WeatherLionApplication.getAppContext(), e.toString(), 2, Toast.LENGTH_SHORT );
         }// end of catch block
     }// end of method astronomyChange
+
+    /**
+     * Performs a local broadcast that the astronomy has changed.
+     */
+    private void broadcastAstronomyChange( String timeOfDay )
+    {
+        Intent astronomyChangeIntent = new Intent( ASTRONOMY_MESSAGE );
+        astronomyChangeIntent.putExtra( ASTRONOMY_PAYLOAD, timeOfDay );
+        LocalBroadcastManager manager =
+                LocalBroadcastManager.getInstance( getApplicationContext() );
+        manager.sendBroadcast( astronomyChangeIntent );
+    }// end of method broadcastAstronomyChange
 
     /**
      * Performs a local broadcast that an error was thrown when attempting to load the weather data.

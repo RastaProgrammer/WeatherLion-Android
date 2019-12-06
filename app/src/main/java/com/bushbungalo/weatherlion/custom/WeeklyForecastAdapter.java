@@ -237,20 +237,18 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                 int retractedHeight = holder.itemView.findViewById( R.id.dayReadings ).getHeight();
                 int expandedHeight = retractedHeight + extendableHeight;
                 ValueAnimator resizeAnimator;
-                int animationDuration = 300;
 
                 // reveal the view containing the additional data
                 holder.itemView.findViewById( R.id.tblExtendedDetails ).setVisibility( View.VISIBLE );
 
                 if( v.getLayoutParams().height == LayoutParams.WRAP_CONTENT ||
-                        v.getLayoutParams().height == retractedHeight)
+                        v.getLayoutParams().height == retractedHeight )
                 {
                     resizeAnimator = ValueAnimator
                         .ofInt( retractedHeight, expandedHeight )
-                            .setDuration( animationDuration );
+                            .setDuration( WeatherLionMain.LIST_ANIMATION_DURATION );
 
                     v.getLayoutParams().height = expandedHeight;
-
 
                     if( WeatherLionApplication.storedPreferences.getProvider().equals(
                             WeatherLionApplication.YAHOO_WEATHER ) )
@@ -274,7 +272,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                 {
                     resizeAnimator = ValueAnimator
                         .ofInt( expandedHeight, retractedHeight )
-                            .setDuration( animationDuration );
+                            .setDuration( WeatherLionMain.LIST_ANIMATION_DURATION );
 
                     v.getLayoutParams().height = retractedHeight;
                 }// end of else block
@@ -298,7 +296,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                         super.onAnimationEnd( animation );
 
                         int[] location = new int[ 2 ];
-                        holder.itemView.getLocationOnScreen( location );
+                        holder.itemView.findViewById( R.id.txvRow4Col1 ).getLocationOnScreen( location );
                         broadcastItemClick( location );
                     }
                 });

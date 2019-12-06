@@ -68,6 +68,8 @@
 
 
     <string name="default_wind">Wind: E 7 mph</string>
+    <string name="activity_wind_title">WIND</string>
+    <string name="activity_wind_reading">E 7 mph</string>
     <string name="default_humidity">Humidity: 0%</string>
     <string name="city_finder_title">City Locator</string>
     <string name="icon_set_dialog_title">Icon set</string>
@@ -269,6 +271,7 @@
     <string name="app_slogan">The KING of all weather widgets!</string>
     <string name="wind">Wind:</string>
     <string name="notif_wind">Wind</string>
+    <string name="activity_humidity_title">HUMIDITY</string>
     <string name="humidity">Humidity:</string>
     <string name="notif_humidity">Humidity</string>
     <string name="widget_background_image">Widget Background Image</string>
@@ -314,4 +317,6 @@
     <string name="forecast_ozone">Ozone</string>
     <string name="forecast_precipitation">Precipitation</string>
     <string name="no_data">No Data</string>
+    <string name="atmosphere">ATMOSPHERE</string>
+    <string name="powered_by">Powered By</string>
 </resources>
