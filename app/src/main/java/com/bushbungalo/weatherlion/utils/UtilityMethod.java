@@ -2478,6 +2478,72 @@ public abstract class UtilityMethod
         return value * value;
     }// end of method square
 
+    public static String findClosestWordMatch( String[] phraseList, String searchPhrase )
+    {
+        StringBuilder closestMatch = new StringBuilder();
+        int closest = searchPhrase.length();
+
+        for( String phrase : phraseList )
+        {
+            int cost = UtilityMethod.getLevenshteinDistance( searchPhrase , phrase );
+
+            if( cost < closest )
+            {
+                closest = cost;
+                closestMatch.setLength( 0 );
+                closestMatch.append( phrase );
+            }// end of if block
+        }// end of for loop
+
+        return closestMatch.toString();
+    }// end of method findClosestWordMatch
+
+    /**
+     * Compute the distance between two strings.
+     */
+    @SuppressWarnings("StatementWithEmptyBody")
+    public static int getLevenshteinDistance( String firstString, String secondString )
+    {
+        int n = firstString.length();
+        int m = secondString.length();
+        int[][] distance = new int[ n + 1 ][ m + 1 ];
+
+        // Step 1
+        if( n == 0 )
+        {
+            return m;
+        }// end of if block
+
+        if( m == 0 )
+        {
+            return n;
+        }// end of if block
+
+        // Step 2
+        for( int i = 0; i <= n; distance[i][0] = i++ );
+
+        for( int j = 0; j <= m; distance[0][j] = j++ );
+
+        // Step 3
+        for( int i = 1; i <= n; i++ )
+        {
+            //Step 4
+            for (int j = 1; j <= m; j++ )
+            {
+                // Step 5
+                int cost = ( secondString.charAt( j - 1 ) == firstString.charAt( i - 1 ) ) ? 0 : 1;
+
+                // Step 6
+                distance[ i ][ j ] = Math.min(
+                    Math.min( distance[ i - 1 ][ j ] + 1, distance[ i ][ j - 1 ] + 1 ),
+                distance[ i - 1 ][ j - 1] + cost );
+            }// end of inner for loop
+        }// end of outer for loop
+
+        // Step 7
+        return distance[ n ][ m ];
+    }// end of method getLevenshteinDistance
+
     public static int getWindRotationSpeed( int windSpeed, String unit )
     {
         // convert to mph if necessary
@@ -4124,32 +4190,37 @@ public abstract class UtilityMethod
             condition = condition.replace( "(night)", "" ).trim();
         }// end of if block
 
-        for( String keyName : UtilityMethod.weatherImages.keySet() )
-        {
-            int cLen = condition.length();
+//        for( String keyName : weatherImages.keySet() )
+//        {
+//            int cLen = condition.length();
+//
+//            String accurateCondition = keyName.contains( "(night)" ) ?
+//                keyName.replace( "(night)", "" ).trim() :
+//                    keyName.trim();
+//
+//            if( keyName.length() >= cLen )
+//            {
+//                if( keyName.substring( 0, cLen ).equals( condition ) )
+//                {
+//                    condition = accurateCondition;
+//
+//                    // break if a closest match is found
+//                    break;
+//                }// end of if block
+//            }// end of if block
+//            else if( condition.startsWith( keyName ) )
+//            {
+//                condition = accurateCondition;
+//
+//                // break if a closest match is found
+//                break;
+//            }// end of else if block
+//        }// end of for each loop
 
-            String accurateCondition = keyName.contains( "(night)" ) ?
-                keyName.replace( "(night)", "" ).trim() :
-                    keyName.trim();
-
-            if( keyName.length() >= cLen )
-            {
-                if( keyName.substring( 0, cLen ).equals( condition ) )
-                {
-                    condition = accurateCondition;
-
-                    // break if a closest match is found
-                    break;
-                }// end of if block
-            }// end of if block
-            else if( condition.startsWith( keyName ) )
-            {
-                condition = accurateCondition;
-
-                // break if a closest match is found
-                break;
-            }// end of else if block
-        }// end of for each loop
+        // create a new method for locating the nearest match
+        condition = UtilityMethod.findClosestWordMatch(
+                        UtilityMethod.weatherImages.keySet().toArray( new String[0]),
+                            condition );
 
         return toProperCase( condition );
     }// end of method validateCondition

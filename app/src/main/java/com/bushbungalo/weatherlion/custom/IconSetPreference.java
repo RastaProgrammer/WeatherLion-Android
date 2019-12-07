@@ -23,7 +23,6 @@ import android.widget.TextView;
 
 import com.bushbungalo.weatherlion.R;
 import com.bushbungalo.weatherlion.WeatherLionApplication;
-import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
 import java.io.IOException;
@@ -103,7 +102,7 @@ public class IconSetPreference extends DialogPreference
             {
                 boolean previewExists = iconSet.equalsIgnoreCase( "mono" );
 
-                String displayIcon = WidgetUpdateService.WEATHER_IMAGES_ROOT + iconSet +
+                String displayIcon =  WeatherLionApplication.WEATHER_IMAGES_ROOT + iconSet +
                         ( previewExists ? "/preview_image.png" : "/weather_10.png" );
 
                 packs.add( displayIcon );

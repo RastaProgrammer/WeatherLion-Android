@@ -445,6 +445,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_below="@+id/txvDailyTitle"
+                                android:clickable="true"
                                 android:divider="#CBCBCB"
                                 android:dividerHeight="0.5dip" />
 

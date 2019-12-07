@@ -403,6 +403,11 @@ public class WeatherLionMain extends AppCompatActivity
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,"Weather icon " +
                     imageFile + " could not be loaded!", TAG + "::loadWeatherIcon" );
+
+            String defaultIcon = WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet
+                    + "/weather_na.png";
+
+            loadWeatherIcon( imv, defaultIcon );
         }// end of catch block
     }// end of method loadWeatherIcon
 
@@ -583,9 +588,11 @@ public class WeatherLionMain extends AppCompatActivity
             hourlyForecast.setVisibility( View.GONE );
         }// end of else block
 
-        fiveDayForecastList = new ArrayList<>( WeatherLionApplication.storedData.getDailyForecast() );
+        fiveDayForecastList = new ArrayList<>(
+                WeatherLionApplication.storedData.getDailyForecast() );
 
-        WeeklyForecastAdapter weeklyForecastAdapter = new WeeklyForecastAdapter( fiveDayForecastList );
+        WeeklyForecastAdapter weeklyForecastAdapter = new WeeklyForecastAdapter(
+                fiveDayForecastList );
         forecastRecyclerView.setAdapter( weeklyForecastAdapter );
 
         detailsScroll = findViewById( R.id.scrDetails );

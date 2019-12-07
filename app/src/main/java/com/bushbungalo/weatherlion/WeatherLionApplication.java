@@ -123,6 +123,9 @@ public class WeatherLionApplication extends Application
     public static final String CITIES_DATABASE_NAME = "WorldCities.db";
     public static final String WAK_DATABASE_NAME = "wak.db";
 
+    public static final String WEATHER_IMAGES_ROOT = "weather_images/";
+    public static final String WIDGET_BACKGROUNDS_PREVIEW_ROOT = "backgrounds/";
+
     // local weather data file
     public static final String WEATHER_DATA_XML = "WeatherData.xml";
     public static final String SERVICE_CALL_LOG = "ServiceCallsToday.json";
