@@ -31,7 +31,6 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.TextPaint;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
 import android.view.Gravity;
@@ -52,8 +51,10 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListPopupWindow;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
@@ -412,8 +413,24 @@ public class WeatherLionMain extends AppCompatActivity
     {
         ViewGroup rootView = findViewById( R.id.weather_main_container );
         TextView txvTimezone = findViewById( R.id.txvTimezone );
-        String shortTZ = TimeZoneInfo.timeZoneCodes.get(
-            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+        String shortTZ;
+
+        if( TimeZoneInfo.timeZoneCodes.get(
+                WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) != null )
+        {
+            shortTZ = TimeZoneInfo.timeZoneCodes.get(
+                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+        }// end of if block
+        else if( TimeZoneInfo.timeZoneCodes.get(
+                WeatherLionApplication.currentLocationTimeZone.getGmtOffset() ) != null)
+        {
+            shortTZ = TimeZoneInfo.timeZoneCodes.get(
+                    WeatherLionApplication.currentLocationTimeZone.getGmtOffset() );
+        }// end of else if block
+        else
+        {
+            shortTZ = null;
+        }// end of else block
 
         TextView txvCurrentCondition = findViewById( R.id.txvClimateConditions );
 
@@ -445,7 +462,7 @@ public class WeatherLionMain extends AppCompatActivity
         TextView txvHumidity = findViewById( R.id.txvHumidity );
 
         txvHumidity.setText( String.format( Locale.ENGLISH,
-        "Humidity: %s%%", WeatherLionApplication.storedData
+        "%s%%", WeatherLionApplication.storedData
                     .getAtmosphere().getHumidity() ) );
 
         // if an hourly forecast is present then show it
@@ -1543,29 +1560,15 @@ public class WeatherLionMain extends AppCompatActivity
      */
     private void showPreviousSearches( View anchor )
     {
+        ArrayAdapter arrayAdapter = new ArrayAdapter<>( this,
+                R.layout.wl_popup_list_item_dark_bg, listItems );
+        ImageView imvShowList = findViewById( R.id.imvShowList );
+        int arrowWidth = imvShowList.getWidth();
         popupWindow = new ListPopupWindow( this );
         popupWindow.setAnchorView( anchor );
-        popupWindow.setAdapter( new ArrayAdapter<>( this,
-                R.layout.wl_popup_list_item_dark_bg, listItems ) );
-        StringBuilder longestString = new StringBuilder();
-
-        for( String s : listItems )
-        {
-            if( longestString.length() == 0 )
-            {
-                longestString.append( s );
-            }// end of if block
-            else if( longestString.toString().length() < s.length() )
-            {
-                longestString.setLength( 0 );
-                longestString.append( s );
-            }// end of else if block
-        }// end of for each loop
-
-        TextPaint paint = new TextPaint();
-        float width = paint.measureText( longestString.toString() ) * 10; // ten is just a random number
-
-        popupWindow.setWidth( (int) width ); // hack
+        popupWindow.setAdapter( arrayAdapter );
+        popupWindow.setContentWidth( measureContentWidth( arrayAdapter, anchor ) +
+                arrowWidth );  // add the width of the arrow to the total width
         popupWindow.setVerticalOffset( 6 );
 
         SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
@@ -1669,6 +1672,64 @@ public class WeatherLionMain extends AppCompatActivity
 
         popupWindow.show();
     }// end of method showPreviousSearches
+
+    /**
+     * Measures the width of the popup window based on the size of it's content.
+     *
+     * @param listAdapter The list adapter to be used for the popup window
+     * @return An {@code Integer} value representing the calculated width of the window
+     * @author alerant
+     * <br />
+     * {@link 'https://stackoverflow.com/a/26814964'}
+     */
+    private int measureContentWidth( ListAdapter listAdapter, View anchor )
+    {
+        ViewGroup mMeasureParent = null;
+        int maxWidth = 0;
+        View itemView = null;
+        int itemType = 0;
+
+        int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(0,
+                View.MeasureSpec.UNSPECIFIED );
+        int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0,
+                View.MeasureSpec.UNSPECIFIED );
+       int count = listAdapter.getCount();
+
+        for ( int i = 0; i < count; i++ )
+        {
+            final int positionType = listAdapter.getItemViewType( i );
+
+            if ( positionType != itemType )
+            {
+                itemType = positionType;
+                itemView = null;
+            }// end of if block
+
+            if ( mMeasureParent == null )
+            {
+                mMeasureParent = new FrameLayout(mContext);
+            }// end of if block
+
+            itemView = listAdapter.getView( i, itemView, mMeasureParent );
+            itemView.measure( View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED );
+            int itemWidth = itemView.getMeasuredWidth() + itemView.getPaddingEnd();
+
+            if( itemWidth > maxWidth )
+            {
+                maxWidth = itemWidth;
+            }// end of if block
+        }// end of for loop
+
+        anchor.measure( View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED );
+        int anchorWidth =  anchor.getMeasuredWidth();
+
+        if( anchorWidth > maxWidth )
+        {
+            maxWidth += anchorWidth - maxWidth; // add the difference to the max width
+        }// end of if block
+
+        return maxWidth;
+    }// end of method measureContentWidth
 
     /**
      * Displays a dialog for key entry or deletion.

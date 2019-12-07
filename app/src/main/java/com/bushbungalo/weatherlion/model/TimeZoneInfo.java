@@ -49,13 +49,19 @@ public class TimeZoneInfo
         timeZoneCodes.put("Asia/Karachi", "PLT");
         timeZoneCodes.put("America/Phoenix", "PNT");
         timeZoneCodes.put("America/Puerto_Rico", "PRT");
+        timeZoneCodes.put("America/Jamaica", "EST");
         timeZoneCodes.put("America/Los_Angeles", "PST");
         timeZoneCodes.put("America/New_York", "EST");
         timeZoneCodes.put("Pacific/Guadalcanal", "SST");
         timeZoneCodes.put("Asia/Ho_Chi_Minh", "VST");
+        timeZoneCodes.put("-0400", "EDT");
         timeZoneCodes.put("-05:00", "EST");
         timeZoneCodes.put("-07:00", "MST");
         timeZoneCodes.put("-10:00", "HST");
+        timeZoneCodes.put("-4.0", "EDT");
+        timeZoneCodes.put("-5.0", "EST");
+        timeZoneCodes.put("-7.0", "MST");
+        timeZoneCodes.put("-10.0", "HST");
     }
 
     private String countryCode;
@@ -63,9 +69,9 @@ public class TimeZoneInfo
     private float longitude;
     private float latitude;
     private String timezoneId;
-    private float dstOffset;
-    private float gmtOffset;
-    private float rawOffset;
+    private String dstOffset;
+    private String gmtOffset;
+    private String rawOffset;
     private Date time;
     private Date sunrise;
     private Date sunset;
@@ -73,8 +79,8 @@ public class TimeZoneInfo
     public TimeZoneInfo(){}
 
     public TimeZoneInfo( String countryCode, String countryName, float latitude,
-                         float longitude, String timezoneId, float dstOffset,
-                         float gmtOffset, float rawOffset, Date time,
+                         float longitude, String timezoneId, String dstOffset,
+                         String gmtOffset, String rawOffset, Date time,
                          Date sunrise, Date sunset )
     {
         this.countryCode = countryCode;
@@ -82,6 +88,7 @@ public class TimeZoneInfo
         this.latitude = latitude;
         this.longitude = longitude;
         this.timezoneId = timezoneId;
+        this.dstOffset = dstOffset;
         this.gmtOffset = gmtOffset;
         this.rawOffset = rawOffset;
         this.time = time;
@@ -98,8 +105,9 @@ public class TimeZoneInfo
         this.latitude = latitude;
         this.longitude = longitude;
         this.timezoneId = timezoneId;
-        this.gmtOffset = 0.0f;
-        this.rawOffset = 0.0f;
+        this.dstOffset = null;
+        this.gmtOffset = null;
+        this.rawOffset = null;
         this.time = time;
         this.sunrise = sunrise;
         this.sunset = sunset;
@@ -113,8 +121,9 @@ public class TimeZoneInfo
         this.latitude = latitude;
         this.longitude = longitude;
         this.timezoneId = timezoneId;
-        this.gmtOffset = 0.0f;
-        this.rawOffset = 0.0f;
+        this.dstOffset = null;
+        this.gmtOffset = null;
+        this.rawOffset = null;
         this.time = null;
         this.sunrise = null;
         this.sunset = null;
@@ -127,8 +136,9 @@ public class TimeZoneInfo
         this.latitude = 0.0f;
         this.longitude = 0.0f;
         this.timezoneId = timezoneId;
-        this.gmtOffset = 0.0f;
-        this.rawOffset = 0.0f;
+        this.dstOffset = null;
+        this.gmtOffset = null;
+        this.rawOffset = null;
         this.time = null;
         this.sunrise = null;
         this.sunset = null;
@@ -184,32 +194,32 @@ public class TimeZoneInfo
         this.timezoneId = timezoneId;
     }
 
-    public float getDstOffset()
+    public String getDstOffset()
     {
         return dstOffset;
     }
 
-    public void setDstOffset( float dstOffset )
+    public void setDstOffset( String dstOffset )
     {
         this.dstOffset = dstOffset;
     }
 
-    public float getGmtOffset()
+    public String getGmtOffset()
     {
         return gmtOffset;
     }
 
-    public void setGmtOffset( float gmtOffset )
+    public void setGmtOffset( String gmtOffset )
     {
         this.gmtOffset = gmtOffset;
     }
 
-    public float getRawOffset()
+    public String getRawOffset()
     {
         return rawOffset;
     }
 
-    public void setRawOffset( float rawOffset )
+    public void setRawOffset( String rawOffset )
     {
         this.rawOffset = rawOffset;
     }
@@ -288,9 +298,9 @@ public class TimeZoneInfo
         timeZoneInfo.setLatitude( Float.parseFloat( lat.getText() ) );
         timeZoneInfo.setLongitude( Float.parseFloat( lng.getText() ) );
         timeZoneInfo.setTimezoneId( timezoneId.getText() );
-        timeZoneInfo.setDstOffset( Float.parseFloat( dstOffset.getText() ) );
-        timeZoneInfo.setGmtOffset( Float.parseFloat( gmtOffset.getText() ) );
-        timeZoneInfo.setRawOffset( Float.parseFloat( rawOffset.getText() ) );
+        timeZoneInfo.setDstOffset( dstOffset.getText() );
+        timeZoneInfo.setGmtOffset( gmtOffset.getText() );
+        timeZoneInfo.setRawOffset( rawOffset.getText() );
 
         timeZoneInfo.time = null;
         timeZoneInfo.sunrise = null;

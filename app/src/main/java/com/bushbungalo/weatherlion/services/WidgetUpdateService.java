@@ -412,6 +412,17 @@ public class WidgetUpdateService extends JobIntentService
                                 lat = CityData.currentCityData.getLatitude();
                                 lng = CityData.currentCityData.getLongitude();
 
+                                // If timezones are inconsistent
+                                if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                                    .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                                {
+                                    WeatherLionApplication.storedData.getLocation().setTimezone(
+                                            CityData.currentCityData.getTimeZone() );
+
+                                    WeatherLionApplication.currentSunriseTime.setLength( 0 );
+                                    WeatherLionApplication.currentSunsetTime.setLength( 0 );
+                                }// end of if block
+
                                 if( WeatherLionApplication.currentSunriseTime.length() == 0 )
                                 {
                                     if( WeatherLionApplication.currentLocationTimeZone == null )
@@ -422,6 +433,9 @@ public class WidgetUpdateService extends JobIntentService
                                         WeatherLionApplication.currentSunriseTime = new StringBuilder();
                                         WeatherLionApplication.currentSunsetTime = new StringBuilder();
 
+                                        sunriseTime.setLength( 0 );
+                                        sunsetTime.setLength( 0 );
+
                                         WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
                                             Locale.ENGLISH ).format(
                                                 WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
@@ -430,17 +444,36 @@ public class WidgetUpdateService extends JobIntentService
                                             Locale.ENGLISH ).format(
                                                 WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
 
+                                        sunriseTime.append( new SimpleDateFormat( "h:mm a",
+                                                Locale.ENGLISH ).format(
+                                                WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                                        sunsetTime.append( new SimpleDateFormat( "h:mm a",
+                                                Locale.ENGLISH ).format(
+                                                WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+
                                     }// end of if block
                                     else
                                     {
                                         WeatherLionApplication.currentSunriseTime = new StringBuilder();
                                         WeatherLionApplication.currentSunsetTime = new StringBuilder();
 
+                                        sunriseTime.setLength( 0 );
+                                        sunsetTime.setLength( 0 );
+
                                         WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
                                                 Locale.ENGLISH ).format(
                                                 WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
 
                                         WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
+                                                Locale.ENGLISH ).format(
+                                                WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+
+                                        sunriseTime.append( new SimpleDateFormat( "h:mm a",
+                                                Locale.ENGLISH ).format(
+                                                WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                                        sunsetTime.append( new SimpleDateFormat( "h:mm a",
                                                 Locale.ENGLISH ).format(
                                                 WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
                                     }// end of else block
@@ -483,28 +516,6 @@ public class WidgetUpdateService extends JobIntentService
                                         UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ),
                                         schedSunriseTime,
                                         schedSunsetTime );
-
-//                                // no previous weather data exists
-//                                if( WeatherLionApplication.storedData == null )
-//                                {
-//                                    // all we need for now is the timezone and country name for the location
-//                                    WeatherLionApplication.storedData.getLocation().setTimezone(
-//                                            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
-//
-//                                    WeatherLionApplication.storedData.getLocation().setCountry(
-//                                            WeatherLionApplication.currentLocationTimeZone.getCountryName() );
-//                                }// end of if block
-//                                else if( !WeatherLionApplication.storedData.getLocation().getTimezone()
-//                                        .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
-//                                {
-//                                    // This data may have been corrupted due to a previous crash
-//
-//                                    WeatherLionApplication.storedData.getLocation().setTimezone(
-//                                            CityData.currentCityData.getTimeZone() );
-//
-//                                    WeatherLionApplication.storedData.getLocation().setCountry(
-//                                            CityData.currentCityData.getCountryName() );
-//                                }// end of else if block
                             }// end of else block
 
                             switch( wxDataProvider )

@@ -228,19 +228,29 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                 if( extendedDataPresent )
                 {
                     extendableHeight = extendedTable.getMeasuredHeight();
+
+                    // reveal the view containing the additional data
+                    holder.itemView.findViewById( R.id.tblExtendedDetails ).setVisibility( View.VISIBLE );
+
+                    // hide the other view
+                    holder.itemView.findViewById( R.id.noExtendedDetails ).setVisibility( View.GONE );
                 }// end of if block
                 else
                 {
                     extendableHeight = noDetails.getMeasuredHeight();
+
+                    // display the view after the layout has already been rendered
+                    holder.itemView.findViewById( R.id.noExtendedDetails ).setVisibility( View.VISIBLE );
+
+                    // hide the other view
+                    holder.itemView.findViewById( R.id.tblExtendedDetails ).setVisibility( View.GONE );
                 }// end of else block
 
                 int retractedHeight = holder.itemView.findViewById( R.id.dayReadings ).getHeight();
                 int expandedHeight = retractedHeight + extendableHeight;
                 ValueAnimator resizeAnimator;
 
-                // reveal the view containing the additional data
-                holder.itemView.findViewById( R.id.tblExtendedDetails ).setVisibility( View.VISIBLE );
-
+                // perform view animation
                 if( v.getLayoutParams().height == LayoutParams.WRAP_CONTENT ||
                         v.getLayoutParams().height == retractedHeight )
                 {
@@ -249,24 +259,6 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                             .setDuration( WeatherLionMain.LIST_ANIMATION_DURATION );
 
                     v.getLayoutParams().height = expandedHeight;
-
-                    if( WeatherLionApplication.storedPreferences.getProvider().equals(
-                            WeatherLionApplication.YAHOO_WEATHER ) )
-                    {
-                        // display the view after the layout has already been rendered
-                        holder.itemView.findViewById( R.id.noExtendedDetails ).setVisibility( View.VISIBLE );
-
-                        // hide the other view
-                        holder.itemView.findViewById( R.id.tblExtendedDetails ).setVisibility( View.GONE );
-                    }// end of if block
-                    else
-                    {
-                        // display the view after the layout has already been rendered
-                        holder.itemView.findViewById( R.id.tblExtendedDetails ).setVisibility( View.VISIBLE );
-
-                        // hide the other view
-                        holder.itemView.findViewById( R.id.noExtendedDetails ).setVisibility( View.GONE );
-                    }// end of else block
                 }// end of if block
                 else
                 {
@@ -332,6 +324,17 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
         // then extended data was supplied. Wind direction will be used
         // because it can be set to null.
 
+        TextView txvRow1Col1 = v.findViewById( R.id.txvRow1Col1 );
+        TextView txvRow1Col2 = v.findViewById( R.id.txvRow1Col2 );
+        TextView txvRow2Col1 = v.findViewById( R.id.txvRow2Col1 );
+        TextView txvRow2Col2 = v.findViewById( R.id.txvRow2Col2 );
+        TextView txvRow3Col1 = v.findViewById( R.id.txvRow3Col1 );
+        TextView txvRow3Col2 = v.findViewById( R.id.txvRow3Col2 );
+        TextView txvRow4Col1 = v.findViewById( R.id.txvRow4Col1 );
+        TextView txvRow4Col2 = v.findViewById( R.id.txvRow4Col2 );
+
+        TextView txvNoDetails = v.findViewById( R.id.txvNoDetails );
+
         if( forecast.getWindDirection() != null )
         {
             Context context = WeatherLionApplication.getAppContext();
@@ -349,17 +352,6 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
             SimpleDateFormat df = new SimpleDateFormat( "h:mm a", Locale.ENGLISH );
             String tempUnit = WeatherLionApplication.storedPreferences.getUseMetric() ?
                     WeatherLionApplication.CELSIUS : WeatherLionApplication.FAHRENHEIT;
-
-            TextView txvRow1Col1 = v.findViewById( R.id.txvRow1Col1 );
-            TextView txvRow1Col2 = v.findViewById( R.id.txvRow1Col2 );
-            TextView txvRow2Col1 = v.findViewById( R.id.txvRow2Col1 );
-            TextView txvRow2Col2 = v.findViewById( R.id.txvRow2Col2 );
-            TextView txvRow3Col1 = v.findViewById( R.id.txvRow3Col1 );
-            TextView txvRow3Col2 = v.findViewById( R.id.txvRow3Col2 );
-            TextView txvRow4Col1 = v.findViewById( R.id.txvRow4Col1 );
-            TextView txvRow4Col2 = v.findViewById( R.id.txvRow4Col2 );
-
-            TextView txvNoDetails = v.findViewById( R.id.txvNoDetails );
 
             switch( WeatherLionApplication.storedPreferences.getProvider() )
             {
@@ -631,7 +623,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                     break;
                 default:
 
-                    txvNoDetails.setText( String.format( Locale.ENGLISH, "%s does not provide extended data.",
+                    txvNoDetails.setText( String.format( Locale.ENGLISH, "No extended data provided by %s.",
                         WeatherLionApplication.storedPreferences.getProvider() ) );
 
                     break;
@@ -641,6 +633,8 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
         }// end of if block
         else
         {
+            txvNoDetails.setText( String.format( Locale.ENGLISH, "No extended data provided by %s.",
+                    WeatherLionApplication.storedPreferences.getProvider() ) );
             // no extended data was loaded
             return false;
         }// end of else block

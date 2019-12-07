@@ -70,7 +70,7 @@
     <string name="default_wind">Wind: E 7 mph</string>
     <string name="activity_wind_title">WIND</string>
     <string name="activity_wind_reading">E 7 mph</string>
-    <string name="default_humidity">Humidity: 0%</string>
+    <string name="default_humidity">0%</string>
     <string name="city_finder_title">City Locator</string>
     <string name="icon_set_dialog_title">Icon set</string>
     <string name="city_finder_hint">Enter a location</string>

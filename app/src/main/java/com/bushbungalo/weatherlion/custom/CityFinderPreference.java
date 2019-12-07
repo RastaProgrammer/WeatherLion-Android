@@ -375,7 +375,7 @@ public class CityFinderPreference extends DialogPreference
                                 Intent storeCityIntent = new Intent( WeatherLionApplication.getAppContext(),
                                         CityStorageService.class );
                                 storeCityIntent.setData( Uri.parse( selectedIndex + ":" + PreferenceManager.getDefaultSharedPreferences(
-                                        getContext() ).getString(  WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
+                                        getContext() ).getString( WeatherLionApplication.CURRENT_LOCATION_PREFERENCE,
                                         Preference.DEFAULT_WEATHER_LOCATION ) ) );
                                 WeatherLionApplication.getAppContext().startService( storeCityIntent );
                             }// end of if block
@@ -385,43 +385,21 @@ public class CityFinderPreference extends DialogPreference
                         {
                             WidgetUpdateService.widgetRefreshRequired = false;
                             UtilityMethod.butteredToast( getContext(),
-                                    "Incomplete city name. Perform a search an select one from the list.",
+                            "Incomplete city name. Perform a search an select one from the list.",
                                     2, Toast.LENGTH_LONG );
                         }// end of else block
+
+                        getDialog().dismiss();
                     }// end of if block
+                    else
+                    {
+                        UtilityMethod.butteredToast( getContext(),
+                    "No changes made.",1, Toast.LENGTH_LONG );
+                    }// end of else block
                }// end of method onClick
             });
         }// end of if block
     }// end of method showDialog
-
-    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver()
-    {
-        @Override
-        public void onReceive( Context context, Intent intent )
-        {
-            String cityResultsJSON = intent.getStringExtra( CityDataService.CITY_DATA_SERVICE_PAYLOAD );
-            JsonArray jArray = JSONHelper.toJSONArray( cityResultsJSON );
-
-            stopSearchAnimation();
-
-            ArrayList<String> matches = new ArrayList<>( JSONHelper.toList( jArray ) );
-            //ArrayList<String> unSortedMatches =  new ArrayList<>( matches );
-
-            Collections.sort( matches ); // sort the results alphabetically
-
-            if( matches.size() > 0 )
-            {
-                listItems = matches.toArray( new String[0] );
-            }// end of if block
-            else
-            {
-                listItems = new String[]{ "No matches..." };
-            }// end of else block
-
-            showListMenu( edtCityName );
-            imbSearch.setEnabled( true );
-        }// end of anonymous method onReceive
-    };// end of BroadcastReceiver
 
     private void performSearch()
     {
@@ -441,7 +419,7 @@ public class CityFinderPreference extends DialogPreference
         else
         {
             UtilityMethod.butteredToast( getContext(),
-                    "Network not available!", 2, Toast.LENGTH_SHORT );
+        "Network not available!", 2, Toast.LENGTH_SHORT );
         }// end of else block
     }// end of method performSearch
 
@@ -559,4 +537,33 @@ public class CityFinderPreference extends DialogPreference
 
         edCityBox.hideSoftInputFromWindow( dialogView.getWindowToken(), 0 );
     }// end of method stopSearchAnimation
+
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver()
+    {
+        @Override
+        public void onReceive( Context context, Intent intent )
+        {
+            String cityResultsJSON = intent.getStringExtra( CityDataService.CITY_DATA_SERVICE_PAYLOAD );
+            JsonArray jArray = JSONHelper.toJSONArray( cityResultsJSON );
+
+            stopSearchAnimation();
+
+            ArrayList<String> matches = new ArrayList<>( JSONHelper.toList( jArray ) );
+            //ArrayList<String> unSortedMatches =  new ArrayList<>( matches );
+
+            Collections.sort( matches ); // sort the results alphabetically
+
+            if( matches.size() > 0 )
+            {
+                listItems = matches.toArray( new String[0] );
+            }// end of if block
+            else
+            {
+                listItems = new String[]{ "No matches..." };
+            }// end of else block
+
+            showListMenu( edtCityName );
+            imbSearch.setEnabled( true );
+        }// end of anonymous method onReceive
+    };// end of BroadcastReceiver
 }// end of class CityFinderPreference

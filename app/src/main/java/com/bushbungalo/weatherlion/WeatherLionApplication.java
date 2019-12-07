@@ -2104,14 +2104,8 @@ public class WeatherLionApplication extends Application
                         currentSunsetTime = new StringBuilder(
                                 storedData.getAstronomy().getSunset() );
 
-                        // send a heads up notification if the main windows is
-                        // not in the foreground after an update
-                        if( !mainWindowShowing )
-                        {
-                            callMethodByName( null,
-                                    "sendWeatherNotification",null,
-                                    null );
-                        }// end of if block
+                        // send a heads up notification
+                        sendWeatherNotification();
                     }// end of if block
 
                     break;
