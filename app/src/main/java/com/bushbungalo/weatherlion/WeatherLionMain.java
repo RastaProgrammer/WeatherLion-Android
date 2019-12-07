@@ -442,6 +442,11 @@ public class WeatherLionMain extends AppCompatActivity
         txvSunsetTime.setText( sunsetTime.toString() );
 
         LinearLayout hourlyForecast = findViewById( R.id.hourlyForecastParent );
+        TextView txvHumidity = findViewById( R.id.txvHumidity );
+
+        txvHumidity.setText( String.format( Locale.ENGLISH,
+        "Humidity: %s%%", WeatherLionApplication.storedData
+                    .getAtmosphere().getHumidity() ) );
 
         // if an hourly forecast is present then show it
         if( WeatherLionApplication.storedData.getHourlyForecast().size() > 0 )
