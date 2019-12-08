@@ -463,6 +463,21 @@ public class WeatherLionMain extends AppCompatActivity
         txvSunriseTime.setText( sunriseTime.toString() );
         txvSunsetTime.setText( sunsetTime.toString() );
 
+        ImageView imvWindIndicator = findViewById( R.id.imvWindIndicator );
+
+        if( UtilityMethod.compassBearings != null &&
+                UtilityMethod.compassBearings.get( WeatherLionApplication.
+                storedData.getWind().getWindDirection() ) != null )
+        {
+            Float rotation = UtilityMethod.compassBearings.get( WeatherLionApplication.
+                    storedData.getWind().getWindDirection() );
+
+            if( rotation != null )
+            {
+                imvWindIndicator.animate().rotation( rotation ).setDuration( 0 );
+            }// end of if block
+        }// end of if block
+
         LinearLayout hourlyForecast = findViewById( R.id.hourlyForecastParent );
         TextView txvHumidity = findViewById( R.id.txvHumidity );
 

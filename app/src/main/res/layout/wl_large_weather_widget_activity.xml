@@ -148,7 +148,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
-                android:singleLine="true"
+                android:maxLines="1"
                 android:layout_toEndOf="@+id/imvUsingGps"
                 android:fontFamily="sans-serif-condensed"
                 android:text="@string/current_location"

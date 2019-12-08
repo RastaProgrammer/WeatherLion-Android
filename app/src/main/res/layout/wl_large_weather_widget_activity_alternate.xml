@@ -204,7 +204,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:background="@drawable/wl_etched_border"
+                android:background="@drawable/wl_table_row_right_border"
                 android:gravity="end"
                 android:paddingStart="0dip"
                 android:paddingEnd="8dip" >
@@ -213,6 +213,7 @@
                     android:id="@+id/txvWeatherCondition"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:maxLines="1"
                     android:ellipsize="end"
                     android:text="@string/current_conditions"
                     android:textColor="#FFFFFF"
@@ -240,22 +241,38 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="2dip"
-                        android:layout_marginEnd="4dip"
                         android:layout_toEndOf="@+id/imvFlag"
-                        android:text="@string/default_wind"
+                        android:text="@string/activity_wind_reading"
                         android:textAlignment="textStart"
                         android:textColor="#FFFFFF"
                         android:textSize="13sp" />
                 </RelativeLayout>
 
-                <TextView
-                    android:id="@+id/txvLastUpdated"
+                <RelativeLayout
+                    android:id="@+id/relUpdated"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/last_updated"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp" />
+                    android:layout_height="wrap_content" >
 
+                    <ImageView
+                        android:id="@+id/imvUpdated"
+                        android:layout_width="12dip"
+                        android:layout_height="12dip"
+                        android:layout_marginTop="2.2dip"
+                        android:layout_marginEnd="2dip"
+                        android:contentDescription="@string/weather_provider_logo"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/wl_updated" />
+
+                    <TextView
+                        android:id="@+id/txvLastUpdated"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toEndOf="@+id/imvUpdated"
+                        android:text="@string/last_updated"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp" />
+
+                </RelativeLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -286,8 +303,8 @@
                         android:id="@+id/txvCurrentLocation"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:maxLines="1"
                         android:ellipsize="end"
-                        android:singleLine="true"
                         android:layout_toEndOf="@+id/imvUsingGps"
                         android:text="@string/current_location"
                         android:textColor="#FFFFFF"
@@ -343,7 +360,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="2dip"
-                        android:layout_marginEnd="4dip"
                         android:layout_toEndOf="@+id/imvAlarmClock"
                         android:text="@string/default_alarm"
                         android:textAlignment="textStart"
@@ -465,7 +481,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/astronomyGrid"
             android:layout_centerInParent="true"
-            android:layout_marginTop="1dip"
+            android:layout_marginTop="0dip"
             android:baselineAligned="false"
             android:orientation="horizontal"
             android:weightSum="5">

@@ -34,6 +34,7 @@
     <string name="current_time">Mon, Jan 01, 7:30 AM</string>
     <string name="last_updated">Mon, Jan 01, 7:00 AM</string>
     <string name="current_reading_icon">Current Reading Icon</string>
+    <string name="current_wind_indicator">Current Wind Indicator</string>
     <string name="feels_like_main">Feels Like 0°</string>
     <string name="feels_like_widget">Feels Like 0°</string>
     <string name="no_reading">0°F</string>

@@ -114,6 +114,30 @@ public abstract class UtilityMethod
         "W", "WNW", "NW", "NNW"
     };
 
+    // Compass directions and their associated bearing
+    public static LinkedHashMap<String, Float> compassBearings;
+    static
+    {
+        compassBearings = new LinkedHashMap<>();
+
+        compassBearings.put( "N", 0.0f );
+        compassBearings.put( "NNE", 22.5f );
+        compassBearings.put( "NE", 45f );
+        compassBearings.put( "ENE", 67.5f );
+        compassBearings.put( "E", 90f );
+        compassBearings.put( "ESE", 112.5f );
+        compassBearings.put( "SE", 135f );
+        compassBearings.put( "SSE", 157.5f );
+        compassBearings.put( "S", 180f );
+        compassBearings.put( "SSW", 202.5f );
+        compassBearings.put( "SW", 225f );
+        compassBearings.put( "WSW", 247.5f );
+        compassBearings.put( "W", 270f );
+        compassBearings.put( "WNW", 292.5f );
+        compassBearings.put( "NW", 315f );
+        compassBearings.put( "NNW", 237.5f );
+    }
+
     // List of compass sectors
     public static List<String> compassSectorsList = Arrays.asList( compassSectors );
 
