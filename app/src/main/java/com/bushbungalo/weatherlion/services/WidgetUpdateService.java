@@ -2583,12 +2583,11 @@ public class WidgetUpdateService extends JobIntentService
 
             if ( Objects.requireNonNull( fxDate ).after( new Date() ) )
             {
-                String fCondition = UtilityMethod.validateCondition( wxForecast.getWeather().getDescription() );
+                String fCondition = UtilityMethod.validateCondition(
+                        wxForecast.getWeather().getDescription() );
 
                 if ( fxDate.after( new Date() ) )
                 {
-                    fCondition = UtilityMethod.toProperCase( fCondition );
-
                     int  fDay = this.getResources().getIdentifier( "txvDay" + (i),
                             "id", this.getPackageName() );
                     int  fIcon = this.getResources().getIdentifier("imvDay" + (i) + "Icon",

@@ -2485,7 +2485,7 @@ public abstract class UtilityMethod
 
         for( String phrase : phraseList )
         {
-            int cost = UtilityMethod.getLevenshteinDistance( searchPhrase , phrase );
+            int cost = getLevenshteinDistance( searchPhrase , phrase );
 
             if( cost < closest )
             {
@@ -2500,6 +2500,11 @@ public abstract class UtilityMethod
 
     /**
      * Compute the distance between two strings.
+     *
+     * @param firstString   The {@code String} the be checked
+     * @param secondString  The {@code String} the string that the fistString will be compared to.
+     *
+     * @return  The number of corrections needed for the string to match
      */
     @SuppressWarnings("StatementWithEmptyBody")
     public static int getLevenshteinDistance( String firstString, String secondString )
@@ -4218,8 +4223,8 @@ public abstract class UtilityMethod
 //        }// end of for each loop
 
         // create a new method for locating the nearest match
-        condition = UtilityMethod.findClosestWordMatch(
-                        UtilityMethod.weatherImages.keySet().toArray( new String[0]),
+        condition = findClosestWordMatch(
+                        weatherImages.keySet().toArray( new String[0]),
                             condition );
 
         return toProperCase( condition );
