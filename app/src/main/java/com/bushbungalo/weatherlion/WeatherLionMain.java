@@ -474,7 +474,7 @@ public class WeatherLionMain extends AppCompatActivity
 
             if( rotation != null )
             {
-                imvWindIndicator.animate().rotation( rotation ).setDuration( 0 );
+                imvWindIndicator.animate().rotation( rotation ).setDuration( 1800 );
             }// end of if block
         }// end of if block
 

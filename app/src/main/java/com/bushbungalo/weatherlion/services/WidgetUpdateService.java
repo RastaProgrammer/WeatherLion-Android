@@ -409,16 +409,27 @@ public class WidgetUpdateService extends JobIntentService
                                 lat = CityData.currentCityData.getLatitude();
                                 lng = CityData.currentCityData.getLongitude();
 
-                                // If timezones are inconsistent
-                                if( !WeatherLionApplication.storedData.getLocation().getTimezone()
-                                    .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                                // If timezones are inconsistent or data corrupted
+                                if( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
+                                {
+                                    if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                                            .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                                    {
+                                        WeatherLionApplication.storedData.getLocation().setTimezone(
+                                                CityData.currentCityData.getTimeZone() );
+
+                                        WeatherLionApplication.currentSunriseTime.setLength( 0 );
+                                        WeatherLionApplication.currentSunsetTime.setLength( 0 );
+                                    }// end of if block
+                                }// end of if block
+                                else
                                 {
                                     WeatherLionApplication.storedData.getLocation().setTimezone(
                                             CityData.currentCityData.getTimeZone() );
 
                                     WeatherLionApplication.currentSunriseTime.setLength( 0 );
                                     WeatherLionApplication.currentSunsetTime.setLength( 0 );
-                                }// end of if block
+                                }// end of else block
 
                                 if( WeatherLionApplication.currentSunriseTime.length() == 0 )
                                 {
@@ -1724,7 +1735,7 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         // Update the current location and update time stamp
-        String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
+        String ts = new SimpleDateFormat( "MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
 
@@ -1936,7 +1947,7 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         // Update the current location and update time stamp
-        String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
+        String ts = new SimpleDateFormat( "MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
 
@@ -2099,7 +2110,7 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         // Update the current location and update time stamp
-        String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
+        String ts = new SimpleDateFormat( "MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
 
@@ -2294,7 +2305,7 @@ public class WidgetUpdateService extends JobIntentService
         }// end of catch block
 
         // Update the current location and update time stamp
-        String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( timeUpdated );
+        String ts = new SimpleDateFormat( "MMM dd, h:mm a", Locale.ENGLISH ).format( timeUpdated );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
 
@@ -2460,7 +2471,7 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         // Update the current location and update time stamp
-        String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
+        String ts = new SimpleDateFormat( "MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
 
@@ -2711,7 +2722,7 @@ public class WidgetUpdateService extends JobIntentService
         }// end if else if block
 
         // Update the current location and update time stamp
-        String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
+        String ts = new SimpleDateFormat( "MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
 
@@ -2857,7 +2868,7 @@ public class WidgetUpdateService extends JobIntentService
         }// end if else if block
 
         // Update the current location and update time stamp
-        String ts = new SimpleDateFormat( "E, MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
+        String ts = new SimpleDateFormat( "MMM dd, h:mm a", Locale.ENGLISH ).format( new Date() );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
 
@@ -3244,7 +3255,7 @@ public class WidgetUpdateService extends JobIntentService
             long nextAlarmTime = alarmManager.getNextAlarmClock().getTriggerTime();
             Date nextAlarmDate = new Date( nextAlarmTime );
             String alarmTime = new SimpleDateFormat(
-                    "E, MMM dd, h:mm a", Locale.ENGLISH ).format( nextAlarmDate );
+                    "MMM dd, h:mm a", Locale.ENGLISH ).format( nextAlarmDate );
             int hoursTilNextAlarm = UtilityMethod.getHoursDifference( new Date(), nextAlarmDate );
 
             if( hoursTilNextAlarm <= 12 )
