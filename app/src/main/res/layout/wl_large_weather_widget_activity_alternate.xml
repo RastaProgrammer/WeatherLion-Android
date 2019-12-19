@@ -258,7 +258,7 @@
                         android:layout_width="12dip"
                         android:layout_height="12dip"
                         android:layout_marginTop="2.2dip"
-                        android:layout_marginEnd="2dip"
+                        android:layout_marginEnd="4dip"
                         android:contentDescription="@string/weather_provider_logo"
                         android:scaleType="fitCenter"
                         android:src="@drawable/wl_updated" />
@@ -350,7 +350,7 @@
                         android:layout_height="12dip"
                         android:layout_alignParentStart="true"
                         android:layout_marginTop="2.2dip"
-                        android:layout_marginEnd="2dip"
+                        android:layout_marginEnd="4dip"
                         android:contentDescription="@string/weather_provider_logo"
                         android:scaleType="fitCenter"
                         android:src="@drawable/wl_alarm" />
@@ -359,7 +359,6 @@
                         android:id="@+id/txvAlarmTime"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="2dip"
                         android:layout_toEndOf="@+id/imvAlarmClock"
                         android:text="@string/default_alarm"
                         android:textAlignment="textStart"

@@ -4,7 +4,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dip">
+    android:padding="10dip"
+    android:background="#ff000000">
 
     <ImageView
         android:id="@+id/imvAppLogo"
@@ -38,7 +39,7 @@
         android:gravity="center"
         android:layout_below="@+id/txvAppName"
         android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#000000"
+        android:textColor="#62A0C9"
         android:textSize="16sp"
         android:textStyle="normal" />
 
@@ -51,7 +52,7 @@
         android:gravity="center"
         android:layout_below="@+id/txvAuthorName"
         android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#000000"
+        android:textColor="#62A0C9"
         android:textSize="16sp"
         android:textStyle="normal" />
 
@@ -64,7 +65,7 @@
         android:text="@string/version_info"
         android:layout_below="@+id/txvCompanyName"
         android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#000000"
+        android:textColor="#62A0C9"
         android:textSize="16sp"
         android:textStyle="normal" />
 
@@ -77,7 +78,7 @@
         android:gravity="center"
         android:layout_below="@+id/txvAppVersion"
         android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#000000"
+        android:textColor="#62A0C9"
         android:textSize="16sp"
         android:textStyle="normal" />
 
@@ -89,7 +90,7 @@
         android:layout_marginTop="40dip"
         android:layout_below="@+id/txvRights"
         android:textAppearance="?android:attr/textAppearance"
-        android:textColor="@color/black_opacity_80"
+        android:textColor="#62A0C9"
         android:textSize="16sp"
         android:textStyle="normal" />
 

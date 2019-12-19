@@ -19,6 +19,7 @@ import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
@@ -151,7 +152,7 @@ public class WeatherDataXMLService extends JobIntentService
 			current.addContent( new Element( "LowTemperature" ).setText( String.valueOf( xmlData.getCurrentLow() ) ) );
 			doc.getRootElement().addContent( current );
 
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "h a" );
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "EEE, MMM dd, yyyy HH:mm" );
 
 			// not all providers supply an hourly forecast
 			if( xmlData.getFiveHourForecast() != null )
@@ -216,6 +217,10 @@ public class WeatherDataXMLService extends JobIntentService
 			WeatherLionApplication.previousWeatherProvider.append( xmlData.getProviderName() );
 
 			broadcastDataStored();
+
+			// remove the backup after successful saving the new file
+			boolean removeBackup = new File( this.getFileStreamPath(
+				WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).delete();
 		}// end of try block
 		catch ( IOException e )
 		{

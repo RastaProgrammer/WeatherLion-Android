@@ -28,6 +28,7 @@ import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.text.HtmlCompat;
@@ -61,9 +62,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -74,6 +73,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -128,6 +128,7 @@ public class WeatherLionApplication extends Application
 
     // local weather data file
     public static final String WEATHER_DATA_XML = "WeatherData.xml";
+    public static final String WEATHER_DATA_BACKUP = "WeatherData.bak";
     public static final String SERVICE_CALL_LOG = "ServiceCallsToday.json";
 
     // preferences constants
@@ -287,74 +288,82 @@ public class WeatherLionApplication extends Application
     {
         if( new File( this.getFileStreamPath( WEATHER_DATA_XML ).toString() ).exists() )
         {
-            try
+            if( !UtilityMethod.isFileEmpty( this, WEATHER_DATA_XML ) )
             {
-                BufferedReader br = new BufferedReader( new FileReader( this.getFileStreamPath( WEATHER_DATA_XML ).toString() ) );
-
-                if( br.readLine() == null )
-                {
-                    // if the file is empty then it doesn't exists
-                    return false;
-                }// end of if block
-            }// end ot try block
-            catch ( IOException e )
-            {
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
-            "Unable to read last weather data file.",
-                TAG + "::onCreate [line: " +
-                            e.getStackTrace()[ 1 ].getLineNumber()+ "]" );
-
-                // if the file is corrupt then it doesn't exists
-                return false;
-            }// end of catch block
-
-            // If the weather data xml file exists, that means the program has previously received
-            // data from a web service. The data must then be loaded into memory.
-            lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
-                    UtilityMethod.readAll(
-                            this.getFileStreamPath( WEATHER_DATA_XML ).toString() )
-                            .replaceAll( "\t", "" ).trim() );
-
-            storedData = lastDataReceived.getWeatherData();
-
-            // the file may have been corrupted if the date does not exists
-            if( storedData.getProvider().getDate() != null )
-            {
-                DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy",
-                        Locale.ENGLISH );
-                try
-                {
-                    UtilityMethod.lastUpdated = df.parse( storedData.getProvider().getDate() );
-                }// end of try block
-                catch ( ParseException e )
-                {
-                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
-                            TAG + "::onCreate [line: " +
-                                    e.getStackTrace()[1].getLineNumber()+ "]" );
-                }// end of catch block
-
-                currentSunriseTime = new StringBuilder( storedData.getAstronomy().getSunrise() );
-                currentSunsetTime = new StringBuilder( storedData.getAstronomy().getSunset() );
-
-                // weather data might not have been saved as intended
-                if( !currentWxLocation.equals( storedData.getLocation().getCity() ) )
-                {
-                    String invoker = this.getClass().getSimpleName() + "::" +
-                        Objects.requireNonNull(
-                            new Object() {}.getClass().getEnclosingMethod() ).getName();
-
-                    refreshWeather( invoker );
-                    return true;
-                }// end of if block
-                else
-                {
-                    return true;
-                }// end of else block
+                return loadWeatherData();
             }// end of if block
+            else
+            {
+                // check for the backup file
+                // make a copy of the existing weather data
+                File currentWeatherDataFile = new File(
+                        this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() );
+
+                File backupWeatherDataFile = new File(
+                        this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
+
+                UtilityMethod.copyFile( backupWeatherDataFile, currentWeatherDataFile );
+
+                return loadWeatherData();
+            }// end of else block
         }// end of if block
 
         return false;
     }// end of method checkForStoredWeatherData
+
+    /**
+     *  Load the data from the weather xml file
+     *
+     * @return True/False depending on success of the operation
+     */
+    private boolean loadWeatherData()
+    {
+        // If the weather data xml file exists, that means the program has previously received
+        // data from a web service. The data must then be loaded into memory.
+        lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                UtilityMethod.readAll(
+                        this.getFileStreamPath( WEATHER_DATA_XML ).toString() )
+                        .replaceAll( "\t", "" ).trim() );
+
+        storedData = lastDataReceived.getWeatherData();
+
+        // the file may have been corrupted if the date does not exists
+        if( storedData.getProvider().getDate() != null )
+        {
+            DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy",
+                    Locale.ENGLISH );
+            try
+            {
+                UtilityMethod.lastUpdated = df.parse( storedData.getProvider().getDate() );
+            }// end of try block
+            catch ( ParseException e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                        TAG + "::onCreate [line: " +
+                                e.getStackTrace()[1].getLineNumber()+ "]" );
+            }// end of catch block
+
+            currentSunriseTime = new StringBuilder( storedData.getAstronomy().getSunrise() );
+            currentSunsetTime = new StringBuilder( storedData.getAstronomy().getSunset() );
+
+            // weather data might not have been saved as intended
+            if( !currentWxLocation.equals( storedData.getLocation().getCity() ) )
+            {
+                String invoker = this.getClass().getSimpleName() + "::" +
+                        Objects.requireNonNull(
+                                new Object() {}.getClass().getEnclosingMethod() ).getName();
+
+                refreshWeather( invoker );
+                return true;
+            }// end of if block
+            else
+            {
+                return true;
+            }// end of else block
+        }// end of if block
+
+        return false;
+    }// end of method loadWeatherData
 
     /**
      * Call the weather service that attempts to load the widget with
@@ -536,7 +545,7 @@ public class WeatherLionApplication extends Application
             String outMsg =  "The program will not run without a location set.\nGoodbye.";
 
             showMessageDialog( null, outMsg, PROGRAM_NAME + " No City",
-                    "exitApplication", null, null );
+        "exitApplication", null, null );
         }// end of else block
     }// end of method checkCurrentCityStatus
 
@@ -568,9 +577,9 @@ public class WeatherLionApplication extends Application
                     currentCityData.getLatitude(),
                     currentCityData.getLongitude() ) == 1 )
             {
-                UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO, String.format("%s was added to the database",
-                        systemLocation ),
-                        TAG + ":: checkSystemLocationStatus" );
+                UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO,
+                    String.format( "%s was added to the database",
+                        systemLocation ),TAG + ":: checkSystemLocationStatus" );
             }// end of if block
 
             JSONHelper.exportCityToJSON( currentCityData );
@@ -581,11 +590,11 @@ public class WeatherLionApplication extends Application
         else
         {
             String prompt = "You must specify a current location in order to run the program.\n" +
-                    "Would you like to specify it now?";
+                "Would you like to specify it now?";
 
             responseDialog(PROGRAM_NAME + " - Location Setup",
-                    prompt,"Yes", "No","setCurrentCityStatus",
-                    "checkCurrentCityStatus", new Object[]{true}, new Class[]{Boolean.class});
+                prompt,"Yes", "No","setCurrentCityStatus",
+                "checkCurrentCityStatus", new Object[]{true}, new Class[]{Boolean.class});
         }// end of else block
     }// end of method checkSystemLocationStatus
 
@@ -668,13 +677,14 @@ public class WeatherLionApplication extends Application
         {
             Gson gson = new GsonBuilder().create();
 
-            // return the JSON string array as a string
+            // return the JSON map as a string
             String json = gson.toJson( exportedServiceLog );
 
             JSONHelper.saveToJSONFile( json, callTracker.toString(), true );
 
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Service log created!",
-                    TAG + "::createServiceCallLog" );
+            // log the action taken
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+        "Service log created!",TAG + "::createServiceCallLog" );
         }// end of if block
     }// end of method createServiceCallLog
 
@@ -1200,8 +1210,9 @@ public class WeatherLionApplication extends Application
         super.onCreate();
         context = getApplicationContext();
         thisClass = this;
-
         connectedToInternet = UtilityMethod.hasInternetConnection( getAppContext() );
+
+        //create the service log to track calls to each provider
         createServiceCallLog();
 
         String invoker = this.getClass().getSimpleName() + "::" +
@@ -1231,10 +1242,12 @@ public class WeatherLionApplication extends Application
         useGps = spf.getBoolean( USE_GPS_LOCATION_PREFERENCE, Preference.DEFAULT_USE_GPS );
         useMetric = spf.getBoolean( USE_METRIC_PREFERENCE, Preference.DEFAULT_USE_METRIC );
         widBackgroundColor = spf.getString( WIDGET_BACKGROUND_PREFERENCE, Preference.DEFAULT_WIDGET_BACKGROUND );
-        final LocationManager manager = (LocationManager) getSystemService( LOCATION_SERVICE );
+        LocationManager manager = (LocationManager) getSystemService( LOCATION_SERVICE );
         gpsRadioEnabled = manager.isProviderEnabled( LocationManager.GPS_PROVIDER );
-
         systemPreferences = new Preference();
+
+        // check if this if the first time the app is being ran or data was cleared
+        checkFirstRun();
 
         // retrieve user preferences
         storedPreferences = systemPreferences.getSavedPreferences();
@@ -1242,103 +1255,16 @@ public class WeatherLionApplication extends Application
         previousWeatherProvider.setLength( 0 );
         previousWeatherProvider.append( storedPreferences.getProvider() );
 
-        checkFirstRun(); // check if this if the first time the app is being ran or data was cleared
-
         iconSet = spf.getString( ICON_SET_PREFERENCE, Preference.DEFAULT_ICON_SET );
+
+        // run the weather service and  call the method that loads the previous weather data
+        actionWeatherService( UNIT_NOT_CHANGED,
+                WidgetUpdateService.LOAD_TIMEZONE_DATA );
 
         if( iconSet == null )
         {
             iconSet = DEFAULT_ICON_SET;
         }// end of if block
-
-        // check if this the first time that the program is being run i.e new installation
-        if( firstRun )
-        {
-            // set a flag in the stored preferences indicating that the first run has already
-            // been completed.
-            storedPreferences.setFirstRun( false );
-        }// end of if block
-        else
-        {
-            if( checkForStoredWeatherData() )
-            {
-                // if this location has already been used there is no need to query the
-                // web service as the location data has been stored locally
-                CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( currentWxLocation );
-                String json;
-                float lat;
-                float lng;
-
-                if( CityData.currentCityData == null )
-                {
-                    json =
-                            UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
-                                    currentWxLocation );
-                    CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
-
-                    lat = CityData.currentCityData.getLatitude();
-                    lng = CityData.currentCityData.getLongitude();
-
-                    if( currentLocationTimeZone == null)
-                    {
-                        currentLocationTimeZone =
-                                UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
-                    }// end of if block
-
-                    CityData.currentCityData.setTimeZone(
-                            currentLocationTimeZone.getTimezoneId() );
-                }// end of if block
-                else
-                {
-                    String today = new SimpleDateFormat( "MM/dd/yyyy",
-                            Locale.ENGLISH ).format( new Date() );
-
-                    String sst = String.format( "%s %s", today, currentSunsetTime.toString() );
-                    String srt = String.format( "%s %s", today, currentSunriseTime.toString() );
-
-                    Date schedSunriseTime = null;
-                    Date schedSunsetTime = null;
-
-                    SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
-                            Locale.ENGLISH );
-
-                    try
-                    {
-                        schedSunsetTime = sdf.parse( sst );
-                        schedSunriseTime = sdf.parse( srt );
-                    } // end of try block
-                    catch ( ParseException e )
-                    {
-                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                                TAG + "::onCreate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-                    }// end of catch block
-
-                    localDateTime = new Date().toInstant().atZone(
-                            ZoneId.of( CityData.currentCityData.getTimeZone()
-                            ) ).toLocalDateTime();
-
-                    // Load the time zone info for the current city
-                    currentLocationTimeZone = new TimeZoneInfo(
-                            CityData.currentCityData.getCountryCode(),
-                            CityData.currentCityData.getCountryName(),
-                            CityData.currentCityData.getLatitude(),
-                            CityData.currentCityData.getLongitude(),
-                            CityData.currentCityData.getTimeZone(),
-                            UtilityMethod.getDateTime( localDateTime ),
-                            schedSunriseTime,
-                            schedSunsetTime );
-                }// end of else block
-            }// end of if block
-            else
-            {
-                // weather data might not have been saved as intended
-                if( storedPreferences.getLocation() != null )
-                {
-                    invoker = TAG + "::onCreate()";
-                    refreshWeather( invoker );
-                }// end of if block
-            }// end of else block
-        }// end of else block
 
         // load any available access providers
         loadAccessProviders();
@@ -1469,6 +1395,97 @@ public class WeatherLionApplication extends Application
                 WidgetUpdateService.enqueueWork( context, updateIntent );
             }// end of if block
         }// end of if block
+
+        // check if this the first time that the program is being run i.e new installation
+        if( firstRun )
+        {
+            // set a flag in the stored preferences indicating that the first run has already
+            // been completed.
+            storedPreferences.setFirstRun( false );
+        }// end of if block
+        else
+        {
+            if( checkForStoredWeatherData() )
+            {
+                // if this location has already been used there is no need to query the
+                // web service as the location data has been stored locally
+                CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( currentWxLocation );
+                String json;
+                float lat;
+                float lng;
+
+                if( CityData.currentCityData == null )
+                {
+                    // contact GeoNames for data about this city
+                    json =
+                            UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                                currentWxLocation );
+                    CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
+
+                    lat = CityData.currentCityData.getLatitude();
+                    lng = CityData.currentCityData.getLongitude();
+
+                    if( currentLocationTimeZone == null)
+                    {
+                        currentLocationTimeZone =
+                                UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                    }// end of if block
+
+                    CityData.currentCityData.setTimeZone(
+                            currentLocationTimeZone.getTimezoneId() );
+                }// end of if block
+                else
+                {
+                    String today = new SimpleDateFormat( "MM/dd/yyyy",
+                            Locale.ENGLISH ).format( new Date() );
+
+                    String sst = String.format( "%s %s", today, currentSunsetTime.toString() );
+                    String srt = String.format( "%s %s", today, currentSunriseTime.toString() );
+
+                    Date schedSunriseTime = null;
+                    Date schedSunsetTime = null;
+
+                    SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
+                            Locale.ENGLISH );
+
+                    try
+                    {
+                        schedSunsetTime = sdf.parse( sst );
+                        schedSunriseTime = sdf.parse( srt );
+                    } // end of try block
+                    catch ( ParseException e )
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                    TAG + "::onCreate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                    }// end of catch block
+
+                    localDateTime = new Date().toInstant().atZone(
+                            ZoneId.of( CityData.currentCityData.getTimeZone()
+                            ) ).toLocalDateTime();
+
+                    // Load the time zone info for the current city
+                    currentLocationTimeZone = new TimeZoneInfo(
+                            CityData.currentCityData.getCountryCode(),
+                            CityData.currentCityData.getCountryName(),
+                            CityData.currentCityData.getLatitude(),
+                            CityData.currentCityData.getLongitude(),
+                            CityData.currentCityData.getTimeZone(),
+                            UtilityMethod.getDateTime( localDateTime ),
+                            schedSunriseTime,
+                            schedSunsetTime );
+                }// end of else block
+            }// end of if block
+            else
+            {
+                // generate some stored data by calling the provider for the
+                // data using the user's stored settings
+                if( storedPreferences.getLocation() != null )
+                {
+                    invoker = TAG + "::onCreate()";
+                    refreshWeather( invoker );
+                }// end of if block
+            }// end of else block
+        }// end of else block
     }// end of method onCreate
 
     /**
@@ -1512,7 +1529,8 @@ public class WeatherLionApplication extends Application
                 WidgetUpdateService.enqueueWork( this, updateIntent );
 
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                        "Update requested by " + invoker,  TAG + "::refreshWeather" );
+                "Update requested by " + invoker, TAG +
+                    "::refreshWeather" );
             }// end of if block
         }// end of if block
     }// end of method refreshWeather
@@ -1562,7 +1580,7 @@ public class WeatherLionApplication extends Application
         btnNegative.setText( negResponse );
         btnNegative.setTypeface( currentTypeface );
 
-        btnPositive.setOnClickListener(new View.OnClickListener()
+        btnPositive.setOnClickListener( new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
@@ -1618,7 +1636,7 @@ public class WeatherLionApplication extends Application
 
         if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O )
         {
-            @SuppressLint("WrongConstant")
+            //@SuppressLint("WrongConstant")
             NotificationChannel notificationChannel = new NotificationChannel( channelId,
                 description, importance );
             // Configure the notification channel.
@@ -1632,8 +1650,7 @@ public class WeatherLionApplication extends Application
             notificationManager.createNotificationChannel( notificationChannel );
         }// end of if block
 
-        storedData =
-                lastDataReceived.getWeatherData();
+        storedData = lastDataReceived.getWeatherData();
 
         notificationLayout.setTextViewText( R.id.txvCityName,
                 storedData.getLocation().getCity() );
@@ -1641,7 +1658,7 @@ public class WeatherLionApplication extends Application
                 storedData.getLocation().getCity() );
 
         String currentConditionIcon = UtilityMethod.getConditionIcon(
-                new StringBuilder(
+            new StringBuilder(
                         storedData.getCurrent().getCondition() ),
                 null );
 
@@ -1698,6 +1715,7 @@ public class WeatherLionApplication extends Application
                 .setBadgeIconType( 1 )
                 .setOngoing( false )
                 .setTicker( tickerText )
+                .setColor( systemColor.toArgb() )
                 .setStyle( new NotificationCompat.DecoratedCustomViewStyle() )
                 .setContentIntent( pIntent )
                 .setCustomContentView( notificationLayout )
@@ -1717,17 +1735,24 @@ public class WeatherLionApplication extends Application
                 RemoteViews notificationHourly = new RemoteViews( getPackageName(),
                         R.layout.wl_hourly_weather_notification_child );
 
-                notificationHourly.setTextViewText( R.id.notification_hourly_weather_time,
-                        wxHourForecast.getTime() );
-
                 String today = new SimpleDateFormat( "MM/dd/yyyy",
                         Locale.ENGLISH ).format( new Date() );
 
-                String hourForecast = String.format( "%s %s", today,
-                        wxHourForecast.getTime() );
+                String hourForecast = String.format( "%s", wxHourForecast.getTime() );
 
-                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h a",
+                SimpleDateFormat sdf = new SimpleDateFormat( "EEE, MMM dd, yyyy HH:mm",
                         Locale.ENGLISH );
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                        "EEE, MMM dd, yyyy HH:mm" );
+
+                String forecastHour = LocalDateTime.parse( wxHourForecast.getTime(),
+                        formatter ).format( DateTimeFormatter.ofPattern(
+                        "h a" ) );
+
+                notificationHourly.setTextViewText( R.id.notification_hourly_weather_time,
+                        forecastHour );
+
                 Date onTime = null;
 
                 try
@@ -1855,7 +1880,7 @@ public class WeatherLionApplication extends Application
     public static Context getAppContext()
     {
         return context;
-    }
+    }// end of method  getAppContext
 
     /**
      * Set the details for the user's location using the json data returned from the web service
@@ -2016,7 +2041,7 @@ public class WeatherLionApplication extends Application
      * @param resID The Id of the resource
      * @param imageFile  The file name for the icon
      */
-    private void loadWeatherIcon( RemoteViews widget, int resID, String imageFile )
+    private void loadWeatherIcon( @NonNull RemoteViews widget, int resID, String imageFile )
     {
         try( InputStream is = this.getAssets().open( imageFile ) )
         {
@@ -2037,7 +2062,7 @@ public class WeatherLionApplication extends Application
     private class AppBroadcastReceiver extends BroadcastReceiver
     {
         @Override
-        public void onReceive( Context context, Intent intent )
+        public void onReceive(Context context, @NonNull Intent intent )
         {
             final String action = Objects.requireNonNull( intent.getAction() );
 
@@ -2125,7 +2150,7 @@ public class WeatherLionApplication extends Application
          * {@inheritDoc}
          */
         @Override
-        public void onReceive( Context context, Intent intent )
+        public void onReceive( Context context, @NonNull Intent intent )
         {
             final String action = Objects.requireNonNull( intent.getAction() );
             String invoker = "WeatherLionApplication::SystemBroadcastReceiver::onReceive";

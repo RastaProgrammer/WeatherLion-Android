@@ -86,8 +86,11 @@
     <string name="dismiss">Dismiss</string>
     <string name="key_dialog_title">Data Access Key Entry</string>
     <string name="access_provider">Access Provider:</string>
+    <string name="access_provider_hint">Access Provider</string>
     <string name="key_name">Key Name:</string>
+    <string name="key_name_hint">Key Name</string>
     <string name="key_value">Key Value:</string>
+    <string name="key_value_hint">Key Value</string>
     <string name="add_key">Add Key</string>
     <string name="delete_key">Delete Key</string>
     <string name="finish">Finish</string>
@@ -276,8 +279,7 @@
     <string name="version_info">Version 1.0</string>
     <string name="all_rights">© All rights reserved</string>
     <string name="about">
-        "Weather Lion is an ongoing effort to create a robust Android weather widget as
-        I continue to grow as a computer programmer."
+        "Weather Lion is an ongoing effort to create a robust Android weather widget as I continue to grow as a computer programmer."
         "\n\n\n\nPraise Ye JAH!!!!"
     </string>
     <string name="app_icon">App Icon</string>

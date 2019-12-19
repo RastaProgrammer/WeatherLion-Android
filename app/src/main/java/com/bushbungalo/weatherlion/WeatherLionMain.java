@@ -1,5 +1,7 @@
 package com.bushbungalo.weatherlion;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.app.AlertDialog;
@@ -33,6 +35,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -86,6 +89,8 @@ import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -318,8 +323,8 @@ public class WeatherLionMain extends AppCompatActivity
         try
         {
             Cursor cursor = weatherAccessDB.query( true, tableName,
-                    new String[]{"Count(*)"}, null, null,
-                    null, null, null, null, null );
+                new String[]{"Count(*)"}, null, null,
+            null, null, null, null, null );
 
             while ( cursor.moveToNext() )
             {
@@ -502,23 +507,25 @@ public class WeatherLionMain extends AppCompatActivity
             for ( int i = 0; i < WeatherLionApplication.storedData.getHourlyForecast().size(); i++ )
             {
                 LastWeatherData.WeatherData.HourlyForecast.HourForecast wxHourForecast =
-                        WeatherLionApplication.storedData.getHourlyForecast().get( i );
-                String forecastTime = null;
+                            WeatherLionApplication.storedData.getHourlyForecast().get( i );
+                        String forecastTime = null;
 
                 View hourForecastView = View.inflate( this, R.layout.wl_hourly_weather_child, null );
                 TextView txvForecastTime = hourForecastView.findViewById( R.id.txvHourForecastTime );
                 ImageView imvHourWeatherIcon = hourForecastView.findViewById( R.id.imvHourForecastWeatherIcon );
                 TextView txvHourlyForecastTemp = hourForecastView.findViewById( R.id.txvHourForecastTemperature );
 
-                txvForecastTime.setText( wxHourForecast.getTime() );
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                        "EEE, MMM dd, yyyy HH:mm" );
 
-                String today = new SimpleDateFormat( "MM/dd/yyyy",
-                        Locale.ENGLISH ).format( new Date() );
+                String forecastHour = LocalDateTime.parse( wxHourForecast.getTime(),
+                        formatter ).format( DateTimeFormatter.ofPattern(
+                        "h a" ) );
+                txvForecastTime.setText( forecastHour );
 
-                String hourForecast = String.format( "%s %s", today,
-                        wxHourForecast.getTime() );
+                String hourForecast = String.format( "%s", wxHourForecast.getTime() );
 
-                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h a",
+                SimpleDateFormat sdf = new SimpleDateFormat( "EEE, MMM dd, yyyy HH:mm",
                         Locale.ENGLISH );
                 Date onTime = null;
 
@@ -529,29 +536,29 @@ public class WeatherLionMain extends AppCompatActivity
                 catch ( ParseException e )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::loadMainActivity [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                            TAG + "::loadMainActivity [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
                 }// end of catch block
 
                 // Load current forecast condition weather image
                 StringBuilder fCondition = new StringBuilder(
-                    UtilityMethod.validateCondition(
-                        wxHourForecast.getCondition() ) );
+                        UtilityMethod.validateCondition(
+                                wxHourForecast.getCondition() ) );
                 String fConditionIcon = UtilityMethod.getConditionIcon( fCondition, onTime );
 
                 loadWeatherIcon( imvHourWeatherIcon, String.format(
-                    "weather_images/%s/weather_%s", WeatherLionApplication.iconSet, fConditionIcon ) );
+                        "weather_images/%s/weather_%s", WeatherLionApplication.iconSet, fConditionIcon ) );
 
                 if( WeatherLionApplication.storedPreferences.getUseMetric() )
                 {
                     txvHourlyForecastTemp.setText( String.format( "%s%s",
-                        Math.round( UtilityMethod.fahrenheitToCelsius(
-                            wxHourForecast.getTemperature() ) ),
-                                WeatherLionApplication.DEGREES ) );
+                            Math.round( UtilityMethod.fahrenheitToCelsius(
+                                    wxHourForecast.getTemperature() ) ),
+                            WeatherLionApplication.DEGREES ) );
                 }// end of if block
                 else
                 {
                     txvHourlyForecastTemp.setText( String.format( "%s%s", wxHourForecast.getTemperature(),
-                        WeatherLionApplication.DEGREES ) );
+                            WeatherLionApplication.DEGREES ) );
                 }// end of else block
 
                 // distribute the views equally horizontally across the parent view
@@ -575,20 +582,56 @@ public class WeatherLionMain extends AppCompatActivity
                     public void onClick( View v )
                     {
                         LastWeatherData.WeatherData.HourlyForecast.HourForecast selectHourForecast =
-                            WeatherLionApplication.storedData.getHourlyForecast().get(
-                                Integer.parseInt( v.getTag().toString() ) );
+                                WeatherLionApplication.storedData.getHourlyForecast().get(
+                                        Integer.parseInt( v.getTag().toString() ) );
 
-                        String message = String.format( "Expect %s skies at %s with a high of %s%s.",
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                                "EEE, MMM dd, yyyy HH:mm" );
+                        LocalDateTime forecastTime = LocalDateTime.parse( selectHourForecast.getTime(),
+                                formatter );
+
+                        String forecastHour = forecastTime.format( DateTimeFormatter.ofPattern(
+                                "h a" ) );
+
+                        String tod = null;
+
+                        switch( UtilityMethod.getTimeOfDay( forecastTime ) )
+                        {
+                            case MORNING:
+
+                                if( forecastTime.isEqual( LocalDateTime.now().plusDays( 1 ) ) )
+                                {
+                                    tod = "tomorrow morning";
+                                }// end of if block
+                                else
+                                {
+                                    tod = "this morning";
+                                }// end of else block
+
+                                break;
+                            case AFTERNOON:
+                                tod = "this afternoon";
+                                break;
+                            case EVENING:
+                                tod = "this evening";
+                                break;
+                            case NIGHT:
+                                tod = "tonight";
+                                break;
+                        }// end of switch
+
+                        String message = String.format( "At %s %s, expect %s skies with a high of %s%s.",
+                                forecastHour.toLowerCase(), tod,
                                 ( selectHourForecast.getCondition().toLowerCase().contains( "sky" ) ?
                                     selectHourForecast.getCondition().toLowerCase().replace( "sky",
                                     "" ).trim() : selectHourForecast.getCondition().toLowerCase() ),
-                                selectHourForecast.getTime().toLowerCase(),
                                 selectHourForecast.getTemperature(),
                                 ( WeatherLionApplication.storedPreferences.getUseMetric() ?
                                         WeatherLionApplication.CELSIUS : WeatherLionApplication.FAHRENHEIT
                                 ) );
 
-                        UtilityMethod.showMessageDialog( message, "Hour Forecast", mContext );
+                        UtilityMethod.showMessageDialog( message,
+                                "Hour Forecast", mContext );
                     }// end of method onClick
                 });
 
@@ -827,7 +870,7 @@ public class WeatherLionMain extends AppCompatActivity
         if( timeUpdated != null )
         {
             txvLastUpdated.setText( String.format( "%s%s", "Updated ",
-                    UtilityMethod.getTimeSince( timeUpdated ) ) );
+                UtilityMethod.getTimeSince( timeUpdated ) ) );
         }// end of if block
 
         if( loadingDialog != null )
@@ -1025,7 +1068,7 @@ public class WeatherLionMain extends AppCompatActivity
             WeatherLionApplication.callMethodByName( null, "checkForStoredWeatherData",
                     null, null );
 
-            View keysDialogView = View.inflate( this, R.layout.wl_data_keys_layout, null);
+            View keysDialogView = View.inflate( this, R.layout.wl_data_keys_alt_layout, null);
             WeatherLionApplication.iconSet = WeatherLionApplication.spf.getString(
                     WeatherLionApplication.ICON_SET_PREFERENCE, Preference.DEFAULT_ICON_SET );
 
@@ -1704,7 +1747,7 @@ public class WeatherLionMain extends AppCompatActivity
      * <br />
      * {@link 'https://stackoverflow.com/a/26814964'}
      */
-    private int measureContentWidth( ListAdapter listAdapter, View anchor )
+    private int measureContentWidth( @NonNull ListAdapter listAdapter, View anchor )
     {
         ViewGroup mMeasureParent = null;
         int maxWidth = 0;
@@ -1734,7 +1777,8 @@ public class WeatherLionMain extends AppCompatActivity
 
             itemView = listAdapter.getView( i, itemView, mMeasureParent );
             itemView.measure( View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED );
-            int itemWidth = itemView.getMeasuredWidth() + itemView.getPaddingEnd();
+            //int itemWidth = itemView.getMeasuredWidth() + itemView.getPaddingEnd();
+            int itemWidth = itemView.getMeasuredWidth();
 
             if( itemWidth > maxWidth )
             {
@@ -1760,7 +1804,7 @@ public class WeatherLionMain extends AppCompatActivity
      */
     private void showDataKeysDialog( String defaultSelection )
     {
-        final View keyDialogView = View.inflate( this, R.layout.wl_data_keys_layout,
+        final View keyDialogView = View.inflate( this, R.layout.wl_data_keys_alt_layout,
                 null );
         keyEntryDialog = new AlertDialog.Builder( mContext ).create();
         keyEntryDialog.setView( keyDialogView );
@@ -1789,6 +1833,12 @@ public class WeatherLionMain extends AppCompatActivity
                 R.id.imvAccessProviderDropArrow );
 
         imvAccessProviderDropArrow.setColorFilter( WeatherLionApplication.systemColor.toArgb() );
+
+        ImageView imvKeyNameDropArrow = keyDialogView.findViewById(
+                R.id.imvKeyNameDropArrow );
+
+        imvKeyNameDropArrow.setColorFilter( WeatherLionApplication.systemColor.toArgb() );
+
         Button btnAddKey = keyDialogView.findViewById( R.id.btnAddKey );
         btnAddKey.setBackground( WeatherLionApplication.systemButtonDrawable );
 
@@ -2164,6 +2214,88 @@ public class WeatherLionMain extends AppCompatActivity
             }
         });
 
+        final EditText edtKeyValue = keyDialogView.findViewById( R.id.edtKeyValue );
+        final TextView txvKeyValue = keyDialogView.findViewById( R.id.txvKeyValue );
+
+        // animate the text view which serves as the title for the edit text view
+        edtKeyValue.setOnFocusChangeListener( new View.OnFocusChangeListener()
+        {
+            @Override
+            public void onFocusChange( View v, boolean hasFocus )
+            {
+                if( hasFocus )
+                {
+
+                    txvKeyValue.setVisibility( View.VISIBLE );
+
+                    final ViewGroup.MarginLayoutParams lp =
+                            (ViewGroup.MarginLayoutParams) txvKeyValue.getLayoutParams();
+                    float origin = lp.topMargin;
+                    float destination = 24.0f;
+                    float largeSize = 18.0f;
+                    float smallSize = 14.0f;
+
+                    ValueAnimator sizeAnimator = ValueAnimator
+                        .ofFloat( largeSize, smallSize )
+                            .setDuration( WeatherLionMain.LIST_ANIMATION_DURATION );
+
+                    ValueAnimator topAnimator = ValueAnimator
+                        .ofFloat( origin, destination )
+                            .setDuration( WeatherLionMain.LIST_ANIMATION_DURATION );
+
+                    topAnimator.addUpdateListener(
+                            new ValueAnimator.AnimatorUpdateListener()
+                            {
+                                @Override
+                                public void onAnimationUpdate( ValueAnimator animation )
+                                {
+                                    lp.topMargin = ( (Float) animation.getAnimatedValue() ).intValue();
+                                    txvKeyValue.requestLayout();
+                                }
+                            });
+
+                    sizeAnimator.addUpdateListener(
+                            new ValueAnimator.AnimatorUpdateListener()
+                            {
+                                @Override
+                                public void onAnimationUpdate( ValueAnimator animation )
+                                {
+                                    txvKeyValue.setTextSize( TypedValue.COMPLEX_UNIT_SP,
+                                            (Float) animation.getAnimatedValue() );
+                                    txvKeyValue.requestLayout();
+                                }
+                            });
+
+                    sizeAnimator.addListener( new AnimatorListenerAdapter()
+                    {
+                        @Override
+                        public void onAnimationEnd( Animator animation )
+                        {
+                            super.onAnimationEnd( animation );
+                            txvKeyValue.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                        }
+                    });
+
+                    AnimatorSet animationSet = new AnimatorSet();
+                    animationSet.setInterpolator( new AccelerateDecelerateInterpolator() );
+                    animationSet.playTogether( topAnimator, sizeAnimator );
+                    animationSet.start();
+                }// end of if block
+                else
+                {
+
+                    if( edtKeyValue.getText().length() > 0 )
+                    {
+                        txvKeyValue.setVisibility( View.VISIBLE );
+                    }// end of if block
+                    else
+                    {
+                        txvKeyValue.setVisibility( View.INVISIBLE );
+                    }// end of else block
+                }// end of else block
+            }// end of method onFocusChange
+        });
+
         btnFinish.setOnClickListener( new View.OnClickListener()
         {
             @Override
@@ -2173,12 +2305,17 @@ public class WeatherLionMain extends AppCompatActivity
             }
         } );
 
-//        keyEntryDialog.setCancelable( wxOnly.contains( WeatherLionApplication.GEO_NAMES ) ); // User is only allowed to cancel if GeoNames account exists
         keyEntryDialog.setCancelable( false ); // User is only allowed to cancel by using the close or finish buttons
         Objects.requireNonNull( keyEntryDialog.getWindow() ).setBackgroundDrawable(
                 new ColorDrawable( Color.TRANSPARENT ) );
         UtilityMethod.loadCustomFont( (RelativeLayout) keyDialogView.findViewById( R.id.rlKeysDialog ) );
+
+        // Controlling width and height with specific values
+        Window dialogWindow = keyEntryDialog.getWindow();
         keyEntryDialog.show();
+        dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                ViewGroup.LayoutParams.WRAP_CONTENT );
+        dialogWindow.setGravity( Gravity.CENTER );
         keyEntryDialog.findViewById( R.id.edtKeyName ).requestFocus();
     }// end of method showDataKeysDialog
 
@@ -2302,7 +2439,7 @@ public class WeatherLionMain extends AppCompatActivity
     /**
      * Updates the windows appearance based on the time of day
      */
-    private void updateAstronomy( String timeOfDay )
+    private void updateAstronomy( @NonNull String timeOfDay )
     {
         WeatherLionApplication.storedData =
             WeatherLionApplication.lastDataReceived.getWeatherData();
@@ -2425,13 +2562,19 @@ public class WeatherLionMain extends AppCompatActivity
 
         if( currentWindDirection.toString().toLowerCase().contains( "w" ) )
         {
-            // wind is blowing in a westward direction
-            rotateAnim = AnimationUtils.loadAnimation( this, R.anim.westward_blade_rotation );
+            // wind is blowing in a meteorological westward direction
+            rotateAnim = AnimationUtils.loadAnimation( this, R.anim.eastward_blade_rotation );
+
+            // wind is blowing in a oceanographic westward direction
+            //rotateAnim = AnimationUtils.loadAnimation( this, R.anim.westward_blade_rotation );
         }// end of if block
         else
         {
-            // wind is blowing in a eastward direction
-            rotateAnim = AnimationUtils.loadAnimation( this, R.anim.eastward_blade_rotation );
+            // wind is blowing in a meteorological eastward direction
+            rotateAnim = AnimationUtils.loadAnimation( this, R.anim.westward_blade_rotation );
+
+            // wind is blowing in a oceanographic eastward direction
+            //rotateAnim = AnimationUtils.loadAnimation( this, R.anim.eastward_blade_rotation );
         }// end of else block
 
         // set the duration of the animation based on the wind speed
@@ -2577,7 +2720,7 @@ public class WeatherLionMain extends AppCompatActivity
     private class AppBroadcastReceiver extends BroadcastReceiver
     {
         @Override
-        public void onReceive( Context context, Intent intent )
+        public void onReceive( Context context, @NonNull Intent intent )
         {
             final String action = Objects.requireNonNull( intent.getAction() );
 
@@ -2735,7 +2878,7 @@ public class WeatherLionMain extends AppCompatActivity
          * {@inheritDoc}
          */
         @Override
-        public void onReceive( Context context, Intent intent )
+        public void onReceive( Context context, @NonNull Intent intent )
         {
             final String action = Objects.requireNonNull( intent.getAction() );
 

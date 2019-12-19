@@ -21,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,7 +69,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -78,12 +81,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"unused", "WeakerAccess", "null", "unchecked"})
@@ -1194,6 +1199,14 @@ public abstract class UtilityMethod
         TEXT
     }
 
+    public enum TimeOfDay
+    {
+        MORNING,
+        AFTERNOON,
+        EVENING,
+        NIGHT
+    }
+
     public static Date lastUpdated;
     public static boolean refreshRequestedBySystem;
     public static boolean refreshRequestedByUser;
@@ -1331,7 +1344,8 @@ public abstract class UtilityMethod
         toastView.setPadding( devicePixelsToPixels( horizontalPadding ), devicePixelsToPixels( verticalPadding ),
                 devicePixelsToPixels( horizontalPadding ),devicePixelsToPixels( verticalPadding ) );
 
-        toastMessage.setTextSize( 15 );
+        //toastMessage.setTextSize( 15 );
+        toastMessage.setTextSize( TypedValue.COMPLEX_UNIT_SP,15 );
         toastMessage.setTextColor( Color.WHITE );
         toastMessage.setTypeface( WeatherLionApplication.currentTypeface );
 
@@ -2784,6 +2798,27 @@ public abstract class UtilityMethod
     }// end of method containsWholeWord
 
     /**
+     * Makes a copy of a file.
+     *
+     * @param sourceFile    The original file to be copied.
+     * @param destinationFile   The copy of the original file.
+     */
+    public static void copyFile( File sourceFile, File destinationFile )
+    {
+        Path source = Paths.get( sourceFile.getPath() );
+        Path destination = Paths.get( destinationFile.getPath() );
+
+        try
+        {
+            Files.copy( source, destination, StandardCopyOption.REPLACE_EXISTING );
+        }// end of try block
+        catch ( IOException e )
+        {
+           logMessage( LogLevel.SEVERE, e.getMessage(), TAG + "::copyFile" );
+        }// end of catch block
+    }// end of method copyFile
+
+    /**
      * Format a Uri so that is is compatible with a valid standard Uri {@code String}
      * @param uri The Uri {@code String} to be formatted
      * @return  A valid formatted Uri {@code String}
@@ -2815,6 +2850,39 @@ public abstract class UtilityMethod
     {
         return NetworkHelper.hasNetworkAccess( context );
     }// end of method hasInternetConnection
+
+    /**
+     * Checks a file to see if it contains data.
+     *
+     * @param context The {@code Context} of the caller
+     * @param fileName The {@code File} to be verified
+     * @return A value of true/false dependent on the result of the test
+     */
+    public static boolean isFileEmpty( Context context, String fileName )
+    {
+        try
+        {
+            BufferedReader br = new BufferedReader( new FileReader(
+                    context.getFileStreamPath( fileName ).toString() ) );
+            File file = new File( fileName );
+
+            if( br.readLine() == null && file.length() == 0 )
+            {
+                // the file is empty
+                return true;
+            }// end of if block
+        }// end ot try block
+        catch ( IOException e )
+        {
+           logMessage( LogLevel.SEVERE,"Unable to read file data.",
+        TAG + "::isFileEmpty [line: " + e.getStackTrace()[ 1 ].getLineNumber() +"]" );
+
+            // if the file is corrupt then it is to be considered empty
+            return true;
+        }// end of catch block
+
+        return false;
+    }// end of method isFileEmpty
 
     /**
      * Determines if a city was previously stored to the local storage
@@ -4030,6 +4098,90 @@ public abstract class UtilityMethod
 
         return 0;
     }// end of method getHoursDifference
+
+    /**
+     * Get the current time of date
+     *
+     * @return An enum value of MORNING, NOON, EVENING, and NIGHT
+     */
+    public static TimeOfDay getTimeOfDay( LocalDateTime inputDate )
+    {
+        if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
+            inputDate.getDayOfMonth(), 4,59,59 ) ) &&
+            inputDate.isBefore( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
+            inputDate.getDayOfMonth(), 11,59,59 ) ) )
+        {
+            return TimeOfDay.MORNING;
+        }// end of if block
+        else  if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
+                  inputDate.getDayOfMonth(), 11,59,59 ) ) &&
+                  inputDate.isBefore( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
+                        inputDate.getDayOfMonth(), 16,59,59 ) ) )
+        {
+            return TimeOfDay.AFTERNOON;
+        }// end of else if block
+
+        if( isDaylightSavings( inputDate ) )
+        {
+            if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
+                    inputDate.getDayOfMonth(), 17,59,59 ) ) &&
+                    inputDate.isBefore( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
+                            inputDate.getDayOfMonth(), 20,59,59 ) ) )
+            {
+                return TimeOfDay.EVENING;
+            }// end of else if block
+            else
+            {
+                // if the time is'nt after 6:00 PM we will assume that it is still afternoon
+                return TimeOfDay.AFTERNOON;
+            }// end of else block
+        }// end of if block
+        else if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
+                inputDate.getDayOfMonth(), 20,59,59 ) ) )
+        {
+            // anytime after 9:00 should be considered a night time
+            return TimeOfDay.NIGHT;
+        }// end of else if block
+        else
+        {
+            if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
+                inputDate.getDayOfMonth(), 16,59,59 ) ) &&
+                    inputDate.isBefore( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
+                            inputDate.getDayOfMonth(), 20,59,59 ) ) )
+            {
+                return TimeOfDay.EVENING;
+            }// end of else if block
+            else
+            {
+                // if the time is'nt after 5:00 PM we will assume that it is still afternoon
+                return TimeOfDay.AFTERNOON;
+            }// end of else block
+        }// end of else block
+
+    }// end of method getTimeOfDay
+
+    /**
+     * Determine if it is daylight savings in the current timezone
+     *
+     * @param dateInput The current date
+     * @return A {code boolean} value of True/False dependent on the evaluation.
+     */
+    public static boolean isDaylightSavings( LocalDateTime dateInput )
+    {
+        TimeZone tz = TimeZone.getTimeZone(
+            WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+
+        Calendar jan = new GregorianCalendar( dateInput.getYear(),
+            Calendar.JANUARY,1 );
+        Calendar jul = new GregorianCalendar( dateInput.getYear(),
+            Calendar.JULY,1 );
+
+        int dateOffset = tz.getOffset( jan.getTimeInMillis() ) / 1000 / 60;
+        int janOffset = tz.getOffset( jan.getTimeInMillis() ) / 1000 / 60;
+        int julOffset = tz.getOffset( jul.getTimeInMillis() ) / 1000 / 60;
+
+        return Math.max( janOffset, julOffset ) != dateOffset;
+    }// end of method isDaylightSavings
 
     /**
      * Get the duration of time that has elapsed since a certain date.

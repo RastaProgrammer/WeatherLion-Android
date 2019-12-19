@@ -146,6 +146,7 @@ public class WidgetUpdateService extends JobIntentService
     private static LinkedHashMap<String, String> hereMapsWeatherProductKeys;
     static
     {
+        // each key is linked to a product offered by Here Maps Weather
         hereMapsWeatherProductKeys = new LinkedHashMap<>();
         hereMapsWeatherProductKeys.put( "conditions", "observation" );
         hereMapsWeatherProductKeys.put( "forecast", "forecast_7days_simple" );
@@ -185,6 +186,7 @@ public class WidgetUpdateService extends JobIntentService
     public static final String LOAD_PREVIOUS_WEATHER = "loadPreviousWeatherData";
     public static final String LOAD_WIDGET_BACKGROUND = "loadWidgetBackground";
     public static final String LOAD_WIDGET_ICON_SET = "loadWeatherIconSet";
+    public static final String LOAD_TIMEZONE_DATA = "getTimeZoneData";
     public static final String ASTRONOMY_CHANGE = "astronomyChange";
 
     private String wxDataProvider;
@@ -229,13 +231,18 @@ public class WidgetUpdateService extends JobIntentService
         handleIntent( intent );
     }
 
-    private void handleIntent( Intent intent )
+    /**
+     * Handle the incoming intent
+     *
+     * @param intent The intent submitted by the caller.
+     */
+    private void handleIntent( @NonNull Intent intent )
     {
         // load all widget ids associated with the application
         WidgetHelper.getWidgetIds();
 
         largeWidgetRemoteViews = new RemoteViews( this.getPackageName(),
-            R.layout.wl_large_weather_widget_activity_alternate);
+            R.layout.wl_large_weather_widget_activity_alternate );
 
         smallWidgetRemoteViews = new RemoteViews( this.getPackageName(),
                 R.layout.wl_small_weather_widget_activity );
@@ -276,14 +283,14 @@ public class WidgetUpdateService extends JobIntentService
             if( callMethod.equals( ASTRONOMY_CHANGE ) )
             {
                 callMethodByName( WidgetUpdateService.this, callMethod,
-                        new Class[]{String.class, AppWidgetManager.class},
+                    new Class[]{String.class, AppWidgetManager.class},
                         new Object[]{WeatherLionApplication.timeOfDayToUse,
                                 appWidgetManager} );
             }// end of if block
             else
             {
                 callMethodByName( WidgetUpdateService.this, callMethod,null,
-                        null );
+                null );
             }// end of else block
 
             // If a location has not been set then the weather cannot be processed
@@ -369,8 +376,8 @@ public class WidgetUpdateService extends JobIntentService
                             hxUrl.setLength( 0 );
                             axUrl.setLength( 0 );
 
-                            // if this location has already been used there is no need to query the
-                            // web service as the location data has been stored locally
+                            // this code is just for redundancy in case the data got corrupted
+                            // because this is also done at the startup of the application.
                             CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage(
                                     WeatherLionApplication.currentWxLocation );
 
@@ -526,6 +533,7 @@ public class WidgetUpdateService extends JobIntentService
                                         schedSunsetTime );
                             }// end of else block
 
+                            // process the request
                             switch( wxDataProvider )
                             {
                                 case WeatherLionApplication.DARK_SKY:
@@ -718,6 +726,7 @@ public class WidgetUpdateService extends JobIntentService
                     }// end of if block
                     else
                     {
+                        // the daily limit for calling each provider has been exhausted
                         Intent settingsIntent = new Intent( this, PrefsActivity.class );
                         settingsIntent.putExtra( WeatherLionMain.LION_LIMIT_EXCEEDED_PAYLOAD, true );
                         startActivity( settingsIntent );
@@ -991,6 +1000,15 @@ public class WidgetUpdateService extends JobIntentService
             // check that the ArrayList is not empty and the the first element is not null
             if( strJSON != null && !strJSON.isEmpty() )
             {
+                // make a copy of the existing weather data
+                File currentWeatherDataFile = new File(
+                    this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() );
+
+                File backupWeatherDataFile = new File(
+                    this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
+
+                UtilityMethod.copyFile( currentWeatherDataFile, backupWeatherDataFile );
+
                 // we are connected to the Internet if JSON data is returned
                 if( WeatherLionApplication.largeWidgetIds.length > 0 )
                 {
@@ -1204,6 +1222,9 @@ public class WidgetUpdateService extends JobIntentService
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
                 currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
+        // refresh widget background due to the possibility of previous data corruption
+        loadWidgetBackground();
 
         String widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
                 com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
@@ -1441,10 +1462,13 @@ public class WidgetUpdateService extends JobIntentService
                         }// end of else block
                     }// end of if block
 
-                    largeWidgetRemoteViews.setString( R.id.tcCurrentTime, "setTimeZone",
-                            CityData.currentCityData.getTimeZone() );
-                    largeWidgetRemoteViews.setString( R.id.tcAMPM, "setTimeZone",
-                            CityData.currentCityData.getTimeZone() );
+                    if( CityData.currentCityData.getTimeZone() != null )
+                    {
+                        largeWidgetRemoteViews.setString( R.id.tcCurrentTime, "setTimeZone",
+                                CityData.currentCityData.getTimeZone() );
+                        largeWidgetRemoteViews.setString( R.id.tcAMPM, "setTimeZone",
+                                CityData.currentCityData.getTimeZone() );
+                    }// end of if block
 
                     appWidgetManager.updateAppWidget( largeWidgetId,
                             largeWidgetRemoteViews );
@@ -1508,6 +1532,9 @@ public class WidgetUpdateService extends JobIntentService
                 }// end of for each loop
             }// end of if block
         }// end of else block
+
+        // check for any pending alarms
+        updateUserSetAlarm();
     }// end of method updateAllAppWidgets
 
     /**
@@ -3317,6 +3344,111 @@ public class WidgetUpdateService extends JobIntentService
 
         return bitmap;
     }// end of method getBitmap
+
+    /**
+     * Retrieve data for the current timezone
+     */
+    private void getTimeZoneData()
+    {
+        // if this location has already been used there is no need to query the
+        // web service as the location data has been stored locally
+        CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage(
+            WeatherLionApplication.currentWxLocation );
+
+        float lat;
+        float lng;
+
+        if( CityData.currentCityData == null )
+        {
+            String cityJSON =
+                UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                    WeatherLionApplication.currentWxLocation );
+            CityData.currentCityData = UtilityMethod.createGeoNamesCityData( cityJSON );
+
+            lat = CityData.currentCityData.getLatitude();
+            lng = CityData.currentCityData.getLongitude();
+
+            if( WeatherLionApplication.currentLocationTimeZone == null )
+            {
+                WeatherLionApplication.currentLocationTimeZone =
+                        UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+            }// end of if block
+
+            // This data may have been corrupted due to a previous crash
+            if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                    .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+            {
+                WeatherLionApplication.storedData.getLocation().setTimezone(
+                        CityData.currentCityData.getTimeZone() );
+
+                WeatherLionApplication.storedData.getLocation().setCountry(
+                        CityData.currentCityData.getCountryName() );
+            }// end of if block
+
+            CityData.currentCityData.setTimeZone(
+                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+        }// end of if block
+        else
+        {
+            lat = CityData.currentCityData.getLatitude();
+            lng = CityData.currentCityData.getLongitude();
+
+            // If timezones are inconsistent or data corrupted
+            if( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
+            {
+                if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                        .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                {
+                    WeatherLionApplication.storedData.getLocation().setTimezone(
+                            CityData.currentCityData.getTimeZone() );
+
+                    WeatherLionApplication.currentSunriseTime.setLength( 0 );
+                    WeatherLionApplication.currentSunsetTime.setLength( 0 );
+                }// end of if block
+            }// end of if block
+            else
+            {
+                WeatherLionApplication.storedData.getLocation().setTimezone(
+                        CityData.currentCityData.getTimeZone() );
+
+                WeatherLionApplication.currentSunriseTime.setLength( 0 );
+                WeatherLionApplication.currentSunsetTime.setLength( 0 );
+            }// end of else block
+
+            if( WeatherLionApplication.currentSunriseTime.length() == 0 )
+            {
+                if( WeatherLionApplication.currentLocationTimeZone == null )
+                {
+                    WeatherLionApplication.currentLocationTimeZone =
+                            UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+
+                    WeatherLionApplication.currentSunriseTime = new StringBuilder();
+                    WeatherLionApplication.currentSunsetTime = new StringBuilder();
+
+                    WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
+                        Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                    WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
+                        Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+                }// end of if block
+                else
+                {
+                    WeatherLionApplication.currentSunriseTime = new StringBuilder();
+                    WeatherLionApplication.currentSunsetTime = new StringBuilder();
+
+                    WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
+                        Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                    WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
+                        Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+                }// end of else block
+            }// end of if block
+        }// end of else block
+    }// end of method getTimeZoneData
 
     /***
      * Update the numerical values displayed on the widget

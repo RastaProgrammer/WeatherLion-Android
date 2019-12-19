@@ -314,7 +314,7 @@ public class LionListPreference extends DialogPreference
                 }// end of method onClick
             });
 
-            // Controlling width and height with random values
+            // Controlling width and height with specific values
             Window dialogWindow = getDialog().getWindow();
             dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
                     ViewGroup.LayoutParams.WRAP_CONTENT );

@@ -62,6 +62,10 @@
         <item name="windowNoTitle">true</item>
     </style>
 
+    <style name="HintTextStyle" parent="TextAppearance.Design.Hint">
+        <item name="android:textSize">16sp</item>
+    </style>
+
     <style name="WeatherTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="WeatherTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
