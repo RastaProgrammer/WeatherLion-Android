@@ -15,6 +15,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -84,6 +85,7 @@ import com.bushbungalo.weatherlion.utils.UtilityMethod;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
@@ -211,6 +213,72 @@ public class WeatherLionMain extends AppCompatActivity
             }// end of if block
         }// end of else if block
     }// end of method accessLoaded
+
+    /***
+     * Changes the color of the cursor on an EditText field
+     *
+     * @author Jared Rummler
+     * <br />
+     * {@link 'https://stackoverflow.com/a/26544231'}
+     */
+    @SuppressWarnings({"", "JavaReflectionMemberAccess"})
+    private void assignCursor( EditText editText )
+    {
+        // the system should have a consistent flow based on the selected widget background
+        if( WeatherLionApplication.widBackgroundColor != null )
+        {
+            int cursorColour;
+
+            switch( WeatherLionApplication.widBackgroundColor.toLowerCase() )
+            {
+                case WeatherLionApplication.AQUA_THEME:
+                    cursorColour = getColor( R.color.aqua );
+
+                    break;
+                case WeatherLionApplication.FROSTY_THEME:
+                    cursorColour = getColor( R.color.frosty);
+
+                    break;
+                case WeatherLionApplication.RABALAC_THEME:
+                    cursorColour = getColor( R.color.rabalac );
+
+                    break;
+                default:
+                    cursorColour = getColor( R.color.lion );
+                    break;
+            }// end of switch block
+
+            try
+            {
+                Field fCursorDrawableRes = TextView.class.getDeclaredField(
+                        "mCursorDrawableRes" );
+                fCursorDrawableRes.setAccessible( true );
+                int mCursorDrawableRes = fCursorDrawableRes.getInt( editText );
+                Field fEditor = TextView.class.getDeclaredField( "mEditor" );
+                fEditor.setAccessible( true );
+                Object editor = fEditor.get( editText );
+
+                Class<?> clazz = editor.getClass();
+                Field fCursorDrawable = clazz.getDeclaredField( "mCursorDrawable" );
+                fCursorDrawable.setAccessible( true );
+
+                Drawable[] drawables = new Drawable[ 2 ];
+                drawables[0] = getDrawable( mCursorDrawableRes );
+                drawables[1] = getDrawable( mCursorDrawableRes );
+
+                if( drawables[ 0 ] != null && drawables[ 1 ] != null )
+                {
+                    drawables[ 0 ].setColorFilter( cursorColour, PorterDuff.Mode.SRC_IN );
+                    drawables[ 1 ].setColorFilter( cursorColour, PorterDuff.Mode.SRC_IN );
+                }// end of if block
+
+                fCursorDrawable.set( editor, drawables );
+            }// end of try block
+            catch ( Throwable ignored )
+            {
+            }// end of catch block
+        }// end of if block
+    }// end of method assignCursor
 
     /**
      * Send out a broadcast that the keys data must be reloaded
@@ -2225,8 +2293,8 @@ public class WeatherLionMain extends AppCompatActivity
             {
                 if( hasFocus )
                 {
-
                     txvKeyValue.setVisibility( View.VISIBLE );
+                    assignCursor( edtKeyValue );
 
                     final ViewGroup.MarginLayoutParams lp =
                             (ViewGroup.MarginLayoutParams) txvKeyValue.getLayoutParams();

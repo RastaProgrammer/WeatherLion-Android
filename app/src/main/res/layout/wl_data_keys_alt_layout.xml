@@ -234,47 +234,56 @@
             android:textColor="@color/black_opacity_80"
             android:text="@string/show_key" />
 
-        <Button
-            android:id="@+id/btnAddKey"
-            android:layout_width="100dip"
-            android:layout_height="30dip"
-            android:layout_below="@+id/cbShowPwd"
-            android:layout_marginStart="0dip"
+        <LinearLayout
+            android:id="@+id/llButtons"
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_marginTop="6dip"
-            android:layout_toStartOf="@+id/btnDeleteKey"
-            android:background="@drawable/wl_aqua_rounded_btn_bg"
-            android:gravity="center"
-            android:text="@string/add_key"
-            android:textColor="#FFFFFF"
-            android:stateListAnimator="@null"/>
+            android:orientation="horizontal"
+            android:layout_below="@+id/cbShowPwd"
+            style="?android:attr/buttonBarStyle">
 
-        <Button
-            android:id="@+id/btnDeleteKey"
-            android:layout_width="100dip"
-            android:layout_height="30dip"
-            android:layout_below="@+id/cbShowPwd"
-            android:layout_toStartOf="@+id/btnFinish"
-            android:layout_marginTop="6dip"
-            android:layout_marginRight="8dip"
-            android:layout_marginLeft="8dip"
-            android:background="@drawable/wl_aqua_rounded_btn_bg"
-            android:gravity="center"
-            android:text="@string/delete_key"
-            android:textColor="#FFFFFF"
-            android:stateListAnimator="@null" />
+            <Button
+                android:id="@+id/btnAddKey"
+                android:layout_width="0dip"
+                android:layout_height="30dip"
+                android:background="@drawable/wl_aqua_rounded_btn_bg"
+                android:gravity="center"
+                android:text="@string/add_key"
+                android:textColor="#FFFFFF"
+                android:stateListAnimator="@null"
+                android:layout_weight="1"
+                style="?android:attr/buttonBarButtonStyle"/>
 
-        <Button
-            android:id="@+id/btnFinish"
-            android:layout_width="100dip"
-            android:layout_height="30dip"
-            android:layout_below="@+id/cbShowPwd"
-            android:layout_marginTop="6dip"
-            android:layout_alignEnd="@+id/cbShowPwd"
-            android:background="@drawable/wl_aqua_rounded_btn_bg"
-            android:gravity="center"
-            android:text="@string/finish"
-            android:textColor="#FFFFFF"
-            android:stateListAnimator="@null" />
+            <Button
+                android:id="@+id/btnDeleteKey"
+                android:layout_width="0dip"
+                android:layout_height="30dip"
+                android:layout_marginRight="8dip"
+                android:layout_marginLeft="8dip"
+                android:background="@drawable/wl_aqua_rounded_btn_bg"
+                android:gravity="center"
+                android:text="@string/delete_key"
+                android:textColor="#FFFFFF"
+                android:stateListAnimator="@null"
+                android:layout_weight="1"
+                style="?android:attr/buttonBarButtonStyle" />
+
+            <Button
+                android:id="@+id/btnFinish"
+                android:layout_width="0dip"
+                android:layout_height="30dip"
+                android:background="@drawable/wl_aqua_rounded_btn_bg"
+                android:gravity="center"
+                android:text="@string/finish"
+                android:textColor="#FFFFFF"
+                android:stateListAnimator="@null"
+                android:layout_weight="1"
+                style="?android:attr/buttonBarButtonStyle" />
+
+        </LinearLayout>
+
+
 
     </RelativeLayout>
 

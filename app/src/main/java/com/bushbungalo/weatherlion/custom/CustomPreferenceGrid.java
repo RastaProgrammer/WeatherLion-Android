@@ -19,7 +19,6 @@ import com.bushbungalo.weatherlion.utils.UtilityMethod;
 import java.io.IOException;
 import java.io.InputStream;
 
-@SuppressWarnings({"WeakerAccess"})
 public class CustomPreferenceGrid extends BaseAdapter
 {
     private Context mContext;
@@ -27,8 +26,6 @@ public class CustomPreferenceGrid extends BaseAdapter
     private final String[] displayPaths;
     private String requester;
     public static final int DEFAULT_DIALOG_WIDTH = 940;
-    public static final int DEFAULT_DIALOG_HEIGHT = 940;
-    public static final int DEFAULT_GRID_DIALOG_HEIGHT = 1180;
 
     CustomPreferenceGrid( Context c, String[] imageName, String[] imagePath, String caller )
     {
