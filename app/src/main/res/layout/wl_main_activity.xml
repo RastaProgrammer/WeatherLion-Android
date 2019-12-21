@@ -244,11 +244,36 @@
                                     android:gravity="center_horizontal">
 
                                     <ImageView
+                                        android:id="@+id/imvWindIndicator"
+                                        android:layout_width="14dip"
+                                        android:layout_height="14dip"
+                                        android:layout_marginTop="12.4dip"
+                                        android:scaleType="fitEnd"
+                                        android:layout_marginStart="6dip"
+                                        android:layout_marginEnd="6dip"
+                                        android:contentDescription="@string/current_wind_indicator"
+                                        android:src="@drawable/wl_meteorological_n" />
+
+                                    <TextView
+                                        android:id="@+id/txvWindDirection"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/activity_wind_direction"
+                                        android:layout_toEndOf="@+id/imvWindIndicator"
+                                        android:layout_marginEnd="10dip"
+                                        android:gravity="center_horizontal"
+                                        android:layout_alignParentBottom="true"
+                                        android:textAppearance="?android:attr/textAppearanceLarge"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="16sp" />
+
+                                    <ImageView
                                         android:id="@+id/imvBlade"
                                         android:layout_width="20dip"
                                         android:layout_height="20dip"
                                         android:clickable="true"
                                         android:layout_marginTop="2dip"
+                                        android:layout_toEndOf="@+id/txvWindDirection"
                                         android:contentDescription="@string/current_reading_icon"
                                         android:src="@drawable/wl_windmill_blade" />
 
@@ -256,28 +281,18 @@
                                         android:id="@+id/imvPole"
                                         android:layout_width="20dip"
                                         android:layout_height="14dip"
+                                        android:layout_toEndOf="@+id/txvWindDirection"
                                         android:layout_marginTop="11.60dip"
                                         android:contentDescription="@string/current_reading_icon"
                                         android:src="@drawable/wl_windmill_pole" />
 
-                                    <ImageView
-                                        android:id="@+id/imvWindIndicator"
-                                        android:layout_width="14dip"
-                                        android:layout_height="14dip"
-                                        android:layout_marginTop="12.4dip"
-                                        android:scaleType="fitEnd"
-                                        android:layout_toEndOf="@+id/imvPole"
-                                        android:layout_marginStart="6dip"
-                                        android:layout_marginEnd="4dip"
-                                        android:contentDescription="@string/current_wind_indicator"
-                                        android:src="@drawable/wl_meteorological_n" />
-
                                     <TextView
-                                        android:id="@+id/txvWindReading"
+                                        android:id="@+id/txvWindSpeed"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="@string/activity_wind_reading"
-                                        android:layout_toEndOf="@+id/imvWindIndicator"
+                                        android:text="@string/activity_wind_speed"
+                                        android:layout_toEndOf="@+id/imvPole"
+                                        android:layout_marginStart="4dip"
                                         android:gravity="center_horizontal"
                                         android:layout_alignParentBottom="true"
                                         android:textAppearance="?android:attr/textAppearanceLarge"

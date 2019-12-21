@@ -237,7 +237,7 @@
                         android:src="@drawable/wl_wind_flag" />
 
                     <TextView
-                        android:id="@+id/txvWindReading"
+                        android:id="@+id/txvWindSpeed"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="2dip"

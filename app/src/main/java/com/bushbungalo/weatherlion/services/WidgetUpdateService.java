@@ -1748,7 +1748,7 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
-        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+        largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
             String.format( Locale.ENGLISH, "%s %d %s",
                 currentWindDirection.toString(),
                     Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -1960,7 +1960,7 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
-        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+        largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
             String.format( Locale.ENGLISH, "%s %d %s",
                 currentWindDirection.toString(),
                     Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -2123,7 +2123,7 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
-        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+        largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
             String.format( Locale.ENGLISH, "%s %d %s",
                 currentWindDirection.toString(),
                     Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -2298,7 +2298,7 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
-        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+        largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
             String.format( Locale.ENGLISH, "%s %d %s",
                 currentWindDirection.toString(),
                     Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -2487,7 +2487,7 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
-        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+        largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
             String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
                 currentWindDirection.toString(),
                     Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -2721,7 +2721,7 @@ public class WidgetUpdateService extends JobIntentService
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition, UtilityMethod.toProperCase( currentCondition.toString() ) );
 
-        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+        largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
             String.format( Locale.ENGLISH, "%s %d %s",
                 currentWindDirection.toString(),
                     Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -2867,7 +2867,7 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
-        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+        largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
             String.format( Locale.ENGLISH, "%s %d %s",
                 currentWindDirection.toString(),
                     Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -3518,7 +3518,7 @@ public class WidgetUpdateService extends JobIntentService
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                         String.format( Locale.ENGLISH, "%s %d %s",
                             currentWindDirection.toString(),
                                 Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -3757,7 +3757,7 @@ public class WidgetUpdateService extends JobIntentService
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                         String.format( Locale.ENGLISH, "%s %d %s",
                             currentWindDirection.toString(),
                                 Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -3869,7 +3869,7 @@ public class WidgetUpdateService extends JobIntentService
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                         String.format( Locale.ENGLISH, "%s %d %s",
                             currentWindDirection.toString(),
                                 Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -3981,7 +3981,7 @@ public class WidgetUpdateService extends JobIntentService
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, currentHigh + DEGREES );
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                         String.format( Locale.ENGLISH, "%s %d %s",
                             currentWindDirection.toString(),
                                 Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -4182,7 +4182,7 @@ public class WidgetUpdateService extends JobIntentService
                     largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, String.format(
                             "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
 
-                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                         String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
                             currentWindDirection.toString(),
                                 Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -4392,7 +4392,7 @@ public class WidgetUpdateService extends JobIntentService
                         largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, metricCurrentLow );
                         largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, metricCurrentFeelsLike );
 
-                        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                             String.format( Locale.ENGLISH, "%s %s %s", getString( R.string.wind ),
                                 currentWindDirection.toString(),
                                     metricCurrentWindReading ) );
@@ -4411,7 +4411,7 @@ public class WidgetUpdateService extends JobIntentService
                         largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, String.format(
                                 "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
 
-                        largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+                        largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                             String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
                                 currentWindDirection.toString(),
                                     Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
@@ -4635,7 +4635,7 @@ public class WidgetUpdateService extends JobIntentService
                 largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, metricCurrentLow );
                 largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, metricCurrentFeelsLike );
 
-                largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+                largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                     String.format( Locale.ENGLISH, "%s %s %s", getString( R.string.wind ),
                         currentWindDirection.toString(),
                             metricCurrentWindReading ) );
@@ -4655,7 +4655,7 @@ public class WidgetUpdateService extends JobIntentService
                         "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
 
 
-                largeWidgetRemoteViews.setTextViewText( R.id.txvWindReading,
+                largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                     String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
                         currentWindDirection.toString(),
                             Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),

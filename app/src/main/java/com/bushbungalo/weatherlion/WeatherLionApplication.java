@@ -22,7 +22,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.os.Build;
@@ -32,8 +34,10 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.text.HtmlCompat;
-import android.text.method.ScrollingMovementMethod;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -41,6 +45,7 @@ import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bushbungalo.weatherlion.custom.CustomPreferenceGrid;
 import com.bushbungalo.weatherlion.database.DBHelper;
 import com.bushbungalo.weatherlion.database.WeatherAccess;
 import com.bushbungalo.weatherlion.model.CityData;
@@ -1799,29 +1804,40 @@ public class WeatherLionApplication extends Application
      * @param title   The alert dialog title
      */
     @SuppressWarnings({"SameParameterValue"})
-    private void showMessageDialog( UtilityMethod.MsgType messageType, String message, String title,
+    private void showMessageDialog( String messageType, String message, String title,
                                     final String methodToCall, final Object[] params, final Class[] paramClassTypes )
     {
         final View messageDialogView = View.inflate( this, R.layout.wl_message_dialog, null );
         final AlertDialog messageDialog = new AlertDialog.Builder( this ).create();
-        messageDialog.setView( messageDialogView );
+        TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
+        TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
+
+        txvTitle.setText( title );
+        txvMessage.setText( message );
 
         RelativeLayout rlTitleBar = messageDialogView.findViewById( R.id.rlDialogTitleBar );
-        rlTitleBar.setBackgroundColor( systemColor.toArgb() );
-
-        TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
-        txvTitle.setMovementMethod( new ScrollingMovementMethod() );
-        txvTitle.setTypeface( currentTypeface );
-        txvTitle.setText( title );
-
-        TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
-        txvMessage.setTypeface( currentTypeface );
+        GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
+        bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
         Button btnOk = messageDialogView.findViewById( R.id.btnOk );
-        btnOk.setBackground( systemButtonDrawable );
-        btnOk.setTypeface( currentTypeface );
+        btnOk.setBackground( WeatherLionApplication.systemButtonDrawable );
 
-        if( messageType != null && messageType.equals( UtilityMethod.MsgType.HTML ) )
+        btnOk.setOnClickListener( new View.OnClickListener()
+        {
+            @Override
+            public void onClick( View v )
+            {
+                messageDialog.dismiss();
+            }
+        });
+
+        messageDialog.setView( messageDialogView );
+        Objects.requireNonNull( messageDialog.getWindow() ).setBackgroundDrawable(
+                new ColorDrawable( Color.TRANSPARENT ) );
+        UtilityMethod.loadCustomFont( (RelativeLayout) messageDialogView.findViewById(
+                R.id.rlMessageDialog ) );
+
+        if( messageType != null && messageType.equalsIgnoreCase( "html" ) )
         {
             txvMessage.setText( HtmlCompat.fromHtml( message, 0 ) );
         }// end of if block
@@ -1835,13 +1851,6 @@ public class WeatherLionApplication extends Application
             @Override
             public void onClick( View v )
             {
-                if( methodToCall == null )
-                {
-                    messageDialog.dismiss();
-
-                    return;
-                }// end of if block
-
                 if( params == null || params.length == 0 )
                 {
                     callMethodByName( this, methodToCall,null, null );
@@ -1856,6 +1865,13 @@ public class WeatherLionApplication extends Application
         });
 
         messageDialog.show();
+
+        // adjust the layout after the window is displayed
+        Window dialogWindow = messageDialog.getWindow();
+        dialogWindow.getAttributes().windowAnimations = R.style.ZoomAnimation;
+        dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
+                ViewGroup.LayoutParams.WRAP_CONTENT );
+        dialogWindow.setGravity( Gravity.CENTER );
     }// end of method showMessageDialog
 
     /**

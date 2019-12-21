@@ -34,7 +34,7 @@
             android:text="@string/key_dialog_title"
             android:textAppearance="?android:attr/textAppearance"
             android:textColor="#FFFFFF"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <ImageView
@@ -224,13 +224,12 @@
         </FrameLayout>
 
         <CheckBox
-
             android:id="@+id/cbShowPwd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignEnd="@+id/flKeyValue"
             android:layout_below="@+id/flKeyValue"
-            android:layout_marginTop="8dip"
+            android:layout_marginTop="6dip"
             android:textColor="@color/black_opacity_80"
             android:text="@string/show_key" />
 

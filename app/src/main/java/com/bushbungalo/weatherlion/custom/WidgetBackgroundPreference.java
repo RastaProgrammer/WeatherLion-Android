@@ -175,6 +175,7 @@ public class WidgetBackgroundPreference extends DialogPreference
         {
             Objects.requireNonNull( getDialog().getWindow() ).setBackgroundDrawable(
                     new ColorDrawable( Color.TRANSPARENT ) );
+            getDialog().getWindow().getAttributes().windowAnimations = R.style.ZoomAnimation;
 
             // Remove the default system dialog buttons from the view
             ( (AlertDialog) getDialog() ).getButton(

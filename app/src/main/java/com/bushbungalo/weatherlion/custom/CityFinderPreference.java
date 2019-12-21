@@ -253,6 +253,8 @@ public class CityFinderPreference extends DialogPreference
             Objects.requireNonNull( getDialog().getWindow() ).setBackgroundDrawable(
                     new ColorDrawable( Color.TRANSPARENT ) );
 
+            getDialog().getWindow().getAttributes().windowAnimations = R.style.ZoomAnimation;
+
             // Remove the default system dialog buttons from the view
             ( (AlertDialog) getDialog() ).getButton(
                     AlertDialog.BUTTON_POSITIVE ).setVisibility( View.GONE );

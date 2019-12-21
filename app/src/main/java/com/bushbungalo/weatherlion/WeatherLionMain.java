@@ -233,15 +233,13 @@ public class WeatherLionMain extends AppCompatActivity
             {
                 case WeatherLionApplication.AQUA_THEME:
                     cursorColour = getColor( R.color.aqua );
-
                     break;
                 case WeatherLionApplication.FROSTY_THEME:
-                    cursorColour = getColor( R.color.frosty);
+                    cursorColour = getColor( R.color.frosty );
 
                     break;
                 case WeatherLionApplication.RABALAC_THEME:
                     cursorColour = getColor( R.color.rabalac );
-
                     break;
                 default:
                     cursorColour = getColor( R.color.lion );
@@ -1607,6 +1605,7 @@ public class WeatherLionMain extends AppCompatActivity
 
         // adjust the layout after the window is displayed
         Window dialogWindow = responseDialog.getWindow();
+        dialogWindow.getAttributes().windowAnimations = R.style.ZoomAnimation;
         dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
                 ViewGroup.LayoutParams.WRAP_CONTENT );
         dialogWindow.setGravity( Gravity.CENTER );
@@ -2380,6 +2379,9 @@ public class WeatherLionMain extends AppCompatActivity
 
         // Controlling width and height with specific values
         Window dialogWindow = keyEntryDialog.getWindow();
+
+        keyEntryDialog.getWindow().getAttributes().windowAnimations = R.style.ZoomAnimation;
+
         keyEntryDialog.show();
         dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
                 ViewGroup.LayoutParams.WRAP_CONTENT );
@@ -2499,6 +2501,7 @@ public class WeatherLionMain extends AppCompatActivity
 
         // adjust the layout after the window is displayed
         Window dialogWindow = messageDialog.getWindow();
+        dialogWindow.getAttributes().windowAnimations = R.style.ZoomAnimation;
         dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
                 ViewGroup.LayoutParams.WRAP_CONTENT );
         dialogWindow.setGravity( Gravity.CENTER );
@@ -2621,8 +2624,8 @@ public class WeatherLionMain extends AppCompatActivity
         currentWindDirection.setLength( 0 );
         currentWindDirection.append( WeatherLionApplication.storedData.getWind().getWindDirection() );
 
-        TextView txvWindReading = findViewById( R.id.txvWindReading );
-        txvWindReading.setTypeface( WeatherLionApplication.currentTypeface );
+        TextView txvWindSpeed = findViewById( R.id.txvWindSpeed );
+        txvWindSpeed.setTypeface( WeatherLionApplication.currentTypeface );
 
         // Windmill rotation
         ImageView blade = findViewById( R.id.imvBlade );
@@ -2667,7 +2670,7 @@ public class WeatherLionMain extends AppCompatActivity
         String displayCurrentFeelsLike;
         String displayCurrentHighTemp;
         String displayCurrentLowTemp;
-        String displayCurrentWindReading;
+        String displayCurrentWindSpeed;
 
         int inputValue;
 
@@ -2695,8 +2698,7 @@ public class WeatherLionMain extends AppCompatActivity
                     UtilityMethod.fahrenheitToCelsius( Float.parseFloat( currentLow.toString() ) ) ),
                         WeatherLionApplication.DEGREES );
 
-            displayCurrentWindReading = String.format( "%s %s %s",
-                currentWindDirection, currentWindSpeed, "km/h" );
+            displayCurrentWindSpeed = String.format( "%s %s", currentWindSpeed, "km/h" );
 
             inputValue = (int) UtilityMethod.fahrenheitToCelsius( Integer.parseInt(
                     currentTemp.toString().replaceAll( "\\D+","" ) ) );
@@ -2715,13 +2717,12 @@ public class WeatherLionMain extends AppCompatActivity
 
             displayCurrentLowTemp = String.format( "%s%s", currentLow.toString(), WeatherLionApplication.DEGREES );
 
-            displayCurrentWindReading = String.format( "%s %s %s",
-                    currentWindDirection, currentWindSpeed, "mph" );
+            displayCurrentWindSpeed = String.format( "%s %s", currentWindSpeed, "mph" );
 
             inputValue = Integer.parseInt( currentTemp.toString().replaceAll( "\\D+","" ) );
         }// end of else block
 
-        txvWindReading.setText( displayCurrentWindReading );
+        txvWindSpeed.setText( displayCurrentWindSpeed );
         txvCurrentTemperature.setText( displayCurrentTemp );
         txvFeelsLikeTemperature.setText( displayCurrentFeelsLike );
         txvHighTemp.setText( displayCurrentHighTemp );
