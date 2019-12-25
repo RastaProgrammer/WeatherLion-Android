@@ -227,6 +227,7 @@
             android:layout_below="@+id/cbShowPwd"
             android:layout_marginStart="0dip"
             android:layout_marginTop="10dip"
+            android:layout_marginBottom="1dip"
             android:layout_toStartOf="@+id/btnDeleteKey"
             android:background="@drawable/wl_aqua_rounded_btn_bg"
             android:gravity="center"
@@ -269,5 +270,6 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/rlDialogBody"
+        android:layout_marginTop="-1dip"
         android:background="@drawable/wl_custom_dialog_footer" />
 </RelativeLayout>

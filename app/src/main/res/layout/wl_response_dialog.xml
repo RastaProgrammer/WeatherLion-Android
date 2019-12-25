@@ -61,6 +61,7 @@
             android:layout_height="30dip"
             android:layout_below="@+id/txvMessage"
             android:layout_marginTop="10dp"
+            android:layout_marginBottom="1dip"
             android:layout_toStartOf="@+id/btnPositive"
             android:background="@drawable/wl_aqua_rounded_btn_bg"
             android:gravity="center"
@@ -75,6 +76,7 @@
             android:layout_height="30dip"
             android:layout_below="@+id/txvMessage"
             android:layout_marginTop="10dip"
+            android:layout_marginBottom="1dip"
             android:layout_marginStart="12dip"
             android:layout_alignParentEnd="true"
             android:background="@drawable/wl_aqua_rounded_btn_bg"
@@ -89,5 +91,6 @@
         android:id="@+id/rlDialogFooter"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="-1dip"
         android:background="@drawable/wl_custom_dialog_footer" />
 </LinearLayout>

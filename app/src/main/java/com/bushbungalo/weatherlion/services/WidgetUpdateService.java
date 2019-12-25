@@ -608,7 +608,8 @@ public class WidgetUpdateService extends JobIntentService
                                     }// end of try block
                                     catch ( Exception e )
                                     {
-                                        dataRetrievalError( e );
+                                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                                            e.getMessage(), TAG + "::handleIntent" );
 
                                         return;
                                     }// end of catch block
@@ -718,7 +719,8 @@ public class WidgetUpdateService extends JobIntentService
                                 }// end of try block
                                 catch ( Exception e )
                                 {
-                                    dataRetrievalError( e );
+                                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                                            e.getMessage(), TAG + "::handleIntent" );
                                 }// end of catch block
                             }// end of if block
                         }// end of if block
@@ -909,7 +911,7 @@ public class WidgetUpdateService extends JobIntentService
         }// end of catch block
     }// end of method callNMethodByName
 
-    private void dataRetrievalError( Exception e )
+    private void dataRetrievalError()
     {
         // inform all receivers that there was a error obtaining weather details
         broadcastLoadingError();
@@ -921,20 +923,9 @@ public class WidgetUpdateService extends JobIntentService
         settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
                 WeatherLionApplication.previousWeatherProvider.toString() ).apply();
 
-        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
-        wxDataProvider + " returned: " + e.getMessage(), TAG + "::dataRetrievalError" );
         // Calling from a Non-UI Thread
         Handler handler = new Handler( Looper.getMainLooper() );
-        final String message;
-
-        if( strJSON.size() == 0 )
-        {
-            message = wxDataProvider + " did not return data!";
-        }// end of if block
-        else
-        {
-            message = wxDataProvider + " returned " + e.getMessage();
-        }// end of else block
+        final String message = wxDataProvider + " did not return data!";
 
         handler.post( new Runnable()
         {
@@ -1065,7 +1056,8 @@ public class WidgetUpdateService extends JobIntentService
                                 }// end of try block
                                 catch ( JSONException e )
                                 {
-                                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Bad Yahoo data: " + e.getMessage(),
+                                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                                            "Bad Yahoo data: " + e.getMessage(),
                                             TAG + "::updateAllAppWidgets [line: " +
                                                     e.getStackTrace()[1].getLineNumber()+ "]" );
                                 }// end of catch block
@@ -1244,7 +1236,8 @@ public class WidgetUpdateService extends JobIntentService
                     if( widBackgroundColor != null )
                     {
                         View widgetView = View.inflate( this,
-                                R.layout.wl_large_weather_widget_activity_alternate, null );
+                                R.layout.wl_large_weather_widget_activity_alternate,
+                                null );
                         ViewGroup root = widgetView.findViewById( R.id.flWidgetParent );
 
                         UtilityMethod.widgetTextViews.clear();
@@ -4750,7 +4743,7 @@ public class WidgetUpdateService extends JobIntentService
             }// end of if block
             else if( !webData.equals( WeatherLionApplication.EMPTY_JSON ) )
             {
-                dataRetrievalError( new NullPointerException( "No data from web service." ) );
+                dataRetrievalError();
             }// end of else if block
         }// end of anonymous method onReceive
     };// end of webServiceData

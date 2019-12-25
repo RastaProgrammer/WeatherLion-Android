@@ -71,7 +71,7 @@
     <style name="AquaTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
     <style name="ZoomAnimation">
-        <item name="android:windowEnterAnimation">@anim/zoom_in</item>
+        <item name="android:windowEnterAnimation">@null</item>
         <item name="android:windowExitAnimation">@anim/zoom_out</item>
     </style>
 </resources>

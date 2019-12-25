@@ -4,15 +4,50 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dip"
+    android:paddingStart="10dip"
+    android:paddingEnd="10dip"
+    android:paddingBottom="10dip"
     android:background="#ff000000">
+
+    <RelativeLayout
+        android:id="@+id/rlAboutTitleBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:padding="6dip">
+
+        <ImageView
+            android:id="@+id/imvBack"
+            android:layout_width="18dip"
+            android:layout_height="18dip"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="40dip"
+            android:src="@drawable/wl_back"
+            android:scaleType="fitXY"
+            android:clickable="true"
+            android:contentDescription="@string/back_to_parent"/>
+
+        <TextView
+            android:id="@+id/txvAboutTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_about"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@+id/imvBack"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="normal" />
+
+    </RelativeLayout>
 
     <ImageView
         android:id="@+id/imvAppLogo"
         android:layout_width="100dip"
         android:layout_height="100dip"
-        android:layout_marginTop="20dip"
+        android:layout_marginTop="30dip"
         android:layout_centerHorizontal="true"
+        android:layout_below="@+id/rlAboutTitleBar"
         android:gravity="center_horizontal"
         android:src="@drawable/wl_logo"
         android:contentDescription="@string/app_logo" />

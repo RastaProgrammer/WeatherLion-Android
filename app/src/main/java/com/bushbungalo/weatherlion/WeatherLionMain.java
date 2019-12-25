@@ -177,7 +177,7 @@ public class WeatherLionMain extends AppCompatActivity
     private BroadcastReceiver  systemEventsBroadcastReceiver = new SystemBroadcastReceiver();
     private BroadcastReceiver appBroadcastReceiver = new AppBroadcastReceiver();
 
-    public static final int LIST_ANIMATION_DURATION = 300;
+    public static final int LION_ANIMATION_DURATION = 300;
 
     /**
      * Method to be called after the required data accesses have be obtained.
@@ -1084,7 +1084,7 @@ public class WeatherLionMain extends AppCompatActivity
         IntentFilter appBroadcastFilter = new IntentFilter();
         appBroadcastFilter.addAction( WidgetUpdateService.WEATHER_LOADING_ERROR_MESSAGE );
         appBroadcastFilter.addAction( PrefsActivity.ICON_SWITCH );
-        appBroadcastFilter.addAction( WidgetUpdateService.ASTRONOMY_CHANGE );
+        appBroadcastFilter.addAction( WidgetUpdateService.ASTRONOMY_MESSAGE );
         appBroadcastFilter.addAction( RECYCLER_ITEM_CLICK );
         appBroadcastFilter.addAction( WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE );
         LocalBroadcastManager.getInstance( this ).registerReceiver( appBroadcastReceiver,
@@ -1606,6 +1606,7 @@ public class WeatherLionMain extends AppCompatActivity
         // adjust the layout after the window is displayed
         Window dialogWindow = responseDialog.getWindow();
         dialogWindow.getAttributes().windowAnimations = R.style.ZoomAnimation;
+        UtilityMethod.zoomInView( responseDialogView );
         dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
                 ViewGroup.LayoutParams.WRAP_CONTENT );
         dialogWindow.setGravity( Gravity.CENTER );
@@ -2304,11 +2305,11 @@ public class WeatherLionMain extends AppCompatActivity
 
                     ValueAnimator sizeAnimator = ValueAnimator
                         .ofFloat( largeSize, smallSize )
-                            .setDuration( WeatherLionMain.LIST_ANIMATION_DURATION );
+                            .setDuration( WeatherLionMain.LION_ANIMATION_DURATION);
 
                     ValueAnimator topAnimator = ValueAnimator
                         .ofFloat( origin, destination )
-                            .setDuration( WeatherLionMain.LIST_ANIMATION_DURATION );
+                            .setDuration( WeatherLionMain.LION_ANIMATION_DURATION);
 
                     topAnimator.addUpdateListener(
                             new ValueAnimator.AnimatorUpdateListener()
@@ -2381,6 +2382,7 @@ public class WeatherLionMain extends AppCompatActivity
         Window dialogWindow = keyEntryDialog.getWindow();
 
         keyEntryDialog.getWindow().getAttributes().windowAnimations = R.style.ZoomAnimation;
+        UtilityMethod.zoomInView( keyDialogView );
 
         keyEntryDialog.show();
         dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
@@ -2502,6 +2504,7 @@ public class WeatherLionMain extends AppCompatActivity
         // adjust the layout after the window is displayed
         Window dialogWindow = messageDialog.getWindow();
         dialogWindow.getAttributes().windowAnimations = R.style.ZoomAnimation;
+        UtilityMethod.zoomInView( messageDialogView );
         dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
                 ViewGroup.LayoutParams.WRAP_CONTENT );
         dialogWindow.setGravity( Gravity.CENTER );
@@ -2624,6 +2627,9 @@ public class WeatherLionMain extends AppCompatActivity
         currentWindDirection.setLength( 0 );
         currentWindDirection.append( WeatherLionApplication.storedData.getWind().getWindDirection() );
 
+        TextView txvWindDirection = findViewById( R.id.txvWindDirection );
+        txvWindDirection.setTypeface( WeatherLionApplication.currentTypeface );
+
         TextView txvWindSpeed = findViewById( R.id.txvWindSpeed );
         txvWindSpeed.setTypeface( WeatherLionApplication.currentTypeface );
 
@@ -2722,6 +2728,7 @@ public class WeatherLionMain extends AppCompatActivity
             inputValue = Integer.parseInt( currentTemp.toString().replaceAll( "\\D+","" ) );
         }// end of else block
 
+        txvWindDirection.setText( currentWindDirection );
         txvWindSpeed.setText( displayCurrentWindSpeed );
         txvCurrentTemperature.setText( displayCurrentTemp );
         txvFeelsLikeTemperature.setText( displayCurrentFeelsLike );
@@ -2761,7 +2768,7 @@ public class WeatherLionMain extends AppCompatActivity
 
                         scrollAnimator = ValueAnimator
                             .ofInt( detailsScroll.getScrollY(), scrollTo )
-                                .setDuration( LIST_ANIMATION_DURATION );
+                                .setDuration(LION_ANIMATION_DURATION);
 
                         scrollAnimator.addUpdateListener(
                             new ValueAnimator.AnimatorUpdateListener()
@@ -2795,7 +2802,7 @@ public class WeatherLionMain extends AppCompatActivity
 
             switch( action )
             {
-                case WidgetUpdateService.ASTRONOMY_CHANGE:
+                case WidgetUpdateService.ASTRONOMY_MESSAGE:
                     Bundle extras = intent.getExtras();
                     String timeOfDay;
 

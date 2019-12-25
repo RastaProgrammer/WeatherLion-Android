@@ -82,6 +82,7 @@
             android:layout_below="@+id/scrEntries"
             android:layout_alignParentEnd="true"
             android:layout_marginTop="10dip"
+            android:layout_marginBottom="1dip"
             android:background="@drawable/wl_aqua_rounded_btn_bg"
             android:gravity="center"
             android:text="@string/cancel"
@@ -95,6 +96,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/rlDialogBody"
+        android:layout_marginTop="-1dip"
         android:background="@drawable/wl_custom_dialog_footer" />
 </RelativeLayout>
 

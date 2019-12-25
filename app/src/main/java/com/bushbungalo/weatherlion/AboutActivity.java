@@ -4,9 +4,15 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
+
+import java.util.Objects;
 
 public class AboutActivity extends AppCompatActivity
 {
@@ -36,8 +42,26 @@ public class AboutActivity extends AppCompatActivity
 
         super.onCreate( savedInstanceState );
 
+        requestWindowFeature( Window.FEATURE_NO_TITLE ); //will hide the title
+        Objects.requireNonNull( getSupportActionBar() ).hide(); // hide the title bar
+        this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
+
+        this.getWindow().setFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN ); //enable full screen
+
         setContentView( R.layout.wl_about_activity );
         UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.rlAbout ) );
+
+        ImageView imvBack = findViewById( R.id.imvBack );
+
+        imvBack.setOnClickListener (new View.OnClickListener()
+        {
+            @Override
+            public void onClick( View v )
+            {
+                finish();
+            }
+        });
 
     }// end of method onCreate
 

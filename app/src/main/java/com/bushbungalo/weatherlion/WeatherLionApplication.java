@@ -463,7 +463,8 @@ public class WeatherLionApplication extends Application
      * @param parameterTypes    An array representing the param type example new Class[]{String.class} or null can be passed.
      * @param paramValues    An array representing the param value example new Object[]{"GeoNames"} or null can be passed.
      */
-    public static void callMethodByName( Object obj, String methodName, Class[] parameterTypes, Object[] paramValues )
+    public static void callMethodByName( Object obj, String methodName,
+                                         Class[] parameterTypes, Object[] paramValues )
     {
         Method method;
 
@@ -1869,6 +1870,7 @@ public class WeatherLionApplication extends Application
         // adjust the layout after the window is displayed
         Window dialogWindow = messageDialog.getWindow();
         dialogWindow.getAttributes().windowAnimations = R.style.ZoomAnimation;
+        UtilityMethod.zoomInView( messageDialogView );
         dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
                 ViewGroup.LayoutParams.WRAP_CONTENT );
         dialogWindow.setGravity( Gravity.CENTER );

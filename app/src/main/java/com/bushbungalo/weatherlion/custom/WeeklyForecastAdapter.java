@@ -256,7 +256,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                 {
                     resizeAnimator = ValueAnimator
                         .ofInt( retractedHeight, expandedHeight )
-                            .setDuration( WeatherLionMain.LIST_ANIMATION_DURATION );
+                            .setDuration( WeatherLionMain.LION_ANIMATION_DURATION);
 
                     v.getLayoutParams().height = expandedHeight;
                 }// end of if block
@@ -264,7 +264,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
                 {
                     resizeAnimator = ValueAnimator
                         .ofInt( expandedHeight, retractedHeight )
-                            .setDuration( WeatherLionMain.LIST_ANIMATION_DURATION );
+                            .setDuration( WeatherLionMain.LION_ANIMATION_DURATION);
 
                     v.getLayoutParams().height = retractedHeight;
                 }// end of else block

@@ -26,6 +26,10 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -1332,7 +1336,6 @@ public abstract class UtilityMethod
         View toastView = toast.getView(); // This'll return the default View of the Toast.
         int horizontalPadding = 20;
         int verticalPadding = 10;
-
 
         TextView toastMessage = toastView.findViewById( android.R.id.message );
         LinearLayout.LayoutParams params = new
@@ -3740,10 +3743,63 @@ public abstract class UtilityMethod
 
         // adjust the layout after the window is displayed
         Window dialogWindow = messageDialog.getWindow();
+        dialogWindow.getAttributes().windowAnimations = R.style.ZoomAnimation;
+        UtilityMethod.zoomInView( messageDialogView );
+
         dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
                 ViewGroup.LayoutParams.WRAP_CONTENT );
         dialogWindow.setGravity( Gravity.CENTER );
+
+        zoomInView( messageDialogView );
     }// end of method showMessageDialog
+
+    public static void zoomInView( final View zoomView )
+    {
+        Animation scaleAnim = new ScaleAnimation(
+            0.0f, 1.0f, // Start and end values for the X axis scaling
+            0.0f, 1.0f, // Start and end values for the Y axis scaling
+            Animation.RELATIVE_TO_SELF, 0.5f, // Pivot point of X scaling
+            Animation.RELATIVE_TO_SELF, 0.5f ); // Pivot point of Y scaling
+
+        scaleAnim.setFillAfter( true ); // Needed to keep the result of the animation
+
+        Animation alphaAnim = new AlphaAnimation( 0.0f, 1.0f );
+        alphaAnim.setFillAfter( true ); // Needed to keep the result of the animation
+
+        AnimationSet animSet = new AnimationSet( true );
+        animSet.addAnimation(scaleAnim);
+        animSet.addAnimation( alphaAnim );
+        animSet.setDuration( 300 );
+
+        zoomView.startAnimation( animSet );
+
+        scaleAnim.setAnimationListener( new Animation.AnimationListener()
+        {
+            @Override
+            public void onAnimationStart( Animation arg0 )
+            {
+            }
+
+            @Override
+            public void onAnimationRepeat( Animation arg0 )
+            {
+            }
+
+            @Override
+            public void onAnimationEnd( Animation arg0 )
+            {
+                // quickly zoom back out by 4%
+                Animation anim = new ScaleAnimation(
+                    1.0f, 0.96f,
+                    1.0f, 0.96f,
+                    Animation.RELATIVE_TO_SELF, 0.5f,
+                    Animation.RELATIVE_TO_SELF, 0.5f );
+                anim.setFillAfter( true );
+                anim.setDuration( 100 );
+                zoomView.startAnimation( anim );
+            }
+        });
+    }// end of method zoomInView
 
     /**
      * Returns an RGB Color which corresponds with a temperature
