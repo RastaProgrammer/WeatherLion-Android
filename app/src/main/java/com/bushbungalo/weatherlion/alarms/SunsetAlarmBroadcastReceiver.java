@@ -14,7 +14,7 @@ public class SunsetAlarmBroadcastReceiver extends BroadcastReceiver
     public static final String ACTION_ALARM = "SunsetAlarm";
 
     @Override
-    public void onReceive(Context context, Intent intent)
+    public void onReceive( Context context, Intent intent )
     {
         if ( ACTION_ALARM.equals( intent.getAction() ) )
         {

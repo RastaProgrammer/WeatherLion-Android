@@ -3753,13 +3753,18 @@ public abstract class UtilityMethod
         zoomInView( messageDialogView );
     }// end of method showMessageDialog
 
+    /**
+     * Custom zoom in animation
+     *
+             * @param zoomView The view to be zoomed in.
+     */
     public static void zoomInView( final View zoomView )
     {
         Animation scaleAnim = new ScaleAnimation(
-            0.0f, 1.0f, // Start and end values for the X axis scaling
-            0.0f, 1.0f, // Start and end values for the Y axis scaling
-            Animation.RELATIVE_TO_SELF, 0.5f, // Pivot point of X scaling
-            Animation.RELATIVE_TO_SELF, 0.5f ); // Pivot point of Y scaling
+                0.85f, 1.0f, // Start and end values for the X axis scaling
+                0.85f, 1.0f, // Start and end values for the Y axis scaling
+                Animation.RELATIVE_TO_SELF, 0.5f, // Pivot point of X scaling
+                Animation.RELATIVE_TO_SELF, 0.5f ); // Pivot point of Y scaling
 
         scaleAnim.setFillAfter( true ); // Needed to keep the result of the animation
 
@@ -3767,36 +3772,25 @@ public abstract class UtilityMethod
         alphaAnim.setFillAfter( true ); // Needed to keep the result of the animation
 
         AnimationSet animSet = new AnimationSet( true );
-        animSet.addAnimation(scaleAnim);
+        animSet.addAnimation( scaleAnim );
         animSet.addAnimation( alphaAnim );
-        animSet.setDuration( 300 );
-
+        animSet.setDuration( 250 );
         zoomView.startAnimation( animSet );
 
         scaleAnim.setAnimationListener( new Animation.AnimationListener()
         {
             @Override
-            public void onAnimationStart( Animation arg0 )
-            {
-            }
+            public void onAnimationStart( Animation arg0 ){}
 
             @Override
-            public void onAnimationRepeat( Animation arg0 )
-            {
-            }
+            public void onAnimationRepeat( Animation arg0 ){}
 
             @Override
             public void onAnimationEnd( Animation arg0 )
             {
                 // quickly zoom back out by 4%
-                Animation anim = new ScaleAnimation(
-                    1.0f, 0.96f,
-                    1.0f, 0.96f,
-                    Animation.RELATIVE_TO_SELF, 0.5f,
-                    Animation.RELATIVE_TO_SELF, 0.5f );
-                anim.setFillAfter( true );
-                anim.setDuration( 100 );
-                zoomView.startAnimation( anim );
+                zoomView.animate().scaleX( 0.96f ).scaleY( 0.96f )
+                        .setDuration( 100 );
             }
         });
     }// end of method zoomInView
@@ -4156,6 +4150,18 @@ public abstract class UtilityMethod
     }// end of method getHoursDifference
 
     /**
+     * Get the number divisible by 10 from a number.
+     * Example: 53 should return 50
+     *
+     * @param number The number to be checked
+     * @return  A number in that series divisible by 10
+     */
+    public static int getTensNumber( int number )
+    {
+        return ( ( ( number % 100 ) - ( number % 10 ) ) / 10 ) * 10;
+    }// end of method getTensNumber
+
+    /**
      * Get the current time of date
      *
      * @return An enum value of MORNING, NOON, EVENING, and NIGHT
@@ -4438,36 +4444,9 @@ public abstract class UtilityMethod
             condition = condition.replace( "(night)", "" ).trim();
         }// end of if block
 
-//        for( String keyName : weatherImages.keySet() )
-//        {
-//            int cLen = condition.length();
-//
-//            String accurateCondition = keyName.contains( "(night)" ) ?
-//                keyName.replace( "(night)", "" ).trim() :
-//                    keyName.trim();
-//
-//            if( keyName.length() >= cLen )
-//            {
-//                if( keyName.substring( 0, cLen ).equals( condition ) )
-//                {
-//                    condition = accurateCondition;
-//
-//                    // break if a closest match is found
-//                    break;
-//                }// end of if block
-//            }// end of if block
-//            else if( condition.startsWith( keyName ) )
-//            {
-//                condition = accurateCondition;
-//
-//                // break if a closest match is found
-//                break;
-//            }// end of else if block
-//        }// end of for each loop
-
         // create a new method for locating the nearest match
         condition = findClosestWordMatch(
-                        weatherImages.keySet().toArray( new String[0]),
+                        weatherImages.keySet().toArray( new String[0] ),
                             condition );
 
         return toProperCase( condition );

@@ -315,6 +315,7 @@
     <string name="forecast_hour_temperature">Forecast Hour Temperature</string>
     <string name="notification_current_temperature">Notification Current Temperature</string>
     <string name="hourly">HOURLY</string>
+    <string name="graph">GRAPHICAL</string>
     <string name="daily">DAILY</string>
     <string name="default_alarm">No Alarm Due Yet</string>
     <string name="astronomy">ASTRONOMY</string>

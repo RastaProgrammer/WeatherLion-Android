@@ -14,7 +14,9 @@ import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
@@ -81,6 +83,14 @@ import com.bushbungalo.weatherlion.utils.DividerItemDecoration;
 import com.bushbungalo.weatherlion.utils.JSONHelper;
 import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
+import com.jjoe64.graphview.DefaultLabelFormatter;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.ValueDependentColor;
+import com.jjoe64.graphview.series.BarGraphSeries;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.DataPointInterface;
+import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.series.PointsGraphSeries;
 
 import java.io.File;
 import java.io.IOException;
@@ -97,6 +107,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -178,6 +189,13 @@ public class WeatherLionMain extends AppCompatActivity
     private BroadcastReceiver appBroadcastReceiver = new AppBroadcastReceiver();
 
     public static final int LION_ANIMATION_DURATION = 300;
+
+    private GraphView hourlyGraph;
+    private GraphView dailyGraph;
+    private int hourlyHighTemp = 0;
+    private int hourlyLowTemp = 0;
+    private int dailyHighestHighTemp = 0;
+    private int dailyLowestHighTemp = 0;
 
     /**
      * Method to be called after the required data accesses have be obtained.
@@ -566,16 +584,19 @@ public class WeatherLionMain extends AppCompatActivity
             TextView txvHour;
             ImageView imvHour;
             TextView txvTemp;
+            hourlyGraph = findViewById( R.id.hourlyGraph );
 
             LinearLayout hourlyForecastGrid = findViewById( R.id.hourlyForecastGrid );
             hourlyForecastGrid.removeAllViews();
+            LinkedHashMap<Date, Integer> hourlyGraphDataPoints = new LinkedHashMap<>();
+            hourlyLowTemp = WeatherLionApplication.storedData.getHourlyForecast().get( 0 ).getTemperature();
+            hourlyHighTemp = WeatherLionApplication.storedData.getHourlyForecast().get( 0 ).getTemperature();
 
             for ( int i = 0; i < WeatherLionApplication.storedData.getHourlyForecast().size(); i++ )
             {
                 LastWeatherData.WeatherData.HourlyForecast.HourForecast wxHourForecast =
                             WeatherLionApplication.storedData.getHourlyForecast().get( i );
-                        String forecastTime = null;
-
+                String forecastTime = null;
                 View hourForecastView = View.inflate( this, R.layout.wl_hourly_weather_child, null );
                 TextView txvForecastTime = hourForecastView.findViewById( R.id.txvHourForecastTime );
                 ImageView imvHourWeatherIcon = hourForecastView.findViewById( R.id.imvHourForecastWeatherIcon );
@@ -613,19 +634,31 @@ public class WeatherLionMain extends AppCompatActivity
 
                 loadWeatherIcon( imvHourWeatherIcon, String.format(
                         "weather_images/%s/weather_%s", WeatherLionApplication.iconSet, fConditionIcon ) );
+                int hourTemp;
 
                 if( WeatherLionApplication.storedPreferences.getUseMetric() )
                 {
-                    txvHourlyForecastTemp.setText( String.format( "%s%s",
-                            Math.round( UtilityMethod.fahrenheitToCelsius(
-                                    wxHourForecast.getTemperature() ) ),
-                            WeatherLionApplication.DEGREES ) );
+                    hourTemp = Math.round( UtilityMethod.fahrenheitToCelsius(
+                            wxHourForecast.getTemperature() ) );
                 }// end of if block
                 else
                 {
-                    txvHourlyForecastTemp.setText( String.format( "%s%s", wxHourForecast.getTemperature(),
-                            WeatherLionApplication.DEGREES ) );
+                    hourTemp = wxHourForecast.getTemperature();
                 }// end of else block
+
+                if( hourTemp < hourlyLowTemp )
+                {
+                    hourlyLowTemp = hourTemp;
+                }// end of if block
+                else if( hourTemp >  hourlyHighTemp )
+                {
+                    hourlyHighTemp = hourTemp;
+                }// end of if block
+
+                txvHourlyForecastTemp.setText( String.format( "%s%s",
+                        hourTemp, WeatherLionApplication.DEGREES ) );
+
+                hourlyGraphDataPoints.put( onTime, hourTemp );
 
                 // distribute the views equally horizontally across the parent view
                 LinearLayout.LayoutParams childLayoutParams = new LinearLayout.LayoutParams(
@@ -706,6 +739,12 @@ public class WeatherLionMain extends AppCompatActivity
                     break;
                 }// end of if block
             }// end of for loop
+
+            hourlyLowTemp = UtilityMethod.getTensNumber( hourlyLowTemp );
+            hourlyHighTemp = UtilityMethod.getTensNumber( hourlyHighTemp );
+
+            createLineGraph( hourlyGraphDataPoints, 1 );
+            //createBarChartGraph( graphDataPoints );
         }// end of if block
         else
         {
@@ -718,6 +757,61 @@ public class WeatherLionMain extends AppCompatActivity
         WeeklyForecastAdapter weeklyForecastAdapter = new WeeklyForecastAdapter(
                 fiveDayForecastList );
         forecastRecyclerView.setAdapter( weeklyForecastAdapter );
+
+        dailyGraph = findViewById( R.id.dailyGraph );
+        LinkedHashMap<Date, Integer> dailyGraphDataPoints = new LinkedHashMap<>();
+        dailyLowestHighTemp = fiveDayForecastList.get( 0 ).getHighTemperature();
+        dailyHighestHighTemp = fiveDayForecastList.get( 0 ).getHighTemperature();
+
+        for( LastWeatherData.WeatherData.DailyForecast.DayForecast forecast : fiveDayForecastList )
+        {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                    "EEE MMM dd HH:mm:ss z yyyy" );
+
+            String dayForecast = String.format( "%s", forecast.getDate() );
+
+            SimpleDateFormat sdf = new SimpleDateFormat( "EEE MMM dd HH:mm:ss z yyyy",
+                    Locale.ENGLISH );
+            Date onTime = null;
+
+            try
+            {
+                onTime = sdf.parse( dayForecast );
+            } // end of try block
+            catch ( ParseException e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                        TAG + "::loadMainActivity [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+            }// end of catch block
+
+            int dayHighTemp;
+
+            if( WeatherLionApplication.storedPreferences.getUseMetric() )
+            {
+                dayHighTemp = Math.round( UtilityMethod.fahrenheitToCelsius(
+                        forecast.getHighTemperature() ) );
+            }// end of if block
+            else
+            {
+                dayHighTemp = forecast.getHighTemperature();
+            }// end of else block
+
+            if( dayHighTemp < dailyLowestHighTemp )
+            {
+                dailyLowestHighTemp = dayHighTemp;
+            }// end of if block
+            else if( dayHighTemp > dailyHighestHighTemp )
+            {
+                dailyHighestHighTemp = dayHighTemp;
+            }// end of if block
+
+            dailyGraphDataPoints.put( onTime, dayHighTemp );
+        }// end of for each loop
+
+        dailyLowestHighTemp = UtilityMethod.getTensNumber( dailyLowestHighTemp );
+        dailyHighestHighTemp = UtilityMethod.getTensNumber( dailyHighestHighTemp );
+
+        createLineGraph( dailyGraphDataPoints, 2 );
 
         detailsScroll = findViewById( R.id.scrDetails );
 
@@ -954,6 +1048,252 @@ public class WeatherLionMain extends AppCompatActivity
         UtilityMethod.loadCustomFont( rootView );
     }// end of method loadMainActivityWeather
 
+    private void createLineGraph( LinkedHashMap<Date, Integer> graphDataPoints, int graphNumber )
+    {
+        DataPoint[] dataPoints = new DataPoint[ graphDataPoints.size() ];
+        int i = 0;
+
+        for( Date dt : graphDataPoints.keySet() )
+        {
+            if( graphDataPoints.get( dt ) != null )
+            {
+                Integer temp = graphDataPoints.get( dt );
+
+                if( temp != null )
+                {
+                    dataPoints[ i ] = new DataPoint( dt, temp );
+                    i++;
+                }// end of if block
+            }// end of if block
+        }// end of for loop
+
+        LineGraphSeries< DataPoint > lineSeries = new LineGraphSeries<>( dataPoints );
+
+        lineSeries.setColor( UtilityMethod.addOpacity(
+            WeatherLionApplication.systemColor.toArgb(),
+                90 ) );
+        //lineSeries.setDrawDataPoints( true );
+        //lineSeries.setDataPointsRadius( 10 );
+        lineSeries.setAnimated( true );
+        lineSeries.setThickness( 4 );
+
+        switch( graphNumber )
+        {
+            case 1:
+                hourlyGraph.getGridLabelRenderer().setVerticalLabelsColor( Color.WHITE );
+                hourlyGraph.getGridLabelRenderer().setHorizontalLabelsColor( Color.WHITE );
+                hourlyGraph.getGridLabelRenderer().setGridColor( Color.parseColor( "#66FFFFFF" ) );
+                hourlyGraph.addSeries( lineSeries );
+
+                hourlyGraph.getGridLabelRenderer().setNumHorizontalLabels( 5 );
+                hourlyGraph.getGridLabelRenderer().setNumVerticalLabels( 3 );
+                hourlyGraph.getViewport().setXAxisBoundsManual( true );
+
+                // set manual y bounds to have nice steps
+                hourlyGraph.getViewport().setMinY( hourlyLowTemp - 10 );
+                hourlyGraph.getViewport().setMaxY( hourlyHighTemp + 10 );
+                hourlyGraph.getViewport().setYAxisBoundsManual( true );
+
+                hourlyGraph.getViewport().setScalable( true );
+
+                // as we use dates as labels, the human rounding to nice readable numbers
+                // is not necessary
+                hourlyGraph.getGridLabelRenderer().setHumanRounding( false );
+
+                // set date label formatter
+                hourlyGraph.getGridLabelRenderer().setLabelFormatter(
+                        new DefaultLabelFormatter()
+                        {
+                            @Override
+                            public String formatLabel( double value, boolean isValueX )
+                            {
+                                if ( isValueX )
+                                {
+                                    // show normal x values
+                                    return new SimpleDateFormat( "h a", Locale.ENGLISH ).format( value );
+                                }// end of if block
+                                else
+                                {
+                                    // show currency for y values
+                                    return super.formatLabel( value, false ) + WeatherLionApplication.DEGREES;
+                                }// end of else block
+                            }
+                        });
+
+                PointsGraphSeries< DataPoint > hourlyTempsPointSeries = new PointsGraphSeries<>( dataPoints );
+                hourlyTempsPointSeries.setColor( WeatherLionApplication.systemColor.toArgb() );
+                hourlyGraph.addSeries( hourlyTempsPointSeries );
+
+                final Paint hourlyCustomPaint = new Paint();
+                hourlyCustomPaint.setColor( Color.WHITE );
+                hourlyCustomPaint.setStyle(Paint.Style.FILL);
+                hourlyCustomPaint.setTextSize( 30 );
+
+                hourlyTempsPointSeries.setCustomShape(new PointsGraphSeries.CustomShape()
+                {
+                    @Override
+                    public void draw( Canvas canvas, Paint paint, float x, float y, DataPointInterface dataPoint )
+                    {
+                        hourlyCustomPaint.setStrokeWidth( 10 );
+                        canvas.drawText(( (int) dataPoint.getY() ) +
+                            WeatherLionApplication.DEGREES, x - 20, y - 20,
+                                hourlyCustomPaint );
+                    }
+                });
+
+                PointsGraphSeries< DataPoint > hourlyPointSeries = new PointsGraphSeries<>( dataPoints );
+                hourlyPointSeries.setSize( 8 );
+                hourlyPointSeries.setColor( Color.WHITE );
+                hourlyGraph.addSeries( hourlyPointSeries );
+
+                break;
+
+            case 2:
+                dailyGraph.getGridLabelRenderer().setVerticalLabelsColor( Color.WHITE );
+                dailyGraph.getGridLabelRenderer().setHorizontalLabelsColor( Color.WHITE );
+                dailyGraph.getGridLabelRenderer().setGridColor( Color.parseColor( "#66FFFFFF" ) );
+                dailyGraph.addSeries( lineSeries );
+
+                dailyGraph.getGridLabelRenderer().setNumHorizontalLabels( 5 );
+                dailyGraph.getGridLabelRenderer().setNumVerticalLabels( 3 );
+                dailyGraph.getViewport().setXAxisBoundsManual( true );
+
+                // set manual y bounds to have nice steps
+                dailyGraph.getViewport().setMinY( dailyLowestHighTemp - 10 );
+                dailyGraph.getViewport().setMaxY( dailyHighestHighTemp + 10 );
+                dailyGraph.getViewport().setYAxisBoundsManual( true );
+
+                dailyGraph.getViewport().setScalable( true );
+
+                // as we use dates as labels, the human rounding to nice readable numbers
+                // is not necessary
+                dailyGraph.getGridLabelRenderer().setHumanRounding( false );
+
+                // set date label formatter
+                dailyGraph.getGridLabelRenderer().setLabelFormatter(
+                        new DefaultLabelFormatter()
+                        {
+                            @Override
+                            public String formatLabel( double value, boolean isValueX )
+                            {
+                                if ( isValueX )
+                                {
+                                    // show normal x values
+                                    return new SimpleDateFormat( "MMM d", Locale.ENGLISH ).format( value );
+                                }// end of if block
+                                else
+                                {
+                                    // show currency for y values
+                                    return super.formatLabel( value, false ) + WeatherLionApplication.DEGREES;
+                                }// end of else block
+                            }
+                        });
+
+                PointsGraphSeries< DataPoint > dailyTempsPointSeries = new PointsGraphSeries<>( dataPoints );
+                dailyTempsPointSeries.setColor( WeatherLionApplication.systemColor.toArgb() );
+                dailyGraph.addSeries( dailyTempsPointSeries );
+
+                final Paint dailyCustomPaint = new Paint();
+                dailyCustomPaint.setColor( Color.WHITE );
+                dailyCustomPaint.setStyle(Paint.Style.FILL);
+                dailyCustomPaint.setTextSize( 30 );
+
+                dailyTempsPointSeries.setCustomShape(new PointsGraphSeries.CustomShape()
+                {
+                    @Override
+                    public void draw( Canvas canvas, Paint paint, float x, float y, DataPointInterface dataPoint )
+                    {
+                        dailyCustomPaint.setStrokeWidth( 10 );
+                        canvas.drawText(( (int) dataPoint.getY() ) +
+                                        WeatherLionApplication.DEGREES, x - 20, y - 20,
+                                dailyCustomPaint );
+                    }
+                });
+
+                PointsGraphSeries< DataPoint > dailyPointSeries = new PointsGraphSeries<>( dataPoints );
+                dailyPointSeries.setSize( 8 );
+                dailyPointSeries.setColor( Color.WHITE );
+                dailyGraph.addSeries( dailyPointSeries );
+
+                break;
+        }// end of switch block
+    }// end of method createLineGraph
+
+    private void createBarChartGraph( LinkedHashMap<Date, Integer> graphDataPoints )
+    {
+        DataPoint[] dataPoints = new DataPoint[ graphDataPoints.size() ];
+
+        int i = 0;
+
+        for( Date dt : graphDataPoints.keySet() )
+        {
+
+            if( graphDataPoints.get( dt ) != null )
+            {
+                Integer temp = graphDataPoints.get( dt );
+
+                if( temp != null )
+                {
+                    dataPoints[ i ] = new DataPoint( dt, temp );
+                    i++;
+                }// end of if block
+            }// end of if block
+        }// end of for loop
+
+        BarGraphSeries<DataPoint> series = new BarGraphSeries<>( dataPoints );
+
+        hourlyGraph.getGridLabelRenderer().setVerticalLabelsColor( Color.WHITE );
+        hourlyGraph.getGridLabelRenderer().setHorizontalLabelsColor( Color.WHITE );
+        hourlyGraph.getGridLabelRenderer().setGridColor( Color.TRANSPARENT );
+        hourlyGraph.addSeries( series );
+
+        // set date label formatter
+        hourlyGraph.getGridLabelRenderer().setLabelFormatter(
+            new DefaultLabelFormatter()
+            {
+                @Override
+                public String formatLabel( double value, boolean isValueX )
+                {
+                    if ( isValueX )
+                    {
+
+                        // show normal x values
+                        return new SimpleDateFormat( "h a", Locale.ENGLISH ).format( value );
+                    }// end of if block
+                    else
+                    {
+                        // show currency for y values
+                        return super.formatLabel( value, false ) + WeatherLionApplication.DEGREES;
+                    }// end of else block
+                }
+            });
+
+        hourlyGraph.getGridLabelRenderer().setNumHorizontalLabels( 5 );
+        hourlyGraph.getViewport().setXAxisBoundsManual( true );
+
+        // as we use dates as labels, the human rounding to nice readable numbers
+        // is not necessary
+        hourlyGraph.getGridLabelRenderer().setHumanRounding( false );
+
+        // set manual y bounds to have nice steps
+        hourlyGraph.getViewport().setMinY( hourlyLowTemp - 10 );
+        hourlyGraph.getViewport().setMaxY( hourlyHighTemp + 10 );
+        hourlyGraph.getViewport().setYAxisBoundsManual( true );
+
+        series.setValueDependentColor( new ValueDependentColor<DataPoint>()
+        {
+            @Override
+            public int get( DataPoint data )
+            {
+                return Color.rgb((int) data.getX()*255/4,
+                        (int) Math.abs(data.getY()*255/6),
+                        100);
+            }
+        });
+
+        series.setSpacing( 50 );
+    }// end of method createBarChartGraph
+
     /**
      * Load a list of previous place that were searched for
      */
@@ -1059,7 +1399,7 @@ public class WeatherLionMain extends AppCompatActivity
                 });
         internetCafeView = internetCafe.getView();
         internetCafeView.setBackgroundColor(
-                UtilityMethod.addOpacity( WeatherLionApplication.systemColor.toArgb() ,
+                UtilityMethod.addOpacity( WeatherLionApplication.systemColor.toArgb(),
                         90 ) );
         TextView infoText = internetCafeView.findViewById(
                 android.support.design.R.id.snackbar_text );
@@ -2756,19 +3096,23 @@ public class WeatherLionMain extends AppCompatActivity
                     detailsScroll.getDrawingRect( scrollViewRect );
 
                     boolean partiallyVisible = !target.getLocalVisibleRect(
-                        scrollViewRect) || scrollViewRect.height() < target.getHeight();
+                        scrollViewRect ) || scrollViewRect.height() < target.getHeight();
 
                     // only scroll if we can't see the entire last row in the view
                     if( partiallyVisible )
                     {
-                        //detailsScroll.smoothScrollTo( 0, scrollTo );
-                        //detailsScroll.setSmoothScrollingEnabled( true );
-                        //target.getParent().requestChildFocus( target, target );
-                        int scrollTo = target.getBottom() - 64;
+                        int scrollTo = target.getBottom();
+                        int scrollY = detailsScroll.getScrollY();
+                        final Rect targetRect = new Rect( 0, 0, target.getWidth(),
+                                target.getHeight() );
+                        target.requestRectangleOnScreen( targetRect, true );
+                        int newScrollY = detailsScroll.getScrollY();
+                        detailsScroll.scrollTo( 0, scrollY );
+                        int buffer = 20;    // bottom buffer
 
                         scrollAnimator = ValueAnimator
-                            .ofInt( detailsScroll.getScrollY(), scrollTo )
-                                .setDuration(LION_ANIMATION_DURATION);
+                            .ofInt( detailsScroll.getScrollY(), newScrollY + buffer )
+                                .setDuration( LION_ANIMATION_DURATION );
 
                         scrollAnimator.addUpdateListener(
                             new ValueAnimator.AnimatorUpdateListener()
@@ -2788,6 +3132,7 @@ public class WeatherLionMain extends AppCompatActivity
                     }// end of if block
                 }// end of method run
             } );
+
     }// end of method scrollToView
 
     /**

@@ -37,5 +37,5 @@ public class SunriseAlarmBroadcastReceiver extends BroadcastReceiver
                     "Sunrise time...",
                     "SunriseAlarmBroadcastReceiver::onReceive" );
         }// end of if block
-    }// end of method
+    }// end of method onReceive
 }// end of class SunriseAlarmBroadcastReceiver

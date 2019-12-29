@@ -444,15 +444,33 @@
                                 <!-- Hourly forecast views will be added here at runtime -->
 
                             </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/txvHourlyGraphTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="6dip"
+                                android:gravity="center_horizontal"
+                                android:paddingTop="10dip"
+                                android:text="@string/graph"
+                                android:textColor="#FFFFFF"
+                                android:textSize="16sp" />
+
+                            <com.jjoe64.graphview.GraphView
+                                android:id="@+id/hourlyGraph"
+                                android:layout_width="match_parent"
+                                android:layout_height="100dip"
+                                android:layout_marginTop="6dip"
+                                android:layout_gravity="center_horizontal"/>
                         </LinearLayout>
 
-                        <RelativeLayout
+                        <LinearLayout
                             android:id="@+id/dailyForecastParent"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:baselineAligned="false"
                             android:orientation="vertical"
-                            android:visibility="visible" >
+                            android:visibility="visible">
 
                             <TextView
                                 android:id="@+id/txvDailyTitle"
@@ -469,7 +487,6 @@
                                 android:id="@+id/lstDayForecast"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_below="@+id/txvDailyTitle"
                                 android:clickable="true"
                                 android:divider="#CBCBCB"
                                 android:dividerHeight="0.5dip" />
@@ -477,7 +494,26 @@
                             <!--android:scrollbars="vertical"
                                 android:fadeScrollbars="true" -->
 
-                        </RelativeLayout>
+                            <TextView
+                                android:id="@+id/txvDailyGraphTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="6dip"
+                                android:gravity="center_horizontal"
+                                android:paddingTop="10dip"
+                                android:text="@string/graph"
+                                android:textColor="#FFFFFF"
+                                android:textSize="16sp" />
+
+                            <com.jjoe64.graphview.GraphView
+                                android:id="@+id/dailyGraph"
+                                android:layout_width="match_parent"
+                                android:layout_height="100dip"
+                                android:layout_marginTop="6dip"
+                                android:layout_marginBottom="20dip"
+                                android:layout_gravity="center_horizontal" />
+
+                        </LinearLayout>
                     </LinearLayout>
                 </ScrollView>
             </RelativeLayout>

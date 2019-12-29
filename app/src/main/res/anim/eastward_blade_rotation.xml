@@ -4,7 +4,7 @@
     <rotate
         n1:duration="1800"
         n1:fromDegrees="0.0"
-        n1:toDegrees="360.0"
+        n1:toDegrees="359.0"
         n1:pivotX="50.0%"
         n1:pivotY="50.0%"
         n1:repeatCount="infinite" />
