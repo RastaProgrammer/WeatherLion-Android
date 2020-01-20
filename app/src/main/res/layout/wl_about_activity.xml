@@ -4,15 +4,12 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingStart="10dip"
-    android:paddingEnd="10dip"
-    android:paddingBottom="10dip"
     android:background="#ff000000">
 
     <RelativeLayout
         android:id="@+id/rlAboutTitleBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dip"
         android:layout_alignParentTop="true"
         android:padding="6dip">
 
@@ -21,6 +18,7 @@
             android:layout_width="18dip"
             android:layout_height="18dip"
             android:layout_centerVertical="true"
+            android:layout_marginStart="10dip"
             android:layout_marginEnd="40dip"
             android:src="@drawable/wl_back"
             android:scaleType="fitXY"
@@ -41,92 +39,105 @@
 
     </RelativeLayout>
 
-    <ImageView
-        android:id="@+id/imvAppLogo"
-        android:layout_width="100dip"
-        android:layout_height="100dip"
-        android:layout_marginTop="30dip"
-        android:layout_centerHorizontal="true"
+    <RelativeLayout
+        android:id="@+id/rlBody"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_below="@+id/rlAboutTitleBar"
-        android:gravity="center_horizontal"
-        android:src="@drawable/wl_logo"
-        android:contentDescription="@string/app_logo" />
+        android:paddingStart="10dip"
+        android:paddingEnd="10dip"
+        android:paddingBottom="10dip">
 
-    <TextView
-        android:id="@+id/txvAppName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/app_title_beta"
-        android:layout_below="@id/imvAppLogo"
-        android:layout_marginTop="20dip"
-        android:gravity="center"
-        android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#000000"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        <ImageView
+            android:id="@+id/imvAppLogo"
+            android:layout_width="100dip"
+            android:layout_height="100dip"
+            android:layout_marginTop="30dip"
+            android:layout_centerHorizontal="true"
 
-    <TextView
-        android:id="@+id/txvAuthorName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/author_name"
-        android:layout_marginTop="4dip"
-        android:gravity="center"
-        android:layout_below="@+id/txvAppName"
-        android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#62A0C9"
-        android:textSize="16sp"
-        android:textStyle="normal" />
+            android:gravity="center_horizontal"
+            android:src="@drawable/wl_logo"
+            android:contentDescription="@string/app_logo" />
 
-    <TextView
-        android:id="@+id/txvCompanyName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/company_name"
-        android:layout_marginTop="4dip"
-        android:gravity="center"
-        android:layout_below="@+id/txvAuthorName"
-        android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#62A0C9"
-        android:textSize="16sp"
-        android:textStyle="normal" />
+        <TextView
+            android:id="@+id/txvAppName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_title_beta"
+            android:layout_below="@id/imvAppLogo"
+            android:layout_marginTop="20dip"
+            android:gravity="center"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#000000"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/txvAppVersion"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dip"
-        android:gravity="center"
-        android:text="@string/version_info"
-        android:layout_below="@+id/txvCompanyName"
-        android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#62A0C9"
-        android:textSize="16sp"
-        android:textStyle="normal" />
+        <TextView
+            android:id="@+id/txvAuthorName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/author_name"
+            android:layout_marginTop="4dip"
+            android:gravity="center"
+            android:layout_below="@+id/txvAppName"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#62A0C9"
+            android:textSize="16sp"
+            android:textStyle="normal" />
 
-    <TextView
-        android:id="@+id/txvRights"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/all_rights"
-        android:layout_marginTop="4dip"
-        android:gravity="center"
-        android:layout_below="@+id/txvAppVersion"
-        android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#62A0C9"
-        android:textSize="16sp"
-        android:textStyle="normal" />
+        <TextView
+            android:id="@+id/txvCompanyName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/company_name"
+            android:layout_marginTop="4dip"
+            android:gravity="center"
+            android:layout_below="@+id/txvAuthorName"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#62A0C9"
+            android:textSize="16sp"
+            android:textStyle="normal" />
 
-    <TextView
-        android:id="@+id/txvMessage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/about"
-        android:layout_marginTop="40dip"
-        android:layout_below="@+id/txvRights"
-        android:textAppearance="?android:attr/textAppearance"
-        android:textColor="#62A0C9"
-        android:textSize="16sp"
-        android:textStyle="normal" />
+        <TextView
+            android:id="@+id/txvAppVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dip"
+            android:gravity="center"
+            android:text="@string/version_info"
+            android:layout_below="@+id/txvCompanyName"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#62A0C9"
+            android:textSize="16sp"
+            android:textStyle="normal" />
+
+        <TextView
+            android:id="@+id/txvRights"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/all_rights"
+            android:layout_marginTop="4dip"
+            android:gravity="center"
+            android:layout_below="@+id/txvAppVersion"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#62A0C9"
+            android:textSize="16sp"
+            android:textStyle="normal" />
+
+        <TextView
+            android:id="@+id/txvMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/about"
+            android:layout_marginTop="40dip"
+            android:layout_below="@+id/txvRights"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#62A0C9"
+            android:textSize="16sp"
+            android:textStyle="normal" />
+
+    </RelativeLayout>
+
+
 
 </RelativeLayout>

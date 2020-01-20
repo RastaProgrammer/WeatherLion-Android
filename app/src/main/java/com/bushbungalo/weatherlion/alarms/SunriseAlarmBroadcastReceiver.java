@@ -3,7 +3,6 @@ package com.bushbungalo.weatherlion.alarms;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 
 import com.bushbungalo.weatherlion.WeatherLionApplication;
@@ -34,8 +33,7 @@ public class SunriseAlarmBroadcastReceiver extends BroadcastReceiver
             WidgetUpdateService.enqueueWork( context, methodIntent );
 
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Sunrise time...",
-                    "SunriseAlarmBroadcastReceiver::onReceive" );
+            "Sunrise time...","SunriseAlarmBroadcastReceiver::onReceive" );
         }// end of if block
     }// end of method onReceive
 }// end of class SunriseAlarmBroadcastReceiver

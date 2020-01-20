@@ -85,8 +85,6 @@ import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.ValueDependentColor;
-import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.DataPointInterface;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -192,10 +190,11 @@ public class WeatherLionMain extends AppCompatActivity
 
     private GraphView hourlyGraph;
     private GraphView dailyGraph;
+    private int highestHourlyHighTemp = 0;
     private int hourlyHighTemp = 0;
     private int hourlyLowTemp = 0;
     private int dailyHighestHighTemp = 0;
-    private int dailyLowestHighTemp = 0;
+    private int dailyLowestLowTemp = 0;
 
     /**
      * Method to be called after the required data accesses have be obtained.
@@ -740,10 +739,11 @@ public class WeatherLionMain extends AppCompatActivity
                 }// end of if block
             }// end of for loop
 
+            highestHourlyHighTemp = hourlyHighTemp;
             hourlyLowTemp = UtilityMethod.getTensNumber( hourlyLowTemp );
             hourlyHighTemp = UtilityMethod.getTensNumber( hourlyHighTemp );
 
-            createLineGraph( hourlyGraphDataPoints, 1 );
+            createLineGraph( hourlyGraphDataPoints, null, 1 );
             //createBarChartGraph( graphDataPoints );
         }// end of if block
         else
@@ -759,9 +759,14 @@ public class WeatherLionMain extends AppCompatActivity
         forecastRecyclerView.setAdapter( weeklyForecastAdapter );
 
         dailyGraph = findViewById( R.id.dailyGraph );
-        LinkedHashMap<Date, Integer> dailyGraphDataPoints = new LinkedHashMap<>();
-        dailyLowestHighTemp = fiveDayForecastList.get( 0 ).getHighTemperature();
+        LinkedHashMap<Date, Integer> dailyHighGraphDataPoints = new LinkedHashMap<>();
+        LinkedHashMap<Date, Integer> dailyLowGraphDataPoints = new LinkedHashMap<>();
+
         dailyHighestHighTemp = fiveDayForecastList.get( 0 ).getHighTemperature();
+        dailyLowestLowTemp = fiveDayForecastList.get( 0 ).getLowTemperature();
+
+        //int dailyLowestHighTemp = fiveDayForecastList.get( 0 ).getHighTemperature();
+        //int dailyHighestLowTemp = fiveDayForecastList.get( 0 ).getLowTemperature();
 
         for( LastWeatherData.WeatherData.DailyForecast.DayForecast forecast : fiveDayForecastList )
         {
@@ -785,33 +790,49 @@ public class WeatherLionMain extends AppCompatActivity
             }// end of catch block
 
             int dayHighTemp;
+            int dayLowTemp;
 
             if( WeatherLionApplication.storedPreferences.getUseMetric() )
             {
                 dayHighTemp = Math.round( UtilityMethod.fahrenheitToCelsius(
                         forecast.getHighTemperature() ) );
+
+                dayLowTemp = Math.round( UtilityMethod.fahrenheitToCelsius(
+                        forecast.getLowTemperature() ) );
             }// end of if block
             else
             {
                 dayHighTemp = forecast.getHighTemperature();
+                dayLowTemp = forecast.getLowTemperature();
             }// end of else block
 
-            if( dayHighTemp < dailyLowestHighTemp )
-            {
-                dailyLowestHighTemp = dayHighTemp;
-            }// end of if block
-            else if( dayHighTemp > dailyHighestHighTemp )
+//            if( dayHighTemp < dailyLowestHighTemp)
+//            {
+//                dailyLowestHighTemp = dayHighTemp;
+//            }// end of if block
+            if( dayHighTemp > dailyHighestHighTemp )
             {
                 dailyHighestHighTemp = dayHighTemp;
             }// end of if block
 
-            dailyGraphDataPoints.put( onTime, dayHighTemp );
+            if( dayLowTemp < dailyLowestLowTemp )
+            {
+                dailyLowestLowTemp = dayLowTemp;
+            }// end of if block
+//            else if( dayLowTemp > dailyHighestLowTemp)
+//            {
+//                dailyHighestLowTemp = dayLowTemp;
+//            }// end of if block
+
+            dailyHighGraphDataPoints.put( onTime, dayHighTemp );
+            dailyLowGraphDataPoints.put( onTime, dayLowTemp );
         }// end of for each loop
 
-        dailyLowestHighTemp = UtilityMethod.getTensNumber( dailyLowestHighTemp );
+        dailyLowestLowTemp = UtilityMethod.getTensNumber( dailyLowestLowTemp );
         dailyHighestHighTemp = UtilityMethod.getTensNumber( dailyHighestHighTemp );
 
-        createLineGraph( dailyGraphDataPoints, 2 );
+        createLineGraph( dailyHighGraphDataPoints, dailyLowGraphDataPoints,
+                2 );
 
         detailsScroll = findViewById( R.id.scrDetails );
 
@@ -1048,32 +1069,30 @@ public class WeatherLionMain extends AppCompatActivity
         UtilityMethod.loadCustomFont( rootView );
     }// end of method loadMainActivityWeather
 
-    private void createLineGraph( LinkedHashMap<Date, Integer> graphDataPoints, int graphNumber )
+    private void createLineGraph( LinkedHashMap<Date, Integer> firstDataPoints,
+                                  LinkedHashMap<Date, Integer> secondDataPoints,
+                                  int graphNumber )
     {
-        DataPoint[] dataPoints = new DataPoint[ graphDataPoints.size() ];
+        DataPoint[] fDataPoints = new DataPoint[ firstDataPoints.size() ];
         int i = 0;
 
-        for( Date dt : graphDataPoints.keySet() )
+        for( Date dt : firstDataPoints.keySet() )
         {
-            if( graphDataPoints.get( dt ) != null )
+            if( firstDataPoints.get( dt ) != null )
             {
-                Integer temp = graphDataPoints.get( dt );
+                Integer temp = firstDataPoints.get( dt );
 
                 if( temp != null )
                 {
-                    dataPoints[ i ] = new DataPoint( dt, temp );
+                    fDataPoints[ i ] = new DataPoint( dt, temp );
                     i++;
                 }// end of if block
             }// end of if block
         }// end of for loop
 
-        LineGraphSeries< DataPoint > lineSeries = new LineGraphSeries<>( dataPoints );
+        LineGraphSeries< DataPoint > lineSeries = new LineGraphSeries<>( fDataPoints );
 
-        lineSeries.setColor( UtilityMethod.addOpacity(
-            WeatherLionApplication.systemColor.toArgb(),
-                90 ) );
-        //lineSeries.setDrawDataPoints( true );
-        //lineSeries.setDataPointsRadius( 10 );
+        lineSeries.setColor( UtilityMethod.addOpacity( Color.CYAN,80 ) );
         lineSeries.setAnimated( true );
         lineSeries.setThickness( 4 );
 
@@ -1091,9 +1110,17 @@ public class WeatherLionMain extends AppCompatActivity
 
                 // set manual y bounds to have nice steps
                 hourlyGraph.getViewport().setMinY( hourlyLowTemp - 10 );
-                hourlyGraph.getViewport().setMaxY( hourlyHighTemp + 10 );
-                hourlyGraph.getViewport().setYAxisBoundsManual( true );
 
+                if( ( ( hourlyHighTemp + 10 ) - highestHourlyHighTemp ) < 5 )
+                {
+                    hourlyGraph.getViewport().setMaxY( hourlyHighTemp + 20 );
+                }// end of if block
+                else
+                {
+                    hourlyGraph.getViewport().setMaxY( hourlyHighTemp + 10 );
+                }// end of else block
+
+                hourlyGraph.getViewport().setYAxisBoundsManual( true );
                 hourlyGraph.getViewport().setScalable( true );
 
                 // as we use dates as labels, the human rounding to nice readable numbers
@@ -1120,28 +1147,29 @@ public class WeatherLionMain extends AppCompatActivity
                             }
                         });
 
-                PointsGraphSeries< DataPoint > hourlyTempsPointSeries = new PointsGraphSeries<>( dataPoints );
+                PointsGraphSeries< DataPoint > hourlyTempsPointSeries = new PointsGraphSeries<>( fDataPoints );
                 hourlyTempsPointSeries.setColor( WeatherLionApplication.systemColor.toArgb() );
                 hourlyGraph.addSeries( hourlyTempsPointSeries );
 
-                final Paint hourlyCustomPaint = new Paint();
-                hourlyCustomPaint.setColor( Color.WHITE );
-                hourlyCustomPaint.setStyle(Paint.Style.FILL);
+                final Paint hourlyCustomPaint = new Paint( Paint.ANTI_ALIAS_FLAG );
+                hourlyCustomPaint.setStyle( Paint.Style.FILL );
+                hourlyCustomPaint.setTypeface( WeatherLionApplication.currentTypeface );
                 hourlyCustomPaint.setTextSize( 30 );
 
-                hourlyTempsPointSeries.setCustomShape(new PointsGraphSeries.CustomShape()
+                hourlyTempsPointSeries.setCustomShape( new PointsGraphSeries.CustomShape()
                 {
                     @Override
                     public void draw( Canvas canvas, Paint paint, float x, float y, DataPointInterface dataPoint )
                     {
+                        hourlyCustomPaint.setColor( UtilityMethod.temperatureColor( (int) dataPoint.getY() ) );
                         hourlyCustomPaint.setStrokeWidth( 10 );
                         canvas.drawText(( (int) dataPoint.getY() ) +
-                            WeatherLionApplication.DEGREES, x - 20, y - 20,
+                            WeatherLionApplication.DEGREES, x - 22, y - 20,
                                 hourlyCustomPaint );
                     }
                 });
 
-                PointsGraphSeries< DataPoint > hourlyPointSeries = new PointsGraphSeries<>( dataPoints );
+                PointsGraphSeries< DataPoint > hourlyPointSeries = new PointsGraphSeries<>( fDataPoints );
                 hourlyPointSeries.setSize( 8 );
                 hourlyPointSeries.setColor( Color.WHITE );
                 hourlyGraph.addSeries( hourlyPointSeries );
@@ -1149,18 +1177,47 @@ public class WeatherLionMain extends AppCompatActivity
                 break;
 
             case 2:
+
+                DataPoint[] sDataPoints = new DataPoint[ secondDataPoints.size() ];
+                i = 0;
+
+                for( Date dt : secondDataPoints.keySet() )
+                {
+                    if( secondDataPoints.get( dt ) != null )
+                    {
+                        Integer temp = secondDataPoints.get( dt );
+
+                        if( temp != null )
+                        {
+                            sDataPoints[ i ] = new DataPoint( dt, temp );
+                            i++;
+                        }// end of if block
+                    }// end of if block
+                }// end of for loop
+
+                LineGraphSeries< DataPoint > secondLineSeries = new LineGraphSeries<>( sDataPoints );
+
+                secondLineSeries.setColor( UtilityMethod.addOpacity(
+                        Color.YELLOW,
+                        90 ) );
+                secondLineSeries.setAnimated( true );
+                secondLineSeries.setThickness( 4 );
+
                 dailyGraph.getGridLabelRenderer().setVerticalLabelsColor( Color.WHITE );
                 dailyGraph.getGridLabelRenderer().setHorizontalLabelsColor( Color.WHITE );
                 dailyGraph.getGridLabelRenderer().setGridColor( Color.parseColor( "#66FFFFFF" ) );
                 dailyGraph.addSeries( lineSeries );
+                dailyGraph.addSeries( secondLineSeries );
 
                 dailyGraph.getGridLabelRenderer().setNumHorizontalLabels( 5 );
-                dailyGraph.getGridLabelRenderer().setNumVerticalLabels( 3 );
+                dailyGraph.getGridLabelRenderer().setNumVerticalLabels( 6 );
+                dailyGraph.getGridLabelRenderer().setVerticalLabelsVisible( true );
+                dailyGraph.getGridLabelRenderer().setPadding( 20 );
                 dailyGraph.getViewport().setXAxisBoundsManual( true );
 
                 // set manual y bounds to have nice steps
-                dailyGraph.getViewport().setMinY( dailyLowestHighTemp - 10 );
-                dailyGraph.getViewport().setMaxY( dailyHighestHighTemp + 10 );
+                dailyGraph.getViewport().setMinY( dailyLowestLowTemp - 10 );
+                dailyGraph.getViewport().setMaxY( dailyHighestHighTemp + 20 );
                 dailyGraph.getViewport().setYAxisBoundsManual( true );
 
                 dailyGraph.getViewport().setScalable( true );
@@ -1189,110 +1246,66 @@ public class WeatherLionMain extends AppCompatActivity
                             }
                         });
 
-                PointsGraphSeries< DataPoint > dailyTempsPointSeries = new PointsGraphSeries<>( dataPoints );
-                dailyTempsPointSeries.setColor( WeatherLionApplication.systemColor.toArgb() );
-                dailyGraph.addSeries( dailyTempsPointSeries );
+                PointsGraphSeries< DataPoint > dailyHighTempsPointSeries = new PointsGraphSeries<>( fDataPoints );
+                dailyHighTempsPointSeries.setColor( WeatherLionApplication.systemColor.toArgb() );
+                dailyGraph.addSeries( dailyHighTempsPointSeries );
 
-                final Paint dailyCustomPaint = new Paint();
-                dailyCustomPaint.setColor( Color.WHITE );
-                dailyCustomPaint.setStyle(Paint.Style.FILL);
-                dailyCustomPaint.setTextSize( 30 );
+                final Paint dailyHighCustomPaint = new Paint();
+                dailyHighCustomPaint.setStyle( Paint.Style.FILL );
+                dailyHighCustomPaint.setTypeface( WeatherLionApplication.currentTypeface );
+                dailyHighCustomPaint.setTextSize( 30 );
 
-                dailyTempsPointSeries.setCustomShape(new PointsGraphSeries.CustomShape()
+
+
+                dailyHighTempsPointSeries.setCustomShape( new PointsGraphSeries.CustomShape()
                 {
                     @Override
                     public void draw( Canvas canvas, Paint paint, float x, float y, DataPointInterface dataPoint )
                     {
-                        dailyCustomPaint.setStrokeWidth( 10 );
+                        dailyHighCustomPaint.setColor( UtilityMethod.temperatureColor( (int) dataPoint.getY() ) );
+
+                        dailyHighCustomPaint.setStrokeWidth( 10 );
                         canvas.drawText(( (int) dataPoint.getY() ) +
-                                        WeatherLionApplication.DEGREES, x - 20, y - 20,
-                                dailyCustomPaint );
+                                        WeatherLionApplication.DEGREES, x - 22, y - 20,
+                                dailyHighCustomPaint );
                     }
                 });
 
-                PointsGraphSeries< DataPoint > dailyPointSeries = new PointsGraphSeries<>( dataPoints );
-                dailyPointSeries.setSize( 8 );
-                dailyPointSeries.setColor( Color.WHITE );
-                dailyGraph.addSeries( dailyPointSeries );
+                PointsGraphSeries< DataPoint > dailyHighPointSeries = new PointsGraphSeries<>( fDataPoints );
+                dailyHighPointSeries.setSize( 8 );
+                dailyHighPointSeries.setColor( Color.WHITE );
+                dailyGraph.addSeries( dailyHighPointSeries );
+
+                // low temps
+                PointsGraphSeries< DataPoint > dailyLowTempsPointSeries = new PointsGraphSeries<>( sDataPoints );
+                dailyLowTempsPointSeries.setColor( WeatherLionApplication.systemColor.toArgb() );
+                dailyGraph.addSeries( dailyLowTempsPointSeries );
+
+                final Paint dailyLowCustomPaint = new Paint();
+                dailyLowCustomPaint.setStyle( Paint.Style.FILL );
+                dailyLowCustomPaint.setTextSize( 30 );
+
+                dailyLowTempsPointSeries.setCustomShape( new PointsGraphSeries.CustomShape()
+                {
+                    @Override
+                    public void draw( Canvas canvas, Paint paint, float x, float y, DataPointInterface dataPoint )
+                    {
+                        dailyLowCustomPaint.setColor( UtilityMethod.temperatureColor( (int) dataPoint.getY() ) );
+                        dailyLowCustomPaint.setStrokeWidth( 10 );
+                        canvas.drawText(( (int) dataPoint.getY() ) +
+                                        WeatherLionApplication.DEGREES, x - 22, y + 40,
+                                dailyLowCustomPaint );
+                    }
+                });
+
+                PointsGraphSeries< DataPoint > dailyLowPointSeries = new PointsGraphSeries<>( sDataPoints );
+                dailyLowPointSeries.setSize( 8 );
+                dailyLowPointSeries.setColor( Color.WHITE );
+                dailyGraph.addSeries( dailyLowPointSeries );
 
                 break;
         }// end of switch block
     }// end of method createLineGraph
-
-    private void createBarChartGraph( LinkedHashMap<Date, Integer> graphDataPoints )
-    {
-        DataPoint[] dataPoints = new DataPoint[ graphDataPoints.size() ];
-
-        int i = 0;
-
-        for( Date dt : graphDataPoints.keySet() )
-        {
-
-            if( graphDataPoints.get( dt ) != null )
-            {
-                Integer temp = graphDataPoints.get( dt );
-
-                if( temp != null )
-                {
-                    dataPoints[ i ] = new DataPoint( dt, temp );
-                    i++;
-                }// end of if block
-            }// end of if block
-        }// end of for loop
-
-        BarGraphSeries<DataPoint> series = new BarGraphSeries<>( dataPoints );
-
-        hourlyGraph.getGridLabelRenderer().setVerticalLabelsColor( Color.WHITE );
-        hourlyGraph.getGridLabelRenderer().setHorizontalLabelsColor( Color.WHITE );
-        hourlyGraph.getGridLabelRenderer().setGridColor( Color.TRANSPARENT );
-        hourlyGraph.addSeries( series );
-
-        // set date label formatter
-        hourlyGraph.getGridLabelRenderer().setLabelFormatter(
-            new DefaultLabelFormatter()
-            {
-                @Override
-                public String formatLabel( double value, boolean isValueX )
-                {
-                    if ( isValueX )
-                    {
-
-                        // show normal x values
-                        return new SimpleDateFormat( "h a", Locale.ENGLISH ).format( value );
-                    }// end of if block
-                    else
-                    {
-                        // show currency for y values
-                        return super.formatLabel( value, false ) + WeatherLionApplication.DEGREES;
-                    }// end of else block
-                }
-            });
-
-        hourlyGraph.getGridLabelRenderer().setNumHorizontalLabels( 5 );
-        hourlyGraph.getViewport().setXAxisBoundsManual( true );
-
-        // as we use dates as labels, the human rounding to nice readable numbers
-        // is not necessary
-        hourlyGraph.getGridLabelRenderer().setHumanRounding( false );
-
-        // set manual y bounds to have nice steps
-        hourlyGraph.getViewport().setMinY( hourlyLowTemp - 10 );
-        hourlyGraph.getViewport().setMaxY( hourlyHighTemp + 10 );
-        hourlyGraph.getViewport().setYAxisBoundsManual( true );
-
-        series.setValueDependentColor( new ValueDependentColor<DataPoint>()
-        {
-            @Override
-            public int get( DataPoint data )
-            {
-                return Color.rgb((int) data.getX()*255/4,
-                        (int) Math.abs(data.getY()*255/6),
-                        100);
-            }
-        });
-
-        series.setSpacing( 50 );
-    }// end of method createBarChartGraph
 
     /**
      * Load a list of previous place that were searched for
@@ -1496,34 +1509,31 @@ public class WeatherLionMain extends AppCompatActivity
                         "constructDataAccess", null, null );
             }// end of if block
 
-            if( WeatherLionApplication.lastDataReceived != null )
+            if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation() != null )
             {
-                if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation() != null )
+                // if data was stored then the original value the location is known
+                WeatherLionApplication.currentWxLocation =
+                        WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
+
+                // if there is no location stored in the local preferences, go to the settings activity
+                if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
+                        Preference.DEFAULT_WEATHER_LOCATION ) )
                 {
-                    // if data was stored then the original value the location is known
-                    WeatherLionApplication.currentWxLocation =
-                            WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
-
-                    // if there is no location stored in the local preferences, go to the settings activity
-                    if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
-                            Preference.DEFAULT_WEATHER_LOCATION ) )
-                    {
-                        showPreferenceActivity( false );
-                        return;
-                    }// end of if block
-                    else
-                    {
-                        initializeMainWindow();
-                    }// end of if block
-
-                    if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
-                    {
-                        noGpsAlert();
-                    }// end of if block
-
-                    initializeMainWindow();
-                    loadMainActivityWeather();
+                    showPreferenceActivity( false );
+                    return;
                 }// end of if block
+                else
+                {
+                    initializeMainWindow();
+                }// end of if block
+
+                if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
+                {
+                    noGpsAlert();
+                }// end of if block
+
+                initializeMainWindow();
+                loadMainActivityWeather();
             }// end of if block
             else if( WeatherLionApplication.storedPreferences != null )
             {

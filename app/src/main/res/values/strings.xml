@@ -74,6 +74,7 @@
     <string name="activity_wind_reading">E 7 mph</string>
     <string name="activity_wind_speed">7 mph</string>
     <string name="default_humidity">0%</string>
+    <string name="default_duration">10 hours and 20 mins</string>
     <string name="city_finder_title">City Locator</string>
     <string name="icon_set_dialog_title">Icon set</string>
     <string name="city_finder_hint">Enter a location</string>
@@ -291,6 +292,7 @@
     <string name="wind">Wind:</string>
     <string name="notif_wind">Wind</string>
     <string name="activity_humidity_title">HUMIDITY</string>
+    <string name="activity_duration_title">DURATION</string>
     <string name="humidity">Humidity:</string>
     <string name="notif_humidity">Humidity</string>
     <string name="widget_background_image">Widget Background Image</string>

@@ -111,6 +111,8 @@ public class ConfigureWidget extends AppCompatActivity
         setResult( RESULT_CANCELED );
         setContentView( R.layout.wl_configuration_activity );
 
+        UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.rlConfiguration ) );
+
         mContext = ConfigureWidget.this;
         widgetManager = AppWidgetManager.getInstance( mContext );
         spf = PreferenceManager.getDefaultSharedPreferences(ConfigureWidget.this );

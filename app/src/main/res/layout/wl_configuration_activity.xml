@@ -7,7 +7,6 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:gravity="center_horizontal"
-    android:padding="10dip"
     android:background="#ff000000">
 
     <ImageView
@@ -20,9 +19,32 @@
         android:src="@drawable/wl_spanner" />
 
     <RelativeLayout
+        android:id="@+id/rlConfigureTitleBar"
+        android:layout_width="match_parent"
+        android:layout_height="50dip"
+        android:layout_alignParentTop="true"
+        android:padding="6dip">
+
+        <TextView
+            android:id="@+id/txvConfigTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_settings"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dip"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="normal" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
         android:id="@+id/rlMainBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/rlConfigureTitleBar"
+        android:padding="10dip"
         android:background="@android:drawable/screen_background_dark_transparent">
 
         <RelativeLayout
@@ -30,6 +52,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dip"
+            android:layout_marginTop="10dip"
             android:background="@drawable/wl_spinner_bg"
             android:padding="10dip" >
 

@@ -282,10 +282,8 @@ public class WidgetUpdateService extends JobIntentService
 
             if( callMethod.equals( ASTRONOMY_CHANGE ) )
             {
-                callMethodByName( WidgetUpdateService.this, callMethod,
-                    new Class[]{String.class, AppWidgetManager.class},
-                        new Object[]{WeatherLionApplication.timeOfDayToUse,
-                                appWidgetManager} );
+                astronomyChange( WeatherLionApplication.timeOfDayToUse,
+                        appWidgetManager );
             }// end of if block
             else
             {
@@ -747,6 +745,12 @@ public class WidgetUpdateService extends JobIntentService
     {
         String currentConditionIcon = null;
         broadcastAstronomyChange( timeOfDay ); // inform the rest of the application
+        WeatherLionApplication.storedData =
+                WeatherLionApplication.lastDataReceived.getWeatherData();
+
+        currentCondition.setLength( 0 );
+        currentCondition.append(
+                WeatherLionApplication.storedData.getCurrent().getCondition() );
 
         switch( timeOfDay )
         {
@@ -763,42 +767,55 @@ public class WidgetUpdateService extends JobIntentService
                 {
                     currentConditionIcon = UtilityMethod.weatherImages.get(
                             currentCondition.toString().toLowerCase() );
+
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            String.format( "Switching to sunrise icon %s!", currentConditionIcon ),
+                            TAG + "::astronomyChange" );
+                }// end of if block
+                else if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                {
+                    // Yahoo has a habit of having sunny nights
+                    currentCondition.setLength( 0 );
+                    currentCondition.append( "Clear" );
+                    largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
+                            currentCondition.toString() );
+
+                    currentConditionIcon = UtilityMethod.weatherImages.get(
+                            currentCondition.toString().toLowerCase() );
+
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            String.format( "Switching to sunrise icon %s!", currentConditionIcon ),
+                            TAG + "::astronomyChange" );
+                }// end of else if block
+
+                if ( UtilityMethod.weatherImages.containsKey(
+                        WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" ) )
+                {
+                    currentConditionIcon =
+                            UtilityMethod.weatherImages.get(
+                                    currentCondition.toString().toLowerCase() + " (night)" );
+
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                            "Switching to sunset icon to " + currentConditionIcon,
+                            TAG + "::astronomyChange" );
                 }// end of if block
                 else
                 {
-                    // Yahoo has a habit of having sunny nights
-                    if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
-                    {
-                        currentCondition.setLength( 0 );
-                        currentCondition.append( "Clear" );
-                        largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
-                                currentCondition.toString() );
-                    }// end of if block
-
-                    if ( UtilityMethod.weatherImages.containsKey(
-                            WidgetUpdateService.currentCondition.toString().toLowerCase() + " (night)" ) )
-                    {
-                        currentConditionIcon =
-                            UtilityMethod.weatherImages.get(
-                                currentCondition.toString().toLowerCase() + " (night)" );
-
-                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                    "Switching to sunset icon to " + currentConditionIcon,
-                        TAG + "::astronomyChange" );
-                    }// end of if block
-                    else
-                    {
-                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                             String.format( "No night icon exists for %s!",
-                                currentCondition.toString() ),
-                                TAG + "::astronomyChange" );
+                                    currentCondition.toString() ),
+                            TAG + "::astronomyChange" );
 
-                        // there will most likely be a day icon but not a night one so exit here
-                        return;
-                    }// end of else block
+                    // there will most likely be a day icon but not a night one so exit here
+                    return;
                 }// end of else block
 
                 break;
+            default:
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+            "Could'nt identify the time of day!",
+                        TAG + "::astronomyChange" );
+
         }// end of switch block
 
         // Load applicable icon based on the time of day
@@ -1578,20 +1595,21 @@ public class WidgetUpdateService extends JobIntentService
 
     private void scheduleAstronomyUpdate()
     {
-        Intent sunsetIntent = new Intent( getApplicationContext(), SunsetAlarmBroadcastReceiver.class );
-        sunsetIntent.setAction( SunsetAlarmBroadcastReceiver.ACTION_ALARM );
-
-        PendingIntent sunsetAlarmIntent = PendingIntent.getBroadcast( getApplicationContext(),
-                0, sunsetIntent, 0 );
 
         Intent sunriseIntent = new Intent( getApplicationContext(), SunriseAlarmBroadcastReceiver.class );
         sunriseIntent.setAction( SunriseAlarmBroadcastReceiver.ACTION_ALARM );
 
         PendingIntent sunriseAlarmIntent = PendingIntent.getBroadcast( getApplicationContext(),
-                0, sunsetIntent, 0 );
+                0, sunriseIntent, 0 );
 
         AlarmManager sunriseAlarmManager = (AlarmManager) getApplicationContext().
                 getSystemService( Context.ALARM_SERVICE );
+
+        Intent sunsetIntent = new Intent( getApplicationContext(), SunsetAlarmBroadcastReceiver.class );
+        sunsetIntent.setAction( SunsetAlarmBroadcastReceiver.ACTION_ALARM );
+
+        PendingIntent sunsetAlarmIntent = PendingIntent.getBroadcast( getApplicationContext(),
+                0, sunsetIntent, 0 );
 
         AlarmManager sunsetAlarmManager = (AlarmManager) getApplicationContext().
                 getSystemService( Context.ALARM_SERVICE );
@@ -1624,7 +1642,8 @@ public class WidgetUpdateService extends JobIntentService
         catch ( ParseException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                    TAG + "::scheduleAstronomyUpdate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+        TAG + "::scheduleAstronomyUpdate [line: " +
+                    e.getStackTrace()[ 1 ].getLineNumber() + "]" );
         }// end of catch block
 
         if ( ( rn.before( schedSunriseTime ) || rn.equals( schedSunriseTime ) ) )

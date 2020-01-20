@@ -46,8 +46,8 @@ public class AboutActivity extends AppCompatActivity
         Objects.requireNonNull( getSupportActionBar() ).hide(); // hide the title bar
         this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
 
-        this.getWindow().setFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN ); //enable full screen
+//        this.getWindow().setFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN,
+//                WindowManager.LayoutParams.FLAG_FULLSCREEN ); //enable full screen
 
         setContentView( R.layout.wl_about_activity );
         UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.rlAbout ) );
