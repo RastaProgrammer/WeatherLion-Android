@@ -14,6 +14,7 @@
         <item name="colorPrimary">@color/aqua</item>
         <item name="colorPrimaryDark">#0288D1</item>
         <item name="colorAccent">#448AFF</item>
+        <item name="android:windowDisablePreview">true</item>
     </style>
 
     <!-- Weather application theme. -->
@@ -22,6 +23,7 @@
         <item name="colorPrimary">@color/frosty</item>
         <item name="colorPrimaryDark">#E46B1B</item>
         <item name="colorAccent">#FD9425</item>
+        <item name="android:windowDisablePreview">true</item>
     </style>
 
     <style name="RabalacTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -29,6 +31,7 @@
         <item name="colorPrimary">@color/rabalac</item>
         <item name="colorPrimaryDark">#36503D</item>
         <item name="colorAccent">#72AF75</item>
+        <item name="android:windowDisablePreview">true</item>
     </style>
 
     <style name="LionTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -36,6 +39,7 @@
         <item name="colorPrimary">@color/lion</item>
         <item name="colorPrimaryDark">#292929</item>
         <item name="colorAccent">#515558</item>
+        <item name="android:windowDisablePreview">true</item>
     </style>
 
     <style name="WeatherLionMenuTheme" parent="Widget.AppCompat.PopupMenu">

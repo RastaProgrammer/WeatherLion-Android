@@ -288,16 +288,14 @@ public class WeatherLionApplication extends Application
 
     /**
      * Check to see if any previous weather data was stored locally and use it if so.
+     *
+     * @return True/False depending on the result of the check
      */
     private boolean checkForStoredWeatherData()
     {
         if( new File( this.getFileStreamPath( WEATHER_DATA_XML ).toString() ).exists() )
         {
-            if( !UtilityMethod.isFileEmpty( this, WEATHER_DATA_XML ) )
-            {
-                return loadWeatherData();
-            }// end of if block
-            else
+            if( UtilityMethod.isFileEmpty( this, WEATHER_DATA_XML ) )
             {
                 // check for the backup file
                 // make a copy of the existing weather data
@@ -307,8 +305,20 @@ public class WeatherLionApplication extends Application
                 File backupWeatherDataFile = new File(
                         this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
 
-                UtilityMethod.copyFile( backupWeatherDataFile, currentWeatherDataFile );
+                if( backupWeatherDataFile.exists() )
+                {
+                    UtilityMethod.copyFile( backupWeatherDataFile, currentWeatherDataFile );
 
+                    return loadWeatherData();
+                }// end of if block
+                else
+                {
+                    return false;
+                }// end of else block
+
+            }// end of if block
+            else
+            {
                 return loadWeatherData();
             }// end of else block
         }// end of if block
@@ -902,8 +912,6 @@ public class WeatherLionApplication extends Application
                     TAG + "::init" );
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,"Launching Weather Widget...",
                     TAG + "::init" );
-
-
         }// end of else block
     }// end of method init
 
@@ -1382,24 +1390,103 @@ public class WeatherLionApplication extends Application
             // check if any weather data exists locally
             if( checkForStoredWeatherData() )
             {
+                // if this location has already been used there is no need to query the
+                // web service as the location data has been stored locally
+                CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( currentWxLocation );
+                String json;
+                float lat;
+                float lng;
+
+                if( CityData.currentCityData == null )
+                {
+                    // contact GeoNames for data about this city
+                    json =
+                            UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                                    currentWxLocation );
+                    CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
+
+                    lat = CityData.currentCityData.getLatitude();
+                    lng = CityData.currentCityData.getLongitude();
+
+                    if( currentLocationTimeZone == null)
+                    {
+                        currentLocationTimeZone =
+                                UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                    }// end of if block
+
+                    CityData.currentCityData.setTimeZone(
+                            currentLocationTimeZone.getTimezoneId() );
+                }// end of if block
+                else
+                {
+                    String today = new SimpleDateFormat( "MM/dd/yyyy",
+                            Locale.ENGLISH ).format( new Date() );
+
+                    String sst = String.format( "%s %s", today, currentSunsetTime.toString() );
+                    String srt = String.format( "%s %s", today, currentSunriseTime.toString() );
+
+                    Date schedSunriseTime = null;
+                    Date schedSunsetTime = null;
+
+                    SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
+                            Locale.ENGLISH );
+
+                    try
+                    {
+                        schedSunsetTime = sdf.parse( sst );
+                        schedSunriseTime = sdf.parse( srt );
+                    } // end of try block
+                    catch ( ParseException e )
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                                TAG + "::onCreate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                    }// end of catch block
+
+                    localDateTime = new Date().toInstant().atZone(
+                            ZoneId.of( CityData.currentCityData.getTimeZone()
+                            ) ).toLocalDateTime();
+
+                    // Load the time zone info for the current city
+                    currentLocationTimeZone = new TimeZoneInfo(
+                            CityData.currentCityData.getCountryCode(),
+                            CityData.currentCityData.getCountryName(),
+                            CityData.currentCityData.getLatitude(),
+                            CityData.currentCityData.getLongitude(),
+                            CityData.currentCityData.getTimeZone(),
+                            UtilityMethod.getDateTime( localDateTime ),
+                            schedSunriseTime,
+                            schedSunsetTime );
+                }// end of else block
+
                 // run the weather service and  call the method that loads the previous weather data
                 actionWeatherService( UNIT_NOT_CHANGED,
                         WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
-            }// end of if block
 
-            if( UtilityMethod.updateRequired( this ) )
+                if( UtilityMethod.updateRequired( this ) )
+                {
+                    extras = new Bundle();
+                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                    extras.putString( LAUNCH_METHOD_EXTRA, null );
+                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                            UNIT_NOT_CHANGED );
+
+                    UtilityMethod.refreshRequestedBySystem = true;
+                    Intent updateIntent = new Intent( context, WidgetUpdateService.class );
+                    updateIntent.putExtras( extras );
+                    WidgetUpdateService.enqueueWork( context, updateIntent );
+                }// end of if block
+            }// end of if block
+            else
             {
-                extras = new Bundle();
-                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                extras.putString( LAUNCH_METHOD_EXTRA, null );
-                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                        UNIT_NOT_CHANGED );
-
-                UtilityMethod.refreshRequestedBySystem = true;
-                Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-                updateIntent.putExtras( extras );
-                WidgetUpdateService.enqueueWork( context, updateIntent );
-            }// end of if block
+                // generate some stored data by calling the provider for the
+                // data using the user's stored settings
+                if( storedPreferences.getLocation() != null )
+                {
+                    restoringWeatherData = true;
+                    invoker = TAG + "::onCreate()";
+                    refreshWeather( invoker );
+                }// end of if block
+            }// end od else block
         }// end of if block
 
         // check if this the first time that the program is being run i.e new installation
@@ -1487,6 +1574,7 @@ public class WeatherLionApplication extends Application
                 // data using the user's stored settings
                 if( storedPreferences.getLocation() != null )
                 {
+                    restoringWeatherData = true;
                     invoker = TAG + "::onCreate()";
                     refreshWeather( invoker );
                 }// end of if block

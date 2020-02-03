@@ -431,8 +431,7 @@ public class CityFinderPreference extends DialogPreference
         popupWindow = new ListPopupWindow( getContext() );
 
         popupWindow.setAnchorView( anchor );
-        popupWindow.setAdapter( new ArrayAdapter<>( getContext(),
-                R.layout.wl_popup_list_item_dark_bg, listItems ) );
+        popupWindow.setAdapter( new CustomPopupMenuAdapter( getContext(), listItems ) );
         popupWindow.setWidth( anchor.getWidth() );
         popupWindow.setVerticalOffset( 6 );
 

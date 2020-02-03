@@ -96,6 +96,7 @@ public class WeeklyForecastAdapter extends RecyclerView.Adapter< WeeklyForecastA
         LayoutInflater inflater = LayoutInflater.from( parent.getContext() );
         View v = inflater.inflate( R.layout.wl_forecast_list_expanded, parent, false );
         UtilityMethod.loadCustomFont( (RelativeLayout) v.findViewById( R.id.dayReadings ) );
+        UtilityMethod.loadCustomFont( (TableLayout) v.findViewById( R.id.tblExtendedDetails ) );
 
         return new ViewHolder( v );
     }

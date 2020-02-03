@@ -6,12 +6,14 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Objects;
 
 public class AboutActivity extends AppCompatActivity
@@ -53,6 +55,12 @@ public class AboutActivity extends AppCompatActivity
         UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.rlAbout ) );
 
         ImageView imvBack = findViewById( R.id.imvBack );
+        TextView company = findViewById( R.id.txvCompanyName );
+
+        // obtain the current year
+        Calendar cal = Calendar.getInstance();
+        company.setText( String.format( Locale.ENGLISH, "%s%d",
+                "BushBungalo Productions™ 2005–", cal.get( Calendar.YEAR ) ) );
 
         imvBack.setOnClickListener (new View.OnClickListener()
         {

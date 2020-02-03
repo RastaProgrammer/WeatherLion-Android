@@ -14,8 +14,14 @@
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_about_app"
+        android:id="@+id/action_reload_widget"
         android:orderInCategory="102"
+        android:title="@string/reload_widget"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_about_app"
+        android:orderInCategory="103"
         android:title="@string/about_menu_item"
         app:showAsAction="never" />
 </menu>

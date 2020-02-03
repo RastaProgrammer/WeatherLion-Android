@@ -62,6 +62,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListPopupWindow;
+import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -70,6 +71,7 @@ import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bushbungalo.weatherlion.custom.CustomPopupMenuAdapter;
 import com.bushbungalo.weatherlion.custom.CustomPreferenceGrid;
 import com.bushbungalo.weatherlion.custom.WeeklyForecastAdapter;
 import com.bushbungalo.weatherlion.database.DBHelper;
@@ -697,7 +699,7 @@ public class WeatherLionMain extends AppCompatActivity
                         {
                             case MORNING:
 
-                                if( forecastTime.isEqual( LocalDateTime.now().plusDays( 1 ) ) )
+                                if( forecastTime.getDayOfWeek() == LocalDateTime.now().plusDays( 1 ).getDayOfWeek() )
                                 {
                                     tod = "tomorrow morning";
                                 }// end of if block
@@ -1058,6 +1060,11 @@ public class WeatherLionMain extends AppCompatActivity
         {
             stopLoading();
             loadingDialog.dismiss();
+
+            if( WeatherLionApplication.restoringWeatherData )
+            {
+                WeatherLionApplication.restoringWeatherData = false;
+            }// end of if block
         }// end of if block
 
         if( !UtilityMethod.hasInternetConnection( this ) )
@@ -1426,6 +1433,7 @@ public class WeatherLionMain extends AppCompatActivity
     {
         super.onCreate( savedInstanceState );
         mContext = this;
+
         requestWindowFeature( Window.FEATURE_NO_TITLE ); //will hide the title
         Objects.requireNonNull( getSupportActionBar() ).hide(); // hide the title bar
         this.getWindow().setStatusBarColor( WeatherLionApplication.systemColor.toArgb() );
@@ -1509,35 +1517,40 @@ public class WeatherLionMain extends AppCompatActivity
                         "constructDataAccess", null, null );
             }// end of if block
 
-            if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation() != null )
+            if( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
             {
-                // if data was stored then the original value the location is known
-                WeatherLionApplication.currentWxLocation =
-                        WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
-
-                // if there is no location stored in the local preferences, go to the settings activity
-                if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
-                        Preference.DEFAULT_WEATHER_LOCATION ) )
+                if( !UtilityMethod.isFileEmpty( this, WeatherLionApplication.WEATHER_DATA_XML ) )
                 {
-                    showPreferenceActivity( false );
-                    return;
-                }// end of if block
-                else
-                {
-                    initializeMainWindow();
-                }// end of if block
+                    if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity() != null )
+                    {
+                        // if data was stored then the original value the location is known
+                        WeatherLionApplication.currentWxLocation =
+                                WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
 
-                if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
-                {
-                    noGpsAlert();
-                }// end of if block
+                        // if there is no location stored in the local preferences, go to the settings activity
+                        if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
+                                Preference.DEFAULT_WEATHER_LOCATION ) )
+                        {
+                            showPreferenceActivity( false );
+                            return;
+                        }// end of if block
+                        else
+                        {
+                            initializeMainWindow();
+                        }// end of if block
 
-                initializeMainWindow();
-                loadMainActivityWeather();
+                        if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
+                        {
+                            noGpsAlert();
+                        }// end of if block
+
+                        initializeMainWindow();
+                        loadMainActivityWeather();
+                    }// end of if block
+                }// end of if block
             }// end of if block
             else if( WeatherLionApplication.storedPreferences != null )
             {
-
                 if( !WeatherLionApplication.storedPreferences.getLocation().equals(
                         Preference.DEFAULT_WEATHER_LOCATION ) )
                 {
@@ -1555,7 +1568,7 @@ public class WeatherLionMain extends AppCompatActivity
                         WeatherLionApplication.callMethodByName( null,"refreshWeather",
                                 new Class[]{ String.class }, new Object[]{ invoker } );
 
-                        showLoadingDialog( "Refreshing Data..." );
+                        showLoadingDialog( "Restoring Weather Data..." );
                         initializeWelcomeWindow();
                         // Have a loading screen displayed in the mean time
                     }// end of if block
@@ -1963,6 +1976,127 @@ public class WeatherLionMain extends AppCompatActivity
     }// end of method responseDialog
 
     /**
+     * Displays a custom popup menu
+     *
+     * @param anchor The view to which the popup menu should be anchored
+     */
+    public void showCustomMainMenuPopup( View anchor )
+    {
+        final String[] menuItems = { "Settings", "Add/Delete Keys", "Sync Widget", "About" };
+        CustomPopupMenuAdapter arrayAdapter = new CustomPopupMenuAdapter( this, menuItems );
+
+        popupWindow = new ListPopupWindow( this );
+        popupWindow.setAnchorView( anchor );
+        //popupWindow.showAtLocation(anchor, Gravity.TOP|Gravity.LEFT, location.left, location.bottom);
+        popupWindow.setAdapter( arrayAdapter );
+        popupWindow.setHorizontalOffset( -390 );
+        popupWindow.setVerticalOffset( 10 );
+        popupWindow.setContentWidth( measureContentWidth( arrayAdapter, anchor ) );
+        popupWindow.setModal( true );
+
+        String wxLocation = WeatherLionApplication.spf.getString(
+                WeatherLionApplication.CURRENT_LOCATION_PREFERENCE, Preference.DEFAULT_WEATHER_LOCATION );
+        final boolean locationSet = wxLocation != null &&
+                !wxLocation.equalsIgnoreCase( Preference.DEFAULT_WEATHER_LOCATION );
+
+        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
+        String widBackgroundColor = spf.getString(
+                WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
+                Preference.DEFAULT_WIDGET_BACKGROUND );
+
+        int largeDrawableId = 0;
+        int smallDrawableId = 0;
+
+        if( widBackgroundColor != null )
+        {
+            switch ( widBackgroundColor.toLowerCase() )
+            {
+                case WeatherLionApplication.AQUA_THEME:
+                    popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_aqua ) );
+                    break;
+                case WeatherLionApplication.FROSTY_THEME:
+                    popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_frosty ) );
+                    break;
+                case WeatherLionApplication.RABALAC_THEME:
+                    popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_rabalac ) );
+                    break;
+                case WeatherLionApplication.LION_THEME:
+                    popupWindow.setBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_lion ) );
+                    break;
+            }// end of switch block
+        }// end of if block
+
+        popupWindow.setOnItemClickListener( new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick( AdapterView<?> parent, View view, int position, long id )
+            {
+                String selection = menuItems[ + position ];
+                ListView lv = popupWindow.getListView();
+
+                switch( position )
+                {
+                    case 0:
+                        if( WeatherLionApplication.geoNamesAccountLoaded )
+                        {
+                            showPreferenceActivity( locationSet );
+                        }// end of if block
+                        else
+                        {
+                            // confirm that user has a GeoNames account and want's to store it
+                            String prompt = "This program requires a geonames username\n" +
+                                    "which was not stored in the database.\nIT IS FREE!" +
+                                    "\nDo you wish to add it now?";
+
+                            responseDialog( WeatherLionApplication.PROGRAM_NAME + " - Missing Key",
+                                    prompt,"Yes", "No","showDataKeysDialog",
+                                    "lackPrivilegesMessage", new Object[]{ "GeoNames" },
+                                    new Class[]{ String.class } );
+                        }// end of else block
+
+                        break;
+
+                    case 1:
+                        showDataKeysDialog( null );
+
+                        break;
+                    case 2:
+                        String invoker = this.getClass().getSimpleName() + "::showMainMenuPopup";
+                        Bundle extras = new Bundle();
+
+                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                                WeatherLionApplication.UNIT_NOT_CHANGED );
+                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                                WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
+
+
+                        Intent methodIntent = new Intent( mContext, WidgetUpdateService.class );
+                        methodIntent.putExtras( extras );
+                        WidgetUpdateService.enqueueWork( mContext, methodIntent );
+
+                        UtilityMethod.butteredToast( WeatherLionMain.this, "Widget sync completed!",
+                                1, Toast.LENGTH_SHORT );
+
+                        break;
+                    case 3:
+                        Intent settingsIntent = new Intent( mContext, AboutActivity.class );
+                        startActivity( settingsIntent );
+
+                        break;
+                    default:
+                        break;
+                }// end of switch block
+
+                popupWindow.dismiss();
+            }// end of anonymous method onItemClick
+        });
+
+        popupWindow.show();
+
+    }// end of method showCustomMainMenuPopup
+
+    /**
      * Displays a popup menu
      *
      * @param v The view to which the popup menu should be anchored
@@ -2007,6 +2141,25 @@ public class WeatherLionMain extends AppCompatActivity
                         showDataKeysDialog( null );
 
                         return true;
+
+                    case R.id.action_reload_widget:
+                        String invoker = this.getClass().getSimpleName() + "::showMainMenuPopup";
+                        Bundle extras = new Bundle();
+
+                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
+                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
+                                WeatherLionApplication.UNIT_NOT_CHANGED );
+                        extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
+                                WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
+
+                        Intent methodIntent = new Intent( mContext, WidgetUpdateService.class );
+                        methodIntent.putExtras( extras );
+                        WidgetUpdateService.enqueueWork( mContext, methodIntent );
+
+                        UtilityMethod.butteredToast( WeatherLionMain.this, "Widget sync completed!",
+                                1, Toast.LENGTH_SHORT );
+
+                        return true;
                     case R.id.action_about_app:
                         Intent settingsIntent = new Intent( mContext, AboutActivity.class );
                         startActivity( settingsIntent );
@@ -2043,8 +2196,7 @@ public class WeatherLionMain extends AppCompatActivity
      */
     private void showPreviousSearches( View anchor )
     {
-        ArrayAdapter arrayAdapter = new ArrayAdapter<>( this,
-                R.layout.wl_popup_list_item_dark_bg, listItems );
+        CustomPopupMenuAdapter arrayAdapter = new CustomPopupMenuAdapter( this, listItems );
         ImageView imvShowList = findViewById( R.id.imvShowList );
         int arrowWidth = imvShowList.getWidth();
         popupWindow = new ListPopupWindow( this );
@@ -2190,7 +2342,7 @@ public class WeatherLionMain extends AppCompatActivity
 
             if ( mMeasureParent == null )
             {
-                mMeasureParent = new FrameLayout(mContext);
+                mMeasureParent = new FrameLayout( mContext );
             }// end of if block
 
             itemView = listAdapter.getView( i, itemView, mMeasureParent );
@@ -2744,14 +2896,14 @@ public class WeatherLionMain extends AppCompatActivity
     private void showLoadingDialog( String loadingMessage )
     {
         View loadingDialogView = View.inflate( this, R.layout.wl_loading_data_layout,
-                null );
+        null );
         //loadingDialogView.setBackgroundColor(Color.parseColor("#FF4A4A4A"));
 
         loadingDialog = new AlertDialog.Builder( mContext ).create();
         loadingDialog.setView( loadingDialogView );
 
         ImageView strollingLion = loadingDialogView.findViewById( R.id.imvStrollingLion );
-        TextView txvLoadingData = loadingDialogView.findViewById(R.id.txvLoadingData );
+        TextView txvLoadingData = loadingDialogView.findViewById( R.id.txvLoadingData );
 
         txvLoadingData.setText( String.format( "%s%s", loadingMessage, "..." ) );
 

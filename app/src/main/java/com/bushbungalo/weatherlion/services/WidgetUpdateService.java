@@ -414,24 +414,24 @@ public class WidgetUpdateService extends JobIntentService
                                 lat = CityData.currentCityData.getLatitude();
                                 lng = CityData.currentCityData.getLongitude();
 
-                                // If timezones are inconsistent or data corrupted
-                                if( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
+                                if( WeatherLionApplication.storedData != null )
                                 {
-                                    if( !WeatherLionApplication.storedData.getLocation().getTimezone()
-                                            .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                                    // If timezones are inconsistent or data corrupted
+                                    if( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
                                     {
-                                        WeatherLionApplication.storedData.getLocation().setTimezone(
-                                                CityData.currentCityData.getTimeZone() );
+                                        if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                                                .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                                        {
+                                            WeatherLionApplication.storedData.getLocation().setTimezone(
+                                                    CityData.currentCityData.getTimeZone() );
 
-                                        WeatherLionApplication.currentSunriseTime.setLength( 0 );
-                                        WeatherLionApplication.currentSunsetTime.setLength( 0 );
+                                            WeatherLionApplication.currentSunriseTime.setLength( 0 );
+                                            WeatherLionApplication.currentSunsetTime.setLength( 0 );
+                                        }// end of if block
                                     }// end of if block
-                                }// end of if block
+                                }// end of if
                                 else
                                 {
-                                    WeatherLionApplication.storedData.getLocation().setTimezone(
-                                            CityData.currentCityData.getTimeZone() );
-
                                     WeatherLionApplication.currentSunriseTime.setLength( 0 );
                                     WeatherLionApplication.currentSunsetTime.setLength( 0 );
                                 }// end of else block
@@ -1569,8 +1569,6 @@ public class WidgetUpdateService extends JobIntentService
                     + "/weather_na.png";
 
             loadWeatherIcon( widget, resID, defaultIcon );
-
-
         }// end of catch block
     }// end of method loadWeatherIcon
 
@@ -1595,7 +1593,6 @@ public class WidgetUpdateService extends JobIntentService
 
     private void scheduleAstronomyUpdate()
     {
-
         Intent sunriseIntent = new Intent( getApplicationContext(), SunriseAlarmBroadcastReceiver.class );
         sunriseIntent.setAction( SunriseAlarmBroadcastReceiver.ACTION_ALARM );
 
@@ -2263,6 +2260,9 @@ public class WidgetUpdateService extends JobIntentService
 
         // load the current background in use
         loadWidgetBackground();
+
+        // load the current icon set
+        loadWeatherIconSet();
 
         // check for previous weather data stored locally
         if( previousWeatherData.exists() )
