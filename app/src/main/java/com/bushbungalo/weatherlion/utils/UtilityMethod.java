@@ -4,7 +4,6 @@ package com.bushbungalo.weatherlion.utils;
   Created by Paul O. Patterson on 11/21/17.
  */
 
-import android.app.ActivityManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -81,6 +80,7 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -4167,27 +4167,27 @@ public abstract class UtilityMethod
      *
      * @return An enum value of MORNING, NOON, EVENING, and NIGHT
      */
-    public static TimeOfDay getTimeOfDay( LocalDateTime inputDate )
+    public static TimeOfDay getTimeOfDay( @NonNull LocalDateTime inputDate )
     {
+        LocalTime lt = inputDate.toLocalTime();
+
         if( isDaylightSavings( inputDate ) )
         {
-            if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                inputDate.getDayOfMonth(), 17,59,59 ) ) &&
-                    inputDate.isBefore( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                        inputDate.getDayOfMonth(), 20,59,59 ) ) )
+            if( lt.isAfter( LocalTime.of( 17,59,59 ) ) &&
+                lt.isBefore( LocalTime.of( 20,59,59 ) ) )
             {
                 return TimeOfDay.EVENING;
-            }// end of else if block
-            else if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                    inputDate.getDayOfMonth(), 20,59,59 ) ) )
+            }// end of if block
+            else if( lt.isAfter( LocalTime.of( 20,59,59 ) ) )
             {
                 // anytime after 9:00 should be considered a night time
                 return TimeOfDay.NIGHT;
             }// end of else if block
-            else if( inputDate.getDayOfWeek() == LocalDateTime.now().plusDays( 1 ).getDayOfWeek() )
+            else if( lt.equals( LocalTime.of( 0,0,0 ) ) ||
+                    ( lt.isAfter( LocalTime.of( 0,0,0 ) ) &&
+                    lt.isBefore( LocalTime.of( 16,59,59 ) ) ) )
             {
-                // after midnight early morning the next day
-                return TimeOfDay.MORNING;
+               return TimeOfDay.MORNING;
             }// end of else if block
             else
             {
@@ -4195,47 +4195,26 @@ public abstract class UtilityMethod
                 return TimeOfDay.AFTERNOON;
             }// end of else block
         }// end of if block
-        else if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                inputDate.getDayOfMonth(), 4,59,59 ) ) &&
-                inputDate.isBefore( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                        inputDate.getDayOfMonth(), 11,59,59 ) ) ||
-                inputDate.getDayOfWeek() == LocalDateTime.now().plusDays( 1 ).getDayOfWeek() )
+        else if( lt.isAfter( LocalTime.of( 16,59,59 ) ) &&
+                lt.isBefore( LocalTime.of( 20,59,59 ) ) )
         {
-            return TimeOfDay.MORNING;
+            return TimeOfDay.EVENING;
         }// end of else if block
-        else if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                inputDate.getDayOfMonth(), 20,59,59 ) ) )
+        else if( lt.isAfter( LocalTime.of( 20,59,59 ) ) )
         {
             // anytime after 9:00 should be considered a night time
             return TimeOfDay.NIGHT;
         }// end of else if block
-        else if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                inputDate.getDayOfMonth(), 11,59,59 ) ) &&
-                inputDate.isBefore( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                        inputDate.getDayOfMonth(), 16,59,59 ) ) )
+        else if( lt.equals( LocalTime.of( 0,0,0 ) ) ||
+                ( lt.isAfter( LocalTime.of( 0,0,0 ) ) &&
+                        lt.isBefore( LocalTime.of( 16,59,59 ) ) ) )
         {
-            return TimeOfDay.AFTERNOON;
+            return TimeOfDay.MORNING;
         }// end of else if block
         else
         {
-            if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                inputDate.getDayOfMonth(), 16,59,59 ) ) &&
-                    inputDate.isBefore( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                        inputDate.getDayOfMonth(), 20,59,59 ) ) )
-            {
-                return TimeOfDay.EVENING;
-            }// end of else if block
-            else if( inputDate.isAfter( LocalDateTime.of( inputDate.getYear(), inputDate.getMonth(),
-                    inputDate.getDayOfMonth(), 20,59,59 ) ) )
-            {
-                // anytime after 9:00 should be considered a night time
-                return TimeOfDay.NIGHT;
-            }// end of else if block
-            else
-            {
-                // if the time is'nt after 5:00 PM we will assume that it is still afternoon
-                return TimeOfDay.AFTERNOON;
-            }// end of else block
+            // if the time is'nt after 5:00 PM we will assume that it is still afternoon
+            return TimeOfDay.AFTERNOON;
         }// end of else block
     }// end of method getTimeOfDay
 
