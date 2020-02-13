@@ -136,6 +136,8 @@ public class WeatherLionApplication extends Application
     public static final String WEATHER_DATA_BACKUP = "WeatherData.bak";
     public static final String SERVICE_CALL_LOG = "ServiceCallsToday.json";
 
+    public static final String OPEN_SOURCE_LICENCE = "licenses/open_source.json";
+
     // preferences constants
     public static final String WEATHER_SOURCE_PREFERENCE = "pref_wx_source";
     public static final String UPDATE_INTERVAL = "pref_update_interval";
@@ -197,7 +199,8 @@ public class WeatherLionApplication extends Application
     public static String[] hereMapsRequiredKeys = new String[] { "app_id", "app_code" };
     public static String[] openWeatherMapRequiredKeys = new String[] { "api_key" };
     public static String[] weatherBitRequiredKeys = new String[] { "api_key" };
-    public static String[] yahooRequiredKeys = new String[] { "app_id", "consumer_key", "consumer_secret" };
+    public static String[] yahooRequiredKeys = new String[] { "app_id", "consumer_key",
+            "consumer_secret" };
 
     public static boolean geoNamesAccountLoaded;
     public static boolean weatherLoadedFromProvider;
@@ -277,7 +280,7 @@ public class WeatherLionApplication extends Application
             systemColor = Color.valueOf( getColor( R.color.lion ) );
             systemButtonDrawable = getDrawable( R.drawable.wl_lion_rounded_btn_bg );
             widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg_large);
-            setTheme( R.style.LionTheme );
+            setTheme( R.style.LionThemeLight);
         }//end of if block
         else
         {
@@ -305,17 +308,28 @@ public class WeatherLionApplication extends Application
                 File backupWeatherDataFile = new File(
                         this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
 
-                if( backupWeatherDataFile.exists() )
-                {
-                    UtilityMethod.copyFile( backupWeatherDataFile, currentWeatherDataFile );
+                boolean blnBackupCreated;
 
-                    return loadWeatherData();
-                }// end of if block
-                else
+                try
                 {
-                    return false;
-                }// end of else block
+                    // ensure that a file is created before making a copy
+                    blnBackupCreated = backupWeatherDataFile.createNewFile();
 
+                    if( blnBackupCreated || backupWeatherDataFile.exists() )
+                    {
+                        UtilityMethod.copyFile( backupWeatherDataFile, currentWeatherDataFile );
+
+                        return loadWeatherData();
+                    }// end of if block
+                }// end of try block
+                catch( IOException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Error occurred while making backup file!\n"
+                        + e.getMessage(),TAG + "::checkForStoredWeatherData [line: " +
+                            UtilityMethod.getExceptionLineNumber( e )  + "]" );
+                }// end of catch block
+
+                return false;
             }// end of if block
             else
             {
@@ -1323,28 +1337,28 @@ public class WeatherLionApplication extends Application
                     systemColor = Color.valueOf( getColor( R.color.aqua ) );
                     systemButtonDrawable = getDrawable( R.drawable.wl_aqua_rounded_btn_bg );
                     widgetBackgroundDrawable = getDrawable( R.drawable.wl_aqua_bg_large );
-                    setTheme( R.style.AquaTheme );
+                    setTheme( R.style.AquaThemeDark );
 
                     break;
                 case FROSTY_THEME:
                     systemColor = Color.valueOf( getColor( R.color.frosty ) );
                     systemButtonDrawable = getDrawable( R.drawable.wl_frosty_rounded_btn_bg );
                     widgetBackgroundDrawable = getDrawable( R.drawable.wl_frosty_bg_large );
-                    setTheme( R.style.FrostyTheme );
+                    setTheme( R.style.FrostyThemeDark );
 
                     break;
                 case RABALAC_THEME:
                     systemColor = Color.valueOf( getColor( R.color.rabalac ) );
                     systemButtonDrawable = getDrawable( R.drawable.wl_rabalac_rounded_btn_bg );
                     widgetBackgroundDrawable = getDrawable( R.drawable.wl_rabalac_bg_large );
-                    setTheme( R.style.RabalacTheme );
+                    setTheme( R.style.RabalacThemeDark );
 
                     break;
                 default:
                     systemColor = Color.valueOf( getColor( R.color.lion ) );
                     systemButtonDrawable = getDrawable( R.drawable.wl_lion_rounded_btn_bg );
                     widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg_large );
-                    setTheme( R.style.LionTheme );
+                    setTheme( R.style.LionThemeDark );
                     break;
             }// end of switch block
         }// end of if block
@@ -1655,7 +1669,7 @@ public class WeatherLionApplication extends Application
         rlTitleBar.setBackgroundColor( systemColor.toArgb() );
 
         TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvDialogMessage = dialogView.findViewById( R.id.txvMessage );
+        TextView txvDialogMessage = dialogView.findViewById( R.id.txvAcknowledements);
 
         Button btnPositive = dialogView.findViewById( R.id.btnPositive );
         btnPositive.setBackground( systemButtonDrawable );
@@ -1899,7 +1913,7 @@ public class WeatherLionApplication extends Application
         final View messageDialogView = View.inflate( this, R.layout.wl_message_dialog, null );
         final AlertDialog messageDialog = new AlertDialog.Builder( this ).create();
         TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
+        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledements);
 
         txvTitle.setText( title );
         txvMessage.setText( message );

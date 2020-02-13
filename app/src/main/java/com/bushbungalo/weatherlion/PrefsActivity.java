@@ -123,17 +123,17 @@ public class PrefsActivity extends AppCompatActivity
         {
             switch( widBackgroundColor.toLowerCase() )
             {
-                case WeatherLionApplication.AQUA_THEME:
-                    setTheme( R.style.AquaTheme );
+                case "aqua":
+                    setTheme( R.style.AquaThemeDark );
                     break;
-                case WeatherLionApplication.FROSTY_THEME:
-                    setTheme( R.style.FrostyTheme );
+                case "frosty":
+                    setTheme( R.style.FrostyThemeDark );
                     break;
-                case WeatherLionApplication.RABALAC_THEME:
-                    setTheme( R.style.RabalacTheme );
+                case "rabalac":
+                    setTheme( R.style.RabalacThemeDark );
                     break;
                 default:
-                    setTheme( R.style.LionTheme );
+                    setTheme( R.style.LionThemeDark );
                     break;
             }// end of switch block
         }// end of if block
@@ -816,25 +816,25 @@ public class PrefsActivity extends AppCompatActivity
                 switch( selectedBackground.toLowerCase() )
                 {
                     case WeatherLionApplication.AQUA_THEME:
-                        context.setTheme( R.style.AquaTheme );
+                        context.setTheme( R.style.AquaThemeDark );
                         WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.aqua ) );
                         WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_aqua_rounded_btn_bg );
 
                         break;
                     case WeatherLionApplication.RABALAC_THEME:
-                        context.setTheme( R.style.RabalacTheme );
+                        context.setTheme( R.style.RabalacThemeDark );
                         WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.rabalac ) );
                         WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_rabalac_rounded_btn_bg );
 
                         break;
                     case WeatherLionApplication.FROSTY_THEME:
-                        context.setTheme( R.style.FrostyTheme );
+                        context.setTheme( R.style.FrostyThemeDark );
                         WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.frosty ) );
                         WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_frosty_rounded_btn_bg );
 
                         break;
                     case WeatherLionApplication.LION_THEME:
-                        context.setTheme( R.style.LionTheme );
+                        context.setTheme( R.style.LionThemeDark );
                         WeatherLionApplication.systemColor = Color.valueOf( context.getColor( R.color.lion ) );
                         WeatherLionApplication.systemButtonDrawable = context.getDrawable( R.drawable.wl_lion_rounded_btn_bg );
 

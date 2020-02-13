@@ -3,6 +3,7 @@
     <string name="app_settings">Weather Data Settings</string>
     <string name="app_about">About Weather Lion</string>
     <string name="app_about_beta">About Weather Lion (Beta)</string>
+    <string name="app_licences">Licences</string>
     <string name="general_settings">GENERAL</string>
     <string name="app_welcome_title">Weather Lion Widget</string>
 
@@ -96,6 +97,7 @@
     <string name="key_value">Key Value:</string>
     <string name="key_value_hint">Key Value</string>
     <string name="add_key">Add Key</string>
+    <string name="view_licences">View Licences</string>
     <string name="delete_key">Delete Key</string>
     <string name="finish">Finish</string>
     <string name="data_provider_hint">Select Data Provider</string>
@@ -289,6 +291,7 @@
     </string>
     <string name="app_icon">App Icon</string>
     <string name="app_logo">App Logo</string>
+    <string name="app_licence_permissions">Weather Lion uses the following open source libraries:</string>
 
     <string name="app_slogan">The KING of all weather widgets!</string>
     <string name="wind">Wind:</string>

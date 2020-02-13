@@ -731,7 +731,7 @@ public class WeatherLionMain extends AppCompatActivity
                                 ) );
 
                         UtilityMethod.showMessageDialog( message,
-                                "Hour Forecast", mContext );
+                                UtilityMethod.toProperCase( forecastHour ) + " Forecast", mContext );
                     }// end of method onClick
                 });
 
@@ -1478,16 +1478,16 @@ public class WeatherLionMain extends AppCompatActivity
                 switch( widBackgroundColor.toLowerCase() )
                 {
                     case WeatherLionApplication.AQUA_THEME:
-                        setTheme( R.style.AquaTheme );
+                        setTheme( R.style.AquaThemeDark );
                         break;
                     case WeatherLionApplication.FROSTY_THEME:
-                        setTheme( R.style.FrostyTheme );
+                        setTheme( R.style.FrostyThemeDark );
                         break;
                     case WeatherLionApplication.RABALAC_THEME:
-                        setTheme( R.style.RabalacTheme );
+                        setTheme( R.style.RabalacThemeDark );
                         break;
                     default:
-                        setTheme( R.style.LionTheme );
+                        setTheme( R.style.LionThemeDark );
                         break;
                 }// end of switch block
             }// end of if block
@@ -1625,7 +1625,7 @@ public class WeatherLionMain extends AppCompatActivity
 
         UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container) );
 
-        TextView txvMessage = findViewById(R.id.txvMessage);
+        TextView txvMessage = findViewById(R.id.txvAcknowledements);
         txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
         View welcomeActivity = findViewById( R.id.weather_main_container);
 
@@ -1909,7 +1909,7 @@ public class WeatherLionMain extends AppCompatActivity
         bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
         TextView txvDialogTitle = responseDialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvDialogMessage = responseDialogView.findViewById( R.id.txvMessage );
+        TextView txvDialogMessage = responseDialogView.findViewById( R.id.txvAcknowledements);
 
         Button btnPositive = responseDialogView.findViewById( R.id.btnPositive );
         btnPositive.setBackground( WeatherLionApplication.systemButtonDrawable );
@@ -2947,7 +2947,7 @@ public class WeatherLionMain extends AppCompatActivity
         final View messageDialogView = View.inflate( this, R.layout.wl_message_dialog, null );
         final AlertDialog messageDialog = new AlertDialog.Builder( this ).create();
         TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
+        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledements);
 
         txvTitle.setText( title );
         txvMessage.setText( message );

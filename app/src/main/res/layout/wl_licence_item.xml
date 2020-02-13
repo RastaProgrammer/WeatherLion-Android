@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/grid_item"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="2dip"
+    android:paddingBottom="2dip" >
+
+    <TextView
+        android:id="@+id/txvLibName"
+        android:gravity="center_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textColor="#62A0C9"
+        android:textSize="20sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/txvLibOwner"
+        android:gravity="center_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/txvLibName"
+        android:layout_marginTop="10dp"
+        android:textColor="#62A0C9"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/txvLibVersion"
+        android:gravity="center_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/txvLibOwner"
+        android:layout_marginTop="10dp"
+        android:textColor="#62A0C9"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/txvLibLicence"
+        android:gravity="start"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/txvLibVersion"
+        android:layout_marginTop="10dp"
+        android:textColor="#7A8599"
+        android:textSize="16sp" />
+</RelativeLayout>
+
+
+

@@ -17,7 +17,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AquaTheme">
+        android:theme="@style/AquaThemeLight">
 
         <activity
             android:name=".WeatherLionMain"
@@ -51,7 +51,7 @@
         </activity>
         <activity
             android:name=".AboutActivity"
-            android:label="@string/app_about"
+            android:label="@string/app_about_beta"
             android:parentActivityName=".WeatherLionMain"
             android:screenOrientation="portrait">
 
@@ -59,6 +59,18 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".WeatherLionMain" />
+        </activity>
+
+        <activity
+            android:name=".LicenceActivity"
+            android:label="@string/app_licences"
+            android:parentActivityName=".AboutActivity"
+            android:screenOrientation="portrait">
+
+            <!-- Older versions of android -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".AboutActivity" />
         </activity>
 
         <receiver

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Paul O. Patterson
@@ -40,6 +41,7 @@ public class WeatherDataXMLService extends JobIntentService
 	private static final int JOB_ID = 80;
 	private static final String TAG = "WeatherDataXMLService";
 	private WeatherDataXML xmlData = new WeatherDataXML();
+	private int writeAttempt = 0;
 
 	public static final String WEATHER_XML_STORAGE_MESSAGE = "WeatherXmlStorageMessage";
 
@@ -93,6 +95,66 @@ public class WeatherDataXMLService extends JobIntentService
 		manager.sendBroadcast( messageIntent );
 	}// end of method broadcastDataStored
 
+	private void createBackupFile()
+	{
+		// check for the backup file
+		// make a copy of the existing weather data
+		File currentWeatherDataFile = new File(
+				this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() );
+
+		File backupWeatherDataFile = new File(
+				this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
+
+		boolean blnBackupCreated;
+
+		try
+		{
+			// ensure that a file is created before making a copy
+			blnBackupCreated = backupWeatherDataFile.createNewFile();
+
+			if( blnBackupCreated || backupWeatherDataFile.exists() )
+			{
+				UtilityMethod.copyFile( backupWeatherDataFile, currentWeatherDataFile );
+			}// end of if block
+		}// end of try block
+		catch( IOException e )
+		{
+			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Error occurred while making backup file!\n"
+				+ e.getMessage(),TAG + "::createBackupFile [line: " +
+					UtilityMethod.getExceptionLineNumber( e )  + "]" );
+		}// end of catch block
+	}// end of method createBackupFile
+
+	private void removeBackupFile()
+	{
+		File dataBackup = new File( this.getFileStreamPath(
+				WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
+
+		try
+		{
+			if( dataBackup.exists() )
+			{
+				// remove the backup after successful saving the new file
+				boolean removeBackup = new File( this.getFileStreamPath(
+						WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).delete();
+
+				UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Backup weather data removed!",
+						TAG + "::removeBackupFile" );
+			}// end of if block
+			else
+			{
+				UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Backup weather data doesn't exist!",
+				TAG + "::removeBackupFile" );
+			}// end of else block
+		} // end of try block
+		catch ( Exception e )
+		{
+			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to remove backup weather data!\n"
+				+ e.getMessage(),TAG + "::removeBackupFile [line: " +
+					UtilityMethod.getExceptionLineNumber( e )  + "]" );
+		}// end of catch block
+	}// end of method removeBackupFile
+
 	private void saveCurrentWeatherXML()
 	{
 		if( xmlData == null ) return; // exit if there is no data loaded
@@ -102,8 +164,12 @@ public class WeatherDataXMLService extends JobIntentService
 
 		String noDate = "Wed Dec 31 19:00:00 EST 1969";
 
+		createBackupFile();
+
 		try
 		{
+			writeAttempt++; // increment the number of attempts at creating the file
+
 			Element weatherData;
 			Document doc;
 			Element provider = new Element( "Provider" );
@@ -217,16 +283,20 @@ public class WeatherDataXMLService extends JobIntentService
 			WeatherLionApplication.previousWeatherProvider.append( xmlData.getProviderName() );
 
 			broadcastDataStored();
-
-			// remove the backup after successful saving the new file
-			boolean removeBackup = new File( this.getFileStreamPath(
-				WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).delete();
+			removeBackupFile();
 		}// end of try block
 		catch ( IOException e )
 		{
-			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-					TAG + "::saveCurrentWeatherXML [line: " +
-							UtilityMethod.getExceptionLineNumber( e )  + "]" );
+			String errorMsg = String.format( Locale.ENGLISH, "Unable to remove backup weather data, attempt %d.\n%s",
+					writeAttempt, e.getMessage() );
+			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, errorMsg,TAG + "::saveCurrentWeatherXML [line: " +
+					UtilityMethod.getExceptionLineNumber( e )  + "]" );
+
+			// perform three attempts at creating the file
+			if( writeAttempt < 3 )
+			{
+				saveCurrentWeatherXML();
+			}// end of if block
 		}// end of catch block
 	}// end of method saveCurrentWeatherXML
 

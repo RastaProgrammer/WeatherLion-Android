@@ -44,6 +44,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bushbungalo.weatherlion.custom.CustomPopupMenuAdapter;
 import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.providers.LargeWeatherWidgetProvider;
 import com.bushbungalo.weatherlion.providers.SmallWeatherWidgetProvider;
@@ -1118,7 +1119,7 @@ public class ConfigureWidget extends AppCompatActivity
     }// end of method performSearch
 
     /**
-     * Display a dialog illiciting a response from the user
+     * Display a dialog that will illicit a response from the user
      *
      * @param prompt    The prompt to be displayed to the user
      * @param title     The title of the dialog box
@@ -1144,7 +1145,7 @@ public class ConfigureWidget extends AppCompatActivity
         rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
 
         TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvDialogMessage = dialogView.findViewById( R.id.txvMessage );
+        TextView txvDialogMessage = dialogView.findViewById( R.id.txvAcknowledements);
 
         Button btnPositive = dialogView.findViewById( R.id.btnPositive );
         btnPositive.setBackground( WeatherLionApplication.systemButtonDrawable );
@@ -1204,7 +1205,7 @@ public class ConfigureWidget extends AppCompatActivity
         popupWindow = new ListPopupWindow( mContext );
 
         popupWindow.setAnchorView( anchor );
-        popupWindow.setAdapter( new ArrayAdapter<>( mContext, R.layout.wl_popup_list_item_dark_theme, listItems ) );
+        popupWindow.setAdapter( new CustomPopupMenuAdapter( mContext, listItems ) );
         popupWindow.setWidth( anchor.getWidth() );
         popupWindow.setVerticalOffset( 6 );
         popupWindow.setBackgroundDrawable( mContext.getDrawable( R.drawable.wl_dark_list_background ) );
@@ -1283,7 +1284,7 @@ public class ConfigureWidget extends AppCompatActivity
         txvTitle.setTypeface( WeatherLionApplication.currentTypeface );
         txvTitle.setText( title );
 
-        TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
+        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledements);
         txvMessage.setTypeface( WeatherLionApplication.currentTypeface );
 
         Button btnOk = messageDialogView.findViewById( R.id.btnOk );

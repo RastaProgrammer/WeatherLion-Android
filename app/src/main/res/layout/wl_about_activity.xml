@@ -7,45 +7,9 @@
     android:background="#ff000000">
 
     <RelativeLayout
-        android:id="@+id/rlAboutTitleBar"
-        android:layout_width="match_parent"
-        android:layout_height="50dip"
-        android:layout_alignParentTop="true"
-        android:padding="6dip">
-
-        <ImageView
-            android:id="@+id/imvBack"
-            android:layout_width="18dip"
-            android:layout_height="18dip"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="10dip"
-            android:layout_marginEnd="40dip"
-            android:src="@drawable/wl_back"
-            android:scaleType="fitXY"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/back_to_parent"/>
-
-        <TextView
-            android:id="@+id/txvAboutTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_about_beta"
-            android:layout_centerVertical="true"
-            android:layout_toEndOf="@+id/imvBack"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:textStyle="normal" />
-
-    </RelativeLayout>
-
-    <RelativeLayout
         android:id="@+id/rlBody"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/rlAboutTitleBar"
         android:paddingStart="10dip"
         android:paddingEnd="10dip"
         android:paddingBottom="10dip">
@@ -127,7 +91,7 @@
             android:textStyle="normal" />
 
         <TextView
-            android:id="@+id/txvMessage"
+            android:id="@+id/txvAcknowledgements"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/about"
@@ -137,6 +101,23 @@
             android:textColor="#62A0C9"
             android:textSize="16sp"
             android:textStyle="normal" />
+
+        <Button
+            android:id="@+id/btnViewLicences"
+            android:layout_width="wrap_content"
+            android:layout_height="30dip"
+            android:layout_below="@+id/txvAcknowledgements"
+            android:layout_marginStart="0dip"
+            android:layout_marginTop="14dip"
+            android:layout_marginBottom="1dip"
+            android:paddingStart="12dip"
+            android:paddingEnd="12dip"
+            android:background="@drawable/wl_aqua_rounded_btn_bg"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"
+            android:text="@string/view_licences"
+            android:textColor="#FFFFFF"
+            android:stateListAnimator="@null"/>
 
     </RelativeLayout>
 

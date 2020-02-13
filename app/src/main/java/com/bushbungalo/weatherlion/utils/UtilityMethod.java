@@ -3528,9 +3528,9 @@ public abstract class UtilityMethod
     {
         boolean ok = false;
 
-        Map<String, Object> importedServiceLog = JSONHelper.importPreviousLogs(
+        Map<String, Object> importedServiceLog = JSONHelper.importJsonData(
             getAppContext().getFileStreamPath(
-                WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
+                WeatherLionApplication.SERVICE_CALL_LOG ).toString(), false );
 
         // ensure that data is loaded
         if( importedServiceLog != null )
@@ -3598,9 +3598,9 @@ public abstract class UtilityMethod
      */
     public static void serviceCall( String provider )
     {
-        Map<String, Object> importedServiceLog = JSONHelper.importPreviousLogs(
+        Map<String, Object> importedServiceLog = JSONHelper.importJsonData(
                 getAppContext().getFileStreamPath(
-                        WeatherLionApplication.SERVICE_CALL_LOG ).toString() );
+                        WeatherLionApplication.SERVICE_CALL_LOG ).toString(), false );
         String date = (String) importedServiceLog.get( "Date" );
         Date logDate = null;
         Map importedServiceMap = (LinkedTreeMap) Objects.requireNonNull( importedServiceLog )
@@ -3715,7 +3715,7 @@ public abstract class UtilityMethod
         final AlertDialog messageDialog = new AlertDialog.Builder( c ).create();
 
         TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvMessage = messageDialogView.findViewById( R.id.txvMessage );
+        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledements);
 
         txvTitle.setText( title );
         txvMessage.setText( message );
@@ -4185,7 +4185,7 @@ public abstract class UtilityMethod
             }// end of else if block
             else if( lt.equals( LocalTime.of( 0,0,0 ) ) ||
                     ( lt.isAfter( LocalTime.of( 0,0,0 ) ) &&
-                    lt.isBefore( LocalTime.of( 16,59,59 ) ) ) )
+                    lt.isBefore( LocalTime.of( 11,59,59 ) ) ) )
             {
                return TimeOfDay.MORNING;
             }// end of else if block
@@ -4207,7 +4207,7 @@ public abstract class UtilityMethod
         }// end of else if block
         else if( lt.equals( LocalTime.of( 0,0,0 ) ) ||
                 ( lt.isAfter( LocalTime.of( 0,0,0 ) ) &&
-                        lt.isBefore( LocalTime.of( 16,59,59 ) ) ) )
+                        lt.isBefore( LocalTime.of( 11,59,59 ) ) ) )
         {
             return TimeOfDay.MORNING;
         }// end of else if block

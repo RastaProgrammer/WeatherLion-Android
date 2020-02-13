@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:id="@+id/rlLicence"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ff000000">
+
+    <RelativeLayout
+        android:id="@+id/rlBody"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingStart="10dip"
+        android:paddingEnd="10dip"
+        android:paddingBottom="10dip"
+        android:background="#ff000000">
+
+        <TextView
+            android:id="@+id/txvAcknowledgements"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_licence_permissions"
+            android:layout_marginTop="40dip"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="#62A0C9"
+            android:textSize="16sp"
+            android:textStyle="normal" />
+
+        <GridView
+            android:id="@+id/grdLicences"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#000000"
+
+            android:numColumns="1"
+            android:clipToPadding="true"
+            android:fitsSystemWindows="true"
+            android:stretchMode="columnWidth"
+            android:horizontalSpacing="0dip"
+            android:verticalSpacing="0dip"
+            android:layout_below="@+id/txvAcknowledgements"
+            android:layout_marginTop="10dip" />
+
+    </RelativeLayout>
+
+
+
+</RelativeLayout>

@@ -1,5 +1,7 @@
 package com.bushbungalo.weatherlion.utils;
 
+import android.content.res.AssetManager;
+
 import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.model.CityData;
 import com.bushbungalo.weatherlion.model.TimeZoneInfo;
@@ -12,11 +14,18 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -108,7 +117,7 @@ public class JSONHelper
                 Gson gson = new Gson();
 
                 // convert the file JSON into a list of objects
-                cityDataList = gson.fromJson(reader, new TypeToken<List<CityData>>() {}.getType());
+                cityDataList = gson.fromJson( reader, new TypeToken<List<CityData>>() {}.getType() );
             }// end of if block
 
         }// end of try block
@@ -136,53 +145,200 @@ public class JSONHelper
         return cityDataList;
     }// end of method importPreviousCitySearches
 
-    public static LinkedTreeMap<String, Object> importPreviousLogs( String filePath )
+    /**
+     * Retrieves JSON data from a file
+     *
+     * @param filePath  The path to the JSON data
+     * @param assetFile Indicates whether or not the file is located in the asset directory
+     * @return  A string representing JSON data
+     */
+    public static String getJSONData( String filePath, boolean assetFile )
+    {
+        FileReader reader = null;
+        String jsonData = null;
+
+        if( assetFile )
+        {
+            AssetManager mgr = WeatherLionApplication.getAppContext().getAssets();
+            String filename;
+
+            try
+            {
+                filename = WeatherLionApplication.OPEN_SOURCE_LICENCE;
+                InputStream in = mgr.open( filename, AssetManager.ACCESS_BUFFER );
+                Writer writer = new StringWriter();
+                char[] buffer = new char[ 1024 ];
+
+                try
+                {
+                    Reader assetReader = new BufferedReader( new InputStreamReader( in, StandardCharsets.UTF_8 ) );
+                    int n;
+
+                    while ( ( n = assetReader.read( buffer ) ) != -1 )
+                    {
+                        writer.write( buffer, 0, n) ;
+                    }// end of while loop
+                }// end of try block
+                catch ( IOException e  )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                            TAG + "::getJSONData [line: " +
+                                    UtilityMethod.getExceptionLineNumber( e ) + "]" );
+                }// end of catch block
+
+                jsonData = writer.toString();
+
+                in.close();
+            }// end of try block
+            catch ( IOException e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                        TAG + "::getJSONData [line: " +
+                                UtilityMethod.getExceptionLineNumber( e ) + "]" );
+            }// end of catch block
+        }// end of if block
+        else
+        {
+            try
+            {
+                File file = new File( filePath );
+
+                // if the is a file present then it will contain a list with at least on object
+                if( file.exists() )
+                {
+                    reader = new FileReader( file );
+                    jsonData = reader.toString();
+                }// end of if block
+
+            }// end of try block
+            catch ( FileNotFoundException | JsonSyntaxException e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                        TAG + "::getJSONData [line: " +
+                                UtilityMethod.getExceptionLineNumber( e ) + "]" );
+            }// end of catch block
+            finally
+            {
+                // close the file reader object
+                if( reader != null )
+                {
+                    try
+                    {
+                        reader.close();
+                    } // end of try block
+                    catch (IOException e)
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                                e.getMessage(),TAG + "::getJSONData [line: "
+                                        + UtilityMethod.getExceptionLineNumber( e ) + "]" );
+                    }// end of catch block
+                }// end of if block
+            }// end of finally block
+        }// end of else block
+
+        return jsonData;
+    }// end of method getJSONData
+
+    /**
+     * Reads data from a JSON file and returns it as a LinkedTreeMap
+     *
+     * @param filePath The location of the file containing the JSON data
+     * @return  A LinkedTreeMap object containing the data
+     */
+    public static LinkedTreeMap<String, Object> importJsonData( String filePath, boolean assetFile )
     {
         FileReader reader = null;
         LinkedTreeMap<String, Object> fileData = null;
 
-        try
+        if( assetFile )
         {
-            File file = new File( filePath );
+            AssetManager mgr = WeatherLionApplication.getAppContext().getAssets();
+            String filename;
 
-            // if the is a file present then it will contain a list with at least on object
-            if( file.exists() )
+            try
             {
-                reader = new FileReader( file );
+                filename = WeatherLionApplication.OPEN_SOURCE_LICENCE;
+                InputStream in = mgr.open( filename, AssetManager.ACCESS_BUFFER );
+                Writer writer = new StringWriter();
+                char[] buffer = new char[ 1024 ];
+
+                try
+                {
+                    Reader assetReader = new BufferedReader( new InputStreamReader( in, StandardCharsets.UTF_8 ) );
+                    int n;
+
+                    while ( ( n = assetReader.read( buffer ) ) != -1 )
+                    {
+                        writer.write( buffer, 0, n) ;
+                    }// end of while loop
+                }// end of try block
+                catch ( IOException e  )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                            TAG + "::importJsonData [line: " +
+                                    UtilityMethod.getExceptionLineNumber( e ) + "]" );
+                }// end of catch block
+
                 Gson gson = new Gson();
 
                 // convert the file JSON into a list of objects
-                fileData = gson.fromJson( reader,
-                    new TypeToken<LinkedTreeMap<String, Object>>(){}.getType() );
-            }// end of if block
+                fileData = gson.fromJson( writer.toString(),
+                        new TypeToken<LinkedTreeMap<String, Object>>(){}.getType() );
 
-        }// end of try block
-        catch ( FileNotFoundException | JsonSyntaxException e )
-        {
-            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-        TAG + "::importPreviousLogs [line: " +
-                    UtilityMethod.getExceptionLineNumber( e ) + "]" );
-        }// end of catch block
-        finally
-        {
-            // close the file reader object
-            if( reader != null )
+                in.close();
+            }// end of try block
+            catch ( IOException e )
             {
-                try
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+            TAG + "::importJsonData [line: " +
+                        UtilityMethod.getExceptionLineNumber( e ) + "]" );
+            }// end of catch block
+        }// end of if block
+        else
+        {
+            try
+            {
+                File file = new File( filePath );
+
+                // if the is a file present then it will contain a list with at least on object
+                if( file.exists() )
                 {
-                    reader.close();
-                } // end of try block
-                catch (IOException e)
+                    reader = new FileReader( file );
+                    Gson gson = new Gson();
+
+                    // convert the file JSON into a list of objects
+                    fileData = gson.fromJson( reader,
+                            new TypeToken<LinkedTreeMap<String, Object>>(){}.getType() );
+                }// end of if block
+
+            }// end of try block
+            catch ( FileNotFoundException | JsonSyntaxException e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
+                        TAG + "::importJsonData [line: " +
+                                UtilityMethod.getExceptionLineNumber( e ) + "]" );
+            }// end of catch block
+            finally
+            {
+                // close the file reader object
+                if( reader != null )
                 {
-                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
-                            e.getMessage(),TAG + "::importPreviousLogs [line: "
-                                    + UtilityMethod.getExceptionLineNumber( e ) + "]" );
-                }// end of catch block
-            }// end of if block
-        }// end of finally block
+                    try
+                    {
+                        reader.close();
+                    } // end of try block
+                    catch (IOException e)
+                    {
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                                e.getMessage(),TAG + "::importJsonData [line: "
+                                        + UtilityMethod.getExceptionLineNumber( e ) + "]" );
+                    }// end of catch block
+                }// end of if block
+            }// end of finally block
+        }// end of else block
 
         return fileData;
-    }// end of method importPreviousLogs
+    }// end of method importJsonData
 
     /***
      * Saves JSON data to a local file for quicker access later.
