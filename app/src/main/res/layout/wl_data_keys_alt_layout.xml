@@ -109,7 +109,7 @@
                 android:paddingStart="2dip"
                 android:paddingEnd="4dip"
                 android:textSize="14sp"
-                android:background="@color/off_white" />
+                android:background="@color/transparent" />
         </FrameLayout>
 
         <FrameLayout
@@ -179,7 +179,7 @@
                 android:paddingEnd="4dip"
                 android:textSize="14sp"
                 android:labelFor="@+id/edtKeyName"
-                android:background="@color/off_white"/>
+                android:background="@color/transparent"/>
         </FrameLayout>
 
         <FrameLayout

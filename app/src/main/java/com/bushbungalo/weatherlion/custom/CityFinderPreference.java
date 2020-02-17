@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -28,7 +29,6 @@ import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -78,10 +78,14 @@ public class CityFinderPreference extends DialogPreference
 
     private int selectedIndex;
     private int layoutId = R.layout.wl_location_preference_dialog;
+    private String widBackgroundColor;
+    private Context mContext;
 
     public CityFinderPreference( Context context, AttributeSet attrs )
     {
         super( context, attrs );
+
+        mContext = context;
 
         setPersistent( false );
         setDialogLayoutResource( layoutId );
@@ -96,6 +100,10 @@ public class CityFinderPreference extends DialogPreference
     @Override
     protected View onCreateDialogView()
     {
+        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( getContext() );
+        widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
+                com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
+
        dialogView = View.inflate( WeatherLionApplication.getAppContext(),
                layoutId, null );
         TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
@@ -134,6 +142,53 @@ public class CityFinderPreference extends DialogPreference
         });
 
         edtCityName.setTypeface( WeatherLionApplication.currentTypeface );
+
+        edtCityName.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+        edtCityName.setHintTextColor( UtilityMethod.addOpacity( WeatherLionApplication.systemColor.toArgb(),
+                40 ) );
+        txvDialogMessage.setTextColor( Color.WHITE );
+
+        RelativeLayout dialogBody = dialogView.findViewById( R.id.rlDialogBody );
+        RelativeLayout dialogFooter = dialogView.findViewById( R.id.rlDialogFooter );
+
+        if( widBackgroundColor != null )
+        {
+            switch ( widBackgroundColor.toLowerCase() )
+            {
+                case WeatherLionApplication.AQUA_THEME:
+                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.aqua_dialog_bg ) ).toArgb() );
+                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
+                            R.color.aqua_dialog_bg ) ).toArgb() );
+                    imbClear.getBackground().setColorFilter( mContext.getColor( R.color.aqua_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbSearch.getBackground().setColorFilter( mContext.getColor( R.color.aqua_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbWorking.getBackground().setColorFilter( mContext.getColor( R.color.aqua_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    break;
+                case WeatherLionApplication.FROSTY_THEME:
+                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.frosty_dialog_bg ) ).toArgb() );
+                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
+                            R.color.frosty_dialog_bg ) ).toArgb() );
+                    imbClear.getBackground().setColorFilter( mContext.getColor( R.color.frosty_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbSearch.getBackground().setColorFilter( mContext.getColor( R.color.frosty_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbWorking.getBackground().setColorFilter( mContext.getColor( R.color.frosty_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    break;
+                case WeatherLionApplication.RABALAC_THEME:
+                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.rabalac_dialog_bg ) ).toArgb() );
+                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
+                            R.color.rabalac_dialog_bg ) ).toArgb() );
+                    imbClear.getBackground().setColorFilter( mContext.getColor( R.color.rabalac_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbSearch.getBackground().setColorFilter( mContext.getColor( R.color.rabalac_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbWorking.getBackground().setColorFilter( mContext.getColor( R.color.rabalac_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    break;
+                case WeatherLionApplication.LION_THEME:
+                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.lion_dialog_bg ) ).toArgb() );
+                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
+                            R.color.lion_dialog_bg ) ).toArgb() );
+                    imbClear.getBackground().setColorFilter( mContext.getColor( R.color.lion_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbSearch.getBackground().setColorFilter( mContext.getColor( R.color.lion_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbWorking.getBackground().setColorFilter( mContext.getColor( R.color.lion_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    break;
+            }// end of switch block
+        }// end of if block
 
         edtCityName.addTextChangedListener( new TextWatcher()
         {
@@ -434,10 +489,6 @@ public class CityFinderPreference extends DialogPreference
         popupWindow.setAdapter( new CustomPopupMenuAdapter( getContext(), listItems ) );
         popupWindow.setWidth( anchor.getWidth() );
         popupWindow.setVerticalOffset( 6 );
-
-        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( getContext() );
-        String widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
-            com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
 
         if( widBackgroundColor != null )
         {

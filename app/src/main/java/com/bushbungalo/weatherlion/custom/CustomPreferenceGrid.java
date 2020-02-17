@@ -87,6 +87,7 @@ public class CustomPreferenceGrid extends BaseAdapter
                         if ( displayImages[ position ].equalsIgnoreCase( selectItem ) )
                         {
                             grid.setBackgroundColor( 0xFFC2E9F8 ); // Opaque Blue
+                            previewText.setTextColor( WeatherLionApplication.systemColor.toArgb() );
                         }// end of if block
                         break;
                     case WidgetBackgroundPreference.CALLER_NAME:
@@ -99,6 +100,7 @@ public class CustomPreferenceGrid extends BaseAdapter
                         if ( displayImages[ position ].equalsIgnoreCase( selectItem + ".png" ) )
                         {
                             grid.setBackgroundColor( 0xFFC2E9F8 ); // Opaque Blue
+                            previewText.setTextColor( WeatherLionApplication.systemColor.toArgb() );
                         }// end of if block
                         break;
                     default:

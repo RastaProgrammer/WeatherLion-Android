@@ -8,6 +8,11 @@
     <color name="black_text">#000000</color>
     <color name="off_white">#F5F5F5</color>
 
+    <color name="aqua_dialog_bg">#2277AA</color>
+    <color name="frosty_dialog_bg">#FFBF00</color>
+    <color name="rabalac_dialog_bg">#679267</color>
+    <color name="lion_dialog_bg">#474749</color>
+
     <!-- Other Colours -->
     <color name="account_info_error_text_color">#ffff5722</color>
     <color name="actionbar_back_button_color">#ff00bbd3</color>

@@ -2385,6 +2385,68 @@ public class WeatherLionMain extends AppCompatActivity
         GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
         bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
+        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
+        final String widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
+                com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
+        RelativeLayout dialogBody = keyDialogView.findViewById( R.id.rlDialogBody );
+        RelativeLayout dialogFooter = keyDialogView.findViewById( R.id.rlDialogFooter );
+
+        TextView txvAccessProvider = keyDialogView.findViewById( R.id.txvAccessProvider );
+        TextView txvKeyName = keyDialogView.findViewById( R.id.txvKeyName );
+        final TextView txvKeyValue = keyDialogView.findViewById( R.id.txvKeyValue );
+
+        if( widBackgroundColor != null )
+        {
+            switch ( widBackgroundColor.toLowerCase() )
+            {
+                case WeatherLionApplication.AQUA_THEME:
+                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.aqua_dialog_bg ) ).toArgb() );
+                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
+                            R.color.aqua_dialog_bg ) ).toArgb() );
+                    txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.aqua_dialog_bg ) ).toArgb() );
+                    txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.aqua_dialog_bg ) ).toArgb() );
+                    txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.aqua_dialog_bg ) ).toArgb() );
+                    break;
+                case WeatherLionApplication.FROSTY_THEME:
+                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.frosty_dialog_bg ) ).toArgb() );
+                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
+                            R.color.frosty_dialog_bg ) ).toArgb() );
+                    txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.frosty_dialog_bg ) ).toArgb() );
+                    txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.frosty_dialog_bg ) ).toArgb() );
+                    txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.frosty_dialog_bg ) ).toArgb() );
+
+                    break;
+                case WeatherLionApplication.RABALAC_THEME:
+                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.rabalac_dialog_bg ) ).toArgb() );
+                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
+                            R.color.rabalac_dialog_bg ) ).toArgb() );
+                    txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.rabalac_dialog_bg ) ).toArgb() );
+                    txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.rabalac_dialog_bg ) ).toArgb() );
+                    txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.rabalac_dialog_bg ) ).toArgb() );
+                    break;
+                case WeatherLionApplication.LION_THEME:
+                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.lion_dialog_bg ) ).toArgb() );
+                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
+                            R.color.lion_dialog_bg ) ).toArgb() );
+                    txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.lion_dialog_bg ) ).toArgb() );
+                    txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.lion_dialog_bg ) ).toArgb() );
+                    txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
+                            R.color.lion_dialog_bg ) ).toArgb() );
+                    break;
+            }// end of switch block
+        }// end of if block
+
         ImageView imvClose = keyDialogView.findViewById( R.id.imvCloseDialog );
         Spinner spnAccessProvider = keyDialogView.findViewById( R.id.spnAccessProvider );
         rlKeyNameParent = keyDialogView.findViewById( R.id.spnKeyNameParent );
@@ -2442,6 +2504,8 @@ public class WeatherLionMain extends AppCompatActivity
             {
                 TextView view = (TextView) super.getView( position, convertView, parent );
                 view.setTypeface( WeatherLionApplication.currentTypeface );
+                view.setTextColor( Color.valueOf( mContext.getColor(
+                        R.color.off_white) ).toArgb() );
                 return view;
             }
 
@@ -2462,7 +2526,7 @@ public class WeatherLionMain extends AppCompatActivity
             spnAccessProvider.setSelection( accessProvidersAdapter.getPosition( defaultSelection ) );
         }// end of if block
 
-        spnAccessProvider.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
+        spnAccessProvider.setOnItemSelectedListener( new AdapterView.OnItemSelectedListener()
         {
             @Override
             public void onItemSelected( AdapterView<?> parent, View view, int position, long id )
@@ -2576,7 +2640,7 @@ public class WeatherLionMain extends AppCompatActivity
             @Override
             public void onItemSelected( AdapterView<?> parent, View view, int position, long id )
             {
-                WeatherLionApplication.selectedKeyName = parent.getItemAtPosition(position).toString();
+                WeatherLionApplication.selectedKeyName = parent.getItemAtPosition( position ).toString();
                 pwdKeyValue.requestFocus();
             }
 
@@ -2785,7 +2849,6 @@ public class WeatherLionMain extends AppCompatActivity
         });
 
         final EditText edtKeyValue = keyDialogView.findViewById( R.id.edtKeyValue );
-        final TextView txvKeyValue = keyDialogView.findViewById( R.id.txvKeyValue );
 
         // animate the text view which serves as the title for the edit text view
         edtKeyValue.setOnFocusChangeListener( new View.OnFocusChangeListener()
@@ -2842,7 +2905,21 @@ public class WeatherLionMain extends AppCompatActivity
                         public void onAnimationEnd( Animator animation )
                         {
                             super.onAnimationEnd( animation );
-                            txvKeyValue.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                            txvKeyValue.setTextColor( Color.valueOf( mContext.getColor(
+                                    R.color.black_opacity_80 ) ).toArgb() );
+
+//                            if( widBackgroundColor != null )
+//                            {
+//                                if( widBackgroundColor.toLowerCase().equals( WeatherLionApplication.LION_THEME ) )
+//                                {
+//                                    txvKeyValue.setTextColor( Color.valueOf( mContext.getColor(
+//                                            R.color.black_opacity_80 ) ).toArgb() );
+//                                }// end of if block
+//                                else
+//                                {
+//                                    txvKeyValue.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+//                                }// end of else block
+//                            }// end of if block
                         }
                     });
 
