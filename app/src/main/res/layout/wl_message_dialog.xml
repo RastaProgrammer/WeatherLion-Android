@@ -39,7 +39,7 @@
     </RelativeLayout>
 
     <RelativeLayout
-        android:id="@+id/rlMessageBody"
+        android:id="@+id/rlDialogBody"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/rlDialogTitleBar"
@@ -53,7 +53,7 @@
             android:fillViewport="true" >
 
             <TextView
-                android:id="@+id/txvAcknowledements"
+                android:id="@+id/txvAcknowledgements"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dip"
@@ -85,7 +85,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="-1dip"
-        android:layout_below="@+id/rlMessageBody"
+        android:layout_below="@+id/rlDialogBody"
         android:background="@drawable/wl_custom_dialog_footer" />
 
 </RelativeLayout>

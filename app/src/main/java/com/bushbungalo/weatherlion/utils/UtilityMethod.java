@@ -68,14 +68,18 @@ import org.json.JSONTokener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -1224,8 +1228,9 @@ public abstract class UtilityMethod
 
     public static List<Integer> widgetTextViews = new ArrayList<>();
     public static List<Integer> widgetImageViews = new ArrayList<>();
+    public static List<Integer> dialogTextViews = new ArrayList<>();
 
-    public static void getViewIds(@NonNull ViewGroup view )
+    public static void getViewIds( @NonNull ViewGroup view )
     {
         for ( int i = 0; i < view.getChildCount(); i++ )
         {
@@ -2343,6 +2348,75 @@ public abstract class UtilityMethod
     /* Miscellaneous Methods */
 
     /**
+     * Compare two file to see if they contain the same data
+     *
+     * @param firstFile The first file to compare
+     * @param secondFile The second file to compare
+     * @return True/False depending on the outcome of the evaluation
+     */
+    public static boolean areFilesTheSame( File firstFile, File secondFile )
+    {
+        return compareFilesByByte( firstFile, secondFile );
+    }// end of method areFilesTheSame
+
+    /**
+     * Compare two file to see if they contain the same data using a byte comparison
+     *
+     * @param firstFile The first file to compare
+     * @param secondFile   The second file to compare
+     * @return  True/False depending on the outcome of the evaluation
+     */
+    @SuppressWarnings( "ResultOfMethodCallIgnored" )
+    public static boolean compareFilesByByte(File firstFile, File secondFile )
+    {
+        FileInputStream first;
+        FileInputStream second;
+
+        try
+        {
+            first = new FileInputStream ( firstFile );
+            second = new FileInputStream( secondFile );
+
+            if ( firstFile.length() == secondFile.length() )
+            {
+                int n;
+                byte[] b1;
+                byte[] b2;
+
+                while ( ( n = first.available() )  > 0 )
+                {
+                    if ( n > 80 )
+                    {
+                        n = 80 ;
+                    }// end of if block
+
+                    b1 = new byte[ n ];
+                    b2 = new byte[ n ];
+                    first.read( b1 );
+                    second.read( b2 );
+
+                    if( !Arrays.equals( b1, b2 ) )
+                    {
+                        return false;
+                    }// end of if block
+                }// end of while loop
+            }// end of if block
+            else
+            {
+                return false;  // length is not matched.
+            }// end of else block
+        }// end of try block
+        catch ( IOException e )
+        {
+            logMessage( LogLevel.SEVERE,
+                    "Unable create a copy of file!\n" + e.getMessage(),
+                    TAG + "::copyFileStream" );
+        }// end of catch block
+
+        return true;
+    }// end of method compareFilesByByte
+
+    /**
      * Round a value to 2 decimal places
      *
      * @param value The value to be rounded
@@ -2380,7 +2454,7 @@ public abstract class UtilityMethod
     {
         // Time zone now taken into consideration
         LocalDateTime ldt = new Date( unixTimeValue * 1000L ).toInstant().atZone(
-            ZoneId.of( WeatherLionApplication.storedData.getLocation().getTimezone()
+            ZoneId.of( WeatherLionApplication.currentLocationTimeZone.getTimezoneId()
                 ) ).toLocalDateTime();
 
         String cDate = String.format( "%s/%s/%s %s:%s", ldt.getDayOfMonth(),
@@ -2807,20 +2881,81 @@ public abstract class UtilityMethod
      * @param sourceFile    The original file to be copied.
      * @param destinationFile   The copy of the original file.
      */
-    public static void copyFile( File sourceFile, File destinationFile )
+    public static void copyFile( File sourceFile, File destinationFile, String caller )
     {
         Path source = Paths.get( sourceFile.getPath() );
         Path destination = Paths.get( destinationFile.getPath() );
 
         try
         {
-            Files.copy( source, destination, StandardCopyOption.REPLACE_EXISTING );
+
+            if( !areFilesTheSame( sourceFile, destinationFile ) )
+            {
+                Files.copy( source, destination, StandardCopyOption.REPLACE_EXISTING );
+
+                logMessage( LogLevel.INFO,
+                        String.format( Locale.ENGLISH,"[%s]...File copy completed...", caller ),
+                        TAG + "::copyFile" );
+            }// end of if block
+            else
+            {
+                logMessage( LogLevel.INFO, "The two files already contain the same data...",
+                        TAG + "::copyFile" );
+            }// end of else block
+
         }// end of try block
         catch ( IOException e )
         {
-           logMessage( LogLevel.SEVERE, e.getMessage(), TAG + "::copyFile" );
+            logMessage( LogLevel.SEVERE, e.getMessage(), TAG + "::copyFile" );
         }// end of catch block
     }// end of method copyFile
+
+    /**
+     * Makes a copy of a file.
+     *
+     * @param sourceFile    The original file to be copied.
+     * @param destinationFile   The copy of the original file.
+     */
+    public static void copyFileStream( File sourceFile, File destinationFile )
+    {
+        InputStream inStream;
+        OutputStream outStream;
+
+        try
+        {
+            // attempt file copy only if the file contains data
+            if( !isFileEmpty( getAppContext(), sourceFile.toString() ) )
+            {
+                inStream = new FileInputStream( sourceFile );
+                outStream = new FileOutputStream( destinationFile, true );
+
+                byte[] buffer = new byte[ 1024 ];
+                int length;
+
+                while( ( length = inStream.read( buffer ) ) > 0 )
+                {
+                    outStream.write( buffer, 0, length );
+                }// end of while loop
+
+                inStream.close();
+                outStream.close();
+
+                logMessage( LogLevel.INFO, "File copy completed...",
+                        TAG + "::copyFileStream" );
+            }// end of if block
+            else
+            {
+                String msg = String.format( Locale.ENGLISH, "Source file %s is empty!",
+                        destinationFile.toString() );
+                logMessage( LogLevel.SEVERE, msg,
+                        TAG + "::copyFileStream" );
+            }// end of else block
+        }// end of try block
+        catch ( IOException e )
+        {
+           logMessage( LogLevel.SEVERE, "Unable create a copy of file!\n" + e.getMessage(), TAG + "::copyFileStream" );
+        }// end of catch block
+    }// end of method copyFileStream
 
     /**
      * Format a Uri so that is is compatible with a valid standard Uri {@code String}
@@ -2862,13 +2997,24 @@ public abstract class UtilityMethod
      * @param fileName The {@code File} to be verified
      * @return A value of true/false dependent on the result of the test
      */
-    public static boolean isFileEmpty( Context context, String fileName )
+     public static boolean isFileEmpty( Context context, String fileName )
     {
+        File file = new File( fileName );
+
         try
         {
-            BufferedReader br = new BufferedReader( new FileReader(
-                    context.getFileStreamPath( fileName ).toString() ) );
-            File file = new File( fileName );
+            BufferedReader br;
+
+            // check to see if the file name contain path separators
+            if( fileName.contains( "/" ) || fileName.contains( "\\" ) )
+            {
+                br = new BufferedReader( new FileReader( fileName ) );
+            }// end of if block
+            else
+            {
+                br = new BufferedReader( new FileReader(
+                        context.getFileStreamPath( fileName ).toString() ) );
+            }// end of else block
 
             if( br.readLine() == null && file.length() == 0 )
             {
@@ -2878,10 +3024,12 @@ public abstract class UtilityMethod
         }// end ot try block
         catch ( IOException e )
         {
-           logMessage( LogLevel.SEVERE,"Unable to read file data.",
-        TAG + "::isFileEmpty [line: " + e.getStackTrace()[ 1 ].getLineNumber() +"]" );
+           logMessage( LogLevel.SEVERE,
+               String.format( Locale.ENGLISH, "Unable to read data from file %s.",
+                    file.toString() ),  TAG + "::isFileEmpty [line: " +
+                       e.getStackTrace()[ 1 ].getLineNumber() +"]" );
 
-            // if the file is corrupt then it is to be considered empty
+            // if the file is corrupt or not found, then it is to be considered empty
             return true;
         }// end of catch block
 
@@ -3668,6 +3816,49 @@ public abstract class UtilityMethod
         }// end of else block
     }// end of method serviceCall
 
+    /**
+     * REmove a specific file from the file system
+     *
+     * @param filePath The path to the file
+     */
+    public static void removeFile( String filePath )
+    {
+        File targetFile = new File( getAppContext().getFileStreamPath(
+                filePath ).toString() );
+
+        try
+        {
+            if( targetFile.exists() )
+            {
+                boolean fileRemoved = targetFile.delete();
+
+                if( fileRemoved )
+                {
+                    logMessage( LogLevel.INFO, "File removed!", TAG + "::removeFile" );
+                }// end of if block
+                else
+                {
+                    logMessage( LogLevel.WARNING,
+                        String.format( Locale.ENGLISH, "Unable to remove file %s!",
+                                targetFile.toString() ), TAG + "::removeFile" );
+                }// end of else block
+            }// end of if block
+            else
+            {
+               logMessage( LogLevel.INFO,
+                   String.format( Locale.ENGLISH, "File %s doesn't exist!",
+                       targetFile.toString() ), TAG + "::removeFile" );
+            }// end of else block
+        } // end of try block
+        catch ( Exception e )
+        {
+            logMessage( LogLevel.WARNING,
+                String.format( Locale.ENGLISH, "Unable to remove file %s!\n%s",
+                    targetFile.toString(), e.getMessage() ), TAG + "::removeFile [line: " +
+                        UtilityMethod.getExceptionLineNumber( e )  + "]" );
+        }// end of catch block
+    }// end of method removeFile
+
     /***
      * Replace the last occurrence of a {@code String} contained in another {@code String}
      *
@@ -3715,14 +3906,16 @@ public abstract class UtilityMethod
         final AlertDialog messageDialog = new AlertDialog.Builder( c ).create();
 
         TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledements);
+        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledgements );
 
         txvTitle.setText( title );
         txvMessage.setText( message );
 
         RelativeLayout rlTitleBar = messageDialogView.findViewById( R.id.rlDialogTitleBar );
-        GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
-        bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
+        RelativeLayout dialogBody = messageDialogView.findViewById( R.id.rlDialogBody );
+        RelativeLayout dialogFooter = messageDialogView.findViewById( R.id.rlDialogFooter );
+
+        themeDialog( c, rlTitleBar, dialogBody, dialogFooter );
 
         Button btnOk = messageDialogView.findViewById( R.id.btnOk );
         btnOk.setBackground( WeatherLionApplication.systemButtonDrawable );
@@ -3753,6 +3946,81 @@ public abstract class UtilityMethod
 
         zoomInView( messageDialogView );
     }// end of method showMessageDialog
+
+    /**
+     * Check to see if any previous weather data was stored locally and use it if so.
+     *
+     * @return True/False depending on the result of the check
+     */
+    public static boolean checkForStoredWeatherData( Context context )
+    {
+        if( new File( context.getFileStreamPath(
+                WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
+        {
+            if( !isFileEmpty( context, WeatherLionApplication.WEATHER_DATA_XML ) )
+            {
+                // check for the backup file
+                // make a copy of the existing weather data
+                File currentWeatherDataFile = new File(
+                        context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() );
+
+                File backupWeatherDataFile = new File(
+                        context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
+
+                copyFile( currentWeatherDataFile, backupWeatherDataFile, TAG + "::checkForStoredWeatherData" );
+                return loadWeatherData( context );
+            }// end of if block
+            else
+            {
+                return loadWeatherData( context );
+            }// end of else block
+        }// end of if block
+
+        return false;
+    }// end of method checkForStoredWeatherData
+
+    /**
+     *  Load the data from the weather xml file
+     *
+     * @return True/False depending on success of the operation
+     */
+    public static boolean loadWeatherData( Context context )
+    {
+        // If the weather data xml file exists, that means the program has previously received
+        // data from a web service. The data must then be loaded into memory.
+        WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
+                UtilityMethod.readAll(
+                    context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
+                        .replaceAll( "\t", "" ).trim() );
+
+        WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
+
+        // the file may have been corrupted if the date does not exists
+        if( WeatherLionApplication.storedData.getProvider().getDate() != null )
+        {
+            DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy",
+                    Locale.ENGLISH );
+            try
+            {
+                UtilityMethod.lastUpdated = df.parse( WeatherLionApplication.storedData.getProvider().getDate() );
+            }// end of try block
+            catch ( ParseException e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                        TAG + "::onCreate [line: " +
+                                e.getStackTrace()[1].getLineNumber()+ "]" );
+            }// end of catch block
+
+            WeatherLionApplication.currentSunriseTime = new StringBuilder(
+                    WeatherLionApplication.storedData.getAstronomy().getSunrise() );
+            WeatherLionApplication.currentSunsetTime = new StringBuilder(
+                    WeatherLionApplication.storedData.getAstronomy().getSunset() );
+
+            return true;
+        }// end of if block
+
+        return false;
+    }// end of method loadWeatherData
 
     /**
      * Custom zoom in animation
@@ -3832,6 +4100,125 @@ public abstract class UtilityMethod
 
         return c;
     }// end of method temperatureColor
+
+    /**
+     * The the dialog based on the selected widget background
+     *
+     * @param dialogTitleBar The title bar for the dialog box
+     * @param dialogBody    The body of the dialog box
+     * @param dialogFooter  The footer of the dialog box
+     */
+    public static void themeDialog( Context c, RelativeLayout dialogTitleBar, RelativeLayout dialogBody,
+                                    RelativeLayout dialogFooter )
+    {
+        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( getAppContext() );        
+        String widBackgroundColor= spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
+                com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
+
+        // initialize colours with default values
+        Color titleBarColor = Color.valueOf( c.getColor( R.color.colorPrimary ) );
+        Color bodyAndFooterColour = Color.valueOf( c.getColor( R.color.colorPrimary ) );
+
+        if( widBackgroundColor != null )
+        {
+            switch ( widBackgroundColor.toLowerCase() )
+            {
+                case WeatherLionApplication.AQUA_THEME:
+                    titleBarColor = Color.valueOf( c.getColor( R.color.aqua ) );
+                    bodyAndFooterColour = Color.valueOf( c.getColor( R.color.aqua_dialog_bg ) );
+
+                    break;
+                case WeatherLionApplication.FROSTY_THEME:
+                    titleBarColor = Color.valueOf( c.getColor( R.color.frosty ) );
+                    bodyAndFooterColour = Color.valueOf( c.getColor( R.color.frosty_dialog_bg ) );
+
+                    break;
+                case WeatherLionApplication.RABALAC_THEME:
+                    titleBarColor = Color.valueOf( c.getColor( R.color.rabalac ) );
+                    bodyAndFooterColour = Color.valueOf( c.getColor( R.color.rabalac_dialog_bg ) );
+
+                    break;
+                case WeatherLionApplication.LION_THEME:
+                    titleBarColor = Color.valueOf( c.getColor( R.color.lion ) );
+                    bodyAndFooterColour = Color.valueOf( c.getColor( R.color.lion_dialog_bg ) );
+
+                    break;
+            }// end of switch block
+        }// end of if block
+
+        ( (GradientDrawable) dialogTitleBar.getBackground() ).setColor( titleBarColor.toArgb() );
+
+        ( (GradientDrawable) dialogFooter.getBackground() ).setColor( bodyAndFooterColour.toArgb() );
+
+        dialogBody.setBackgroundColor( bodyAndFooterColour.toArgb() );
+
+        Color textColour;
+
+        LocalTime lt = LocalTime.now();
+
+        String t = get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
+        int h = Integer.parseInt( t.split( ":" )[ 0 ] );    // the current hour
+        int m = Integer.parseInt( t.split( ":" )[ 1 ] );    // the current minute
+
+        if( lt.isAfter( LocalTime.of( h,  m, 0 ) ) &&
+                lt.isBefore( LocalTime.of( 20,59,59 ) ) )
+        {
+            // daytime theme
+            textColour = Color.valueOf( c.getColor( R.color.black_opacity_80 ) );
+            bodyAndFooterColour = Color.valueOf( c.getColor( R.color.off_white ) );
+
+            ( (GradientDrawable) dialogFooter.getBackground() ).setColor(
+                    bodyAndFooterColour.toArgb() );
+            dialogBody.setBackgroundColor( bodyAndFooterColour.toArgb() );
+        }// end of if block
+        else
+        {
+            // night time theme
+            textColour = Color.valueOf( c.getColor( R.color.off_white ) );
+            ( (GradientDrawable) dialogFooter.getBackground() ).setColor(
+                    bodyAndFooterColour.toArgb() );
+            dialogBody.setBackgroundColor( bodyAndFooterColour.toArgb() );
+        }// end of else block
+
+        getDialogTextViewIds( dialogBody );
+
+        for ( int viewId : dialogTextViews )
+        {
+            View v = dialogBody.findViewById( viewId );
+
+            if( v instanceof Button )
+            {
+                ( (TextView) v ).setTextColor( Color.valueOf(
+                    c.getColor( R.color.off_white ) ).toArgb() );
+            }// end of if block
+            else
+            {
+                ( (TextView) v ).setTextColor( textColour.toArgb() );
+            }// end of else block
+        }// end of for loop
+    }// end of method themeDialog
+
+    /**
+     * Get all the TextView ids that are children of a ViewGroup
+     *
+     * @param view The ViewGroup that should contain TextViews as children
+     */
+    public static void getDialogTextViewIds( @NonNull ViewGroup view )
+    {
+        for ( int i = 0; i < view.getChildCount(); i++ )
+        {
+            View v = view.getChildAt( i );
+
+            if ( v instanceof TextView )
+            {
+                dialogTextViews.add( v.getId() );
+            }// end of if block
+            else if ( v instanceof ViewGroup )
+            {
+                getDialogTextViewIds( (ViewGroup) v );
+            }// end of else if block
+        }// end of for loop
+    }// end of method getViewIds
 
     /**
      * Retrieves a specific preference value.

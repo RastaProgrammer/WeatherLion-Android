@@ -844,6 +844,10 @@ public class WidgetUpdateService extends JobIntentService
         {
             UtilityMethod.butteredToast( WeatherLionApplication.getAppContext(), e.toString(), 2, Toast.LENGTH_SHORT );
         }// end of catch block
+
+        String invoker = this.getClass().getSimpleName() + "::astronomyChange";
+        WeatherLionApplication.callMethodByName( null,"sendWeatherNotification",
+                null, null );
     }// end of method astronomyChange
 
     /**
@@ -933,12 +937,18 @@ public class WidgetUpdateService extends JobIntentService
         // inform all receivers that there was a error obtaining weather details
         broadcastLoadingError();
 
-        // reverse the attempt to use the provider
-        loadPreviousWeatherData();
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(
-                WeatherLionApplication.getAppContext() );
-        settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
-                WeatherLionApplication.previousWeatherProvider.toString() ).apply();
+        File weatherDataFile = new File( this.getFileStreamPath(
+                WeatherLionApplication.WEATHER_DATA_XML ).toString() );
+
+        if( weatherDataFile.exists() )
+        {
+            // reverse the attempt to use the provider
+            loadPreviousWeatherData();
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(
+                    WeatherLionApplication.getAppContext() );
+            settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
+                    WeatherLionApplication.previousWeatherProvider.toString() ).apply();
+        }// end of if block
 
         // Calling from a Non-UI Thread
         Handler handler = new Handler( Looper.getMainLooper() );
@@ -1008,15 +1018,6 @@ public class WidgetUpdateService extends JobIntentService
             // check that the ArrayList is not empty and the the first element is not null
             if( strJSON != null && !strJSON.isEmpty() )
             {
-                // make a copy of the existing weather data
-                File currentWeatherDataFile = new File(
-                    this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() );
-
-                File backupWeatherDataFile = new File(
-                    this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
-
-                UtilityMethod.copyFile( currentWeatherDataFile, backupWeatherDataFile );
-
                 // we are connected to the Internet if JSON data is returned
                 if( WeatherLionApplication.largeWidgetIds.length > 0 )
                 {
@@ -1614,6 +1615,18 @@ public class WidgetUpdateService extends JobIntentService
         String today = new SimpleDateFormat( "MM/dd/yyyy",
             Locale.ENGLISH ).format( new Date() );
 
+        if( WeatherLionApplication.currentSunriseTime.length() == 0 )
+        {
+            if( WeatherLionApplication.storedData != null )
+            {
+                WeatherLionApplication.currentSunriseTime.append(
+                        WeatherLionApplication.storedData.getAstronomy().getSunrise() );
+
+                WeatherLionApplication.currentSunsetTime.append(
+                        WeatherLionApplication.storedData.getAstronomy().getSunset() );
+            }// end of if block
+        }// end of if block
+
         String sst = String.format( "%s %s", today,
                 WeatherLionApplication.currentSunsetTime.toString() );
 
@@ -1792,11 +1805,14 @@ public class WidgetUpdateService extends JobIntentService
         // Load current condition weather image
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
-        loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        if( currentConditionIcon != null )
+        {
+            loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-        loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+            loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        }// end of if block
 
         // Five Hour Forecast
         int x = 1;
@@ -1882,9 +1898,12 @@ public class WidgetUpdateService extends JobIntentService
             String fConditionIcon = UtilityMethod.getForecastConditionIcon(
                     fCondition );
 
-            loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-         WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet +
-                     "/weather_" + fConditionIcon );
+            if( fConditionIcon != null )
+            {
+                loadWeatherIcon( largeWidgetRemoteViews, fIcon,
+                        WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet +
+                                "/weather_" + fConditionIcon );
+            }// end of if block
 
             currentFiveDayForecast.add(
                 new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
@@ -2005,11 +2024,14 @@ public class WidgetUpdateService extends JobIntentService
         // Load current condition weather image
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
-        loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        if( currentConditionIcon != null )
+        {
+            loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-        loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+            loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        }// end of if block
 
         // Five Day Forecast
         int i = 1;
@@ -2055,8 +2077,12 @@ public class WidgetUpdateService extends JobIntentService
                 String fConditionIcon = UtilityMethod.getForecastConditionIcon(
                         fCondition );
 
-                loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-                         WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+                if( fConditionIcon != null )
+                {
+                    loadWeatherIcon( largeWidgetRemoteViews, fIcon,
+                            WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet +
+                                    "/weather_" + fConditionIcon );
+                }// end of if block
 
                 currentFiveDayForecast.add(
                         new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
@@ -2168,11 +2194,14 @@ public class WidgetUpdateService extends JobIntentService
         // Load current condition weather image
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
-        loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        if( currentConditionIcon != null )
+        {
+            loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-        loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+            loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        }// end of if block
 
         // Five Day Forecast
         int i = 1;
@@ -2203,8 +2232,12 @@ public class WidgetUpdateService extends JobIntentService
                 String fConditionIcon = UtilityMethod.getForecastConditionIcon(
                         fCondition );
 
-                loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-             WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+                if( fConditionIcon != null )
+                {
+                    loadWeatherIcon( largeWidgetRemoteViews, fIcon,
+                            WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet +
+                                    "/weather_" + fConditionIcon );
+                }// end of if block
 
                 currentFiveDayForecast.add(
                         new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
@@ -2257,7 +2290,10 @@ public class WidgetUpdateService extends JobIntentService
     {
         File previousWeatherData = new File( this.getFileStreamPath(
                 WeatherLionApplication.WEATHER_DATA_XML ).toString() );
-        loadingPreviousWeather =  true;
+
+        File backupWeatherDataFile = new File( this.getFileStreamPath(
+                WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
+        loadingPreviousWeather = true;
 
         // load the current background in use
         loadWidgetBackground();
@@ -2266,8 +2302,13 @@ public class WidgetUpdateService extends JobIntentService
         loadWeatherIconSet();
 
         // check for previous weather data stored locally
-        if( previousWeatherData.exists() )
+        if( previousWeatherData.exists() &&
+                !UtilityMethod.isFileEmpty( this, WeatherLionApplication.WEATHER_DATA_XML ) )
         {
+            // ensure that data is loaded for redundancy
+            WeatherLionApplication.storedData =
+                    WeatherLionApplication.lastDataReceived.getWeatherData();
+
             currentCountry.setLength( 0 );
             currentCountry.append( WeatherLionApplication.storedData.getLocation().getCountry() );
 
@@ -2290,6 +2331,37 @@ public class WidgetUpdateService extends JobIntentService
             sunsetTime.append(WeatherLionApplication.storedData.getAstronomy().getSunset().toUpperCase() );
 
         }// end of if block
+        else if( backupWeatherDataFile.exists() &&
+                !UtilityMethod.isFileEmpty( this, WeatherLionApplication.WEATHER_DATA_BACKUP ) )
+        {
+            UtilityMethod.copyFile( backupWeatherDataFile, previousWeatherData,
+                    TAG + "::loadPreviousWeatherData" );
+
+            // ensure that data is loaded for redundancy
+            WeatherLionApplication.storedData =
+                    WeatherLionApplication.lastDataReceived.getWeatherData();
+
+            currentCountry.setLength( 0 );
+            currentCountry.append( WeatherLionApplication.storedData.getLocation().getCountry() );
+
+            currentCondition.setLength( 0 ); // reset
+            currentCondition.append( WeatherLionApplication.storedData.getCurrent().getCondition() );
+
+            currentWindDirection.setLength( 0 ); // reset
+            currentWindDirection.append( WeatherLionApplication.storedData.getWind().getWindDirection() );
+
+            currentWindSpeed.setLength( 0 );
+            currentWindSpeed.append( WeatherLionApplication.storedData.getWind().getWindSpeed() );
+
+            currentHumidity.setLength( 0 );
+            currentHumidity.append( WeatherLionApplication.storedData.getAtmosphere().getHumidity() );
+
+            sunriseTime.setLength( 0 );
+            sunriseTime.append( WeatherLionApplication.storedData.getAstronomy().getSunrise().toUpperCase() );
+
+            sunsetTime.setLength( 0 );
+            sunsetTime.append(WeatherLionApplication.storedData.getAstronomy().getSunset().toUpperCase() );
+        }// end of else if block
 
         updateTemps( false ); // call update temps here
         formatWeatherCondition();
@@ -2366,11 +2438,14 @@ public class WidgetUpdateService extends JobIntentService
         // Load current condition weather image
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
-        loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-         WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        if( currentConditionIcon != null )
+        {
+            loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-        loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+            loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        }// end of if block
 
         for ( int i = 0; i < WeatherLionApplication.storedData.getDailyForecast().size(); i++ )
         {
@@ -2413,8 +2488,12 @@ public class WidgetUpdateService extends JobIntentService
                     ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
             String wxIcon =  WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon;
 
-            loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-         WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+            if( fConditionIcon != null )
+            {
+                loadWeatherIcon( largeWidgetRemoteViews, fIcon,
+                        WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet +
+                                "/weather_" + fConditionIcon );
+            }// end of if block
 
             currentFiveDayForecast.add(
                     new FiveDayForecast( forecastDate,
@@ -2534,11 +2613,14 @@ public class WidgetUpdateService extends JobIntentService
         // Load current condition weather image
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
-        loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-         WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        if( currentConditionIcon != null )
+        {
+            loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-        loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+            loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        }// end of if block
 
         // Five Hour Forecast
         float fTemp;    // forecasted hour temperature
@@ -2646,8 +2728,12 @@ public class WidgetUpdateService extends JobIntentService
                     String fConditionIcon = UtilityMethod.getForecastConditionIcon(
                             fCondition );
 
-                    loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+                    if( fConditionIcon != null )
+                    {
+                        loadWeatherIcon( largeWidgetRemoteViews, fIcon,
+                                WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet +
+                                        "/weather_" + fConditionIcon );
+                    }// end of if block
 
                     currentFiveDayForecast.add(
                         new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
@@ -2783,11 +2869,14 @@ public class WidgetUpdateService extends JobIntentService
         // Load current condition weather image
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
-        loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-     WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        if( currentConditionIcon != null )
+        {
+            loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-        loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-     WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+            loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        }// end of if block
 
         List< YahooWeatherYdnDataItem.Forecast > fdf = yahoo19.getForecast();
         currentFiveDayForecast.clear(); // ensure that this list is clean
@@ -2810,8 +2899,12 @@ public class WidgetUpdateService extends JobIntentService
             String fConditionIcon = UtilityMethod.getForecastConditionIcon(
                     fCondition );
 
-            loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-         WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+            if( fConditionIcon != null )
+            {
+                loadWeatherIcon( largeWidgetRemoteViews, fIcon,
+                        WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet +
+                                "/weather_" + fConditionIcon );
+            }// end of if block
 
             Date forecastDate = UtilityMethod.getDateTime( fdf.get( i ).getDate() );
 
@@ -2929,11 +3022,14 @@ public class WidgetUpdateService extends JobIntentService
         // Load current condition weather image
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
 
-        loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-     WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        if( currentConditionIcon != null )
+        {
+            loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-        loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-     WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+            loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        }// end of if block
 
         List< YrWeatherDataItem.HourByHourForecast > fhf = yr.getHourlyForecast();
         SimpleDateFormat df = new SimpleDateFormat( "MMMM dd, yyyy", Locale.ENGLISH );
@@ -3032,8 +3128,12 @@ public class WidgetUpdateService extends JobIntentService
                 String fConditionIcon = UtilityMethod.getForecastConditionIcon(
                         fCondition );
 
-                loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-                         WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+                if( fConditionIcon != null )
+                {
+                    loadWeatherIcon( largeWidgetRemoteViews, fIcon,
+                            WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet +
+                                    "/weather_" + fConditionIcon );
+                }// end of if block
 
                 fiveDays.add( wxDailyForecast );
 
@@ -3201,11 +3301,14 @@ public class WidgetUpdateService extends JobIntentService
         String currentConditionIcon = UtilityMethod.getConditionIcon( currentCondition, null );
         String weatherCondition = WeatherLionApplication.storedData.getCurrent().getCondition();
 
-        loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        if( currentConditionIcon != null )
+        {
+            loadWeatherIcon( largeWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
 
-        loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
-                 WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+            loadWeatherIcon( smallWidgetRemoteViews, R.id.imvCurrentCondition,
+                    WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + currentConditionIcon );
+        }// end of if block
 
         for ( int i = 0; i < WeatherLionApplication.storedData.getDailyForecast().size(); i++ )
         {
@@ -3231,8 +3334,12 @@ public class WidgetUpdateService extends JobIntentService
                     = UtilityMethod.weatherImages.get( fCondition.toLowerCase() ) == null
                     ? "na.png" : UtilityMethod.weatherImages.get( fCondition.toLowerCase() );
 
-            loadWeatherIcon( largeWidgetRemoteViews, fIcon,
-                     WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet + "/weather_" + fConditionIcon );
+            if( fConditionIcon != null )
+            {
+                loadWeatherIcon( largeWidgetRemoteViews, fIcon,
+                        WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet +
+                                "/weather_" + fConditionIcon );
+            }// end of if block
 
             if( i == 4 )
             {
@@ -3406,24 +3513,24 @@ public class WidgetUpdateService extends JobIntentService
             lat = CityData.currentCityData.getLatitude();
             lng = CityData.currentCityData.getLongitude();
 
-            // If timezones are inconsistent or data corrupted
-            if( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
+            if( WeatherLionApplication.storedData != null )
             {
-                if( !WeatherLionApplication.storedData.getLocation().getTimezone()
-                        .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                // If timezones are inconsistent or data corrupted
+                if( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
                 {
-                    WeatherLionApplication.storedData.getLocation().setTimezone(
-                            CityData.currentCityData.getTimeZone() );
+                    if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                            .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                    {
+                        WeatherLionApplication.storedData.getLocation().setTimezone(
+                                CityData.currentCityData.getTimeZone() );
 
-                    WeatherLionApplication.currentSunriseTime.setLength( 0 );
-                    WeatherLionApplication.currentSunsetTime.setLength( 0 );
+                        WeatherLionApplication.currentSunriseTime.setLength( 0 );
+                        WeatherLionApplication.currentSunsetTime.setLength( 0 );
+                    }// end of if block
                 }// end of if block
             }// end of if block
             else
             {
-                WeatherLionApplication.storedData.getLocation().setTimezone(
-                        CityData.currentCityData.getTimeZone() );
-
                 WeatherLionApplication.currentSunriseTime.setLength( 0 );
                 WeatherLionApplication.currentSunsetTime.setLength( 0 );
             }// end of else block
@@ -3627,7 +3734,7 @@ public class WidgetUpdateService extends JobIntentService
                         hl[ i - 1 ][ 0 ] = Integer.parseInt( fHigh );
                         hl[ i - 1 ][ 1 ] = Integer.parseInt( fLow );
 
-                        int  dayTemps = this.getResources().getIdentifier( "txvDay" + (i) + "Temps",
+                        int dayTemps = this.getResources().getIdentifier( "txvDay" + (i) + "Temps",
                                 "id", this.getPackageName() );
 
                         largeWidgetRemoteViews.setTextViewText( dayTemps, temps );
@@ -4761,7 +4868,7 @@ public class WidgetUpdateService extends JobIntentService
                     updateAllAppWidgets( appWidgetManager );
                 }// end of if block
             }// end of if block
-            else if( !webData.equals( WeatherLionApplication.EMPTY_JSON ) )
+            else if( webData.equals( WeatherLionApplication.EMPTY_JSON ) )
             {
                 dataRetrievalError();
             }// end of else if block

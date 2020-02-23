@@ -102,6 +102,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -336,7 +337,7 @@ public class WeatherLionMain extends AppCompatActivity
 
         } // end of try block
         catch ( SecurityException | NoSuchMethodException  | IllegalArgumentException |
-                IllegalAccessException | InvocationTargetException e)
+                IllegalAccessException | InvocationTargetException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
                     TAG + "::callMethodByName [line: " +
@@ -1315,6 +1316,107 @@ public class WeatherLionMain extends AppCompatActivity
     }// end of method createLineGraph
 
     /**
+     * Check weather data in case of data corruption
+     */
+    private void checkData()
+    {
+        String invoker = this.getClass().getSimpleName() + "::checkData";
+
+        if( UtilityMethod.checkForStoredWeatherData( this ) )
+        {
+            // weather data might not have been saved as intended
+            if( WeatherLionApplication.currentWxLocation.equals(
+                    WeatherLionApplication.storedData.getLocation().getCity() ) )
+            {
+                WeatherLionApplication.callMethodByName( null,"refreshWeather",
+                        new Class[]{ String.class }, new Object[]{ invoker } );
+            }// end of if block
+
+            // if this location has already been used there is no need to query the
+            // web service as the location data has been stored locally
+            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage(
+                    WeatherLionApplication.currentWxLocation );
+            String json;
+            float lat;
+            float lng;
+
+            if( CityData.currentCityData == null )
+            {
+                // contact GeoNames for data about this city
+                json =
+                        UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                                WeatherLionApplication.currentWxLocation );
+                CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
+
+                lat = CityData.currentCityData.getLatitude();
+                lng = CityData.currentCityData.getLongitude();
+
+                if( WeatherLionApplication.currentLocationTimeZone == null)
+                {
+                    WeatherLionApplication.currentLocationTimeZone =
+                            UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                }// end of if block
+
+                CityData.currentCityData.setTimeZone(
+                        WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+            }// end of if block
+            else
+            {
+                String today = new SimpleDateFormat( "MM/dd/yyyy",
+                        Locale.ENGLISH ).format( new Date() );
+
+                String sst = String.format( "%s %s", today,
+                        WeatherLionApplication.currentSunsetTime.toString() );
+                String srt = String.format( "%s %s", today,
+                        WeatherLionApplication.currentSunriseTime.toString() );
+
+                Date schedSunriseTime = null;
+                Date schedSunsetTime = null;
+
+                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
+                        Locale.ENGLISH );
+
+                try
+                {
+                    schedSunsetTime = sdf.parse( sst );
+                    schedSunriseTime = sdf.parse( srt );
+                } // end of try block
+                catch ( ParseException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                            TAG + "::onCreate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                }// end of catch block
+
+                WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
+                        ZoneId.of( CityData.currentCityData.getTimeZone()
+                        ) ).toLocalDateTime();
+
+                // Load the time zone info for the current city
+                WeatherLionApplication.currentLocationTimeZone = new TimeZoneInfo(
+                        CityData.currentCityData.getCountryCode(),
+                        CityData.currentCityData.getCountryName(),
+                        CityData.currentCityData.getLatitude(),
+                        CityData.currentCityData.getLongitude(),
+                        CityData.currentCityData.getTimeZone(),
+                        UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ),
+                        schedSunriseTime,
+                        schedSunsetTime );
+            }// end of else block
+        }// end of if block
+        else
+        {
+            // generate some stored data by calling the provider for the
+            // data using the user's stored settings
+            if( WeatherLionApplication.storedPreferences.getLocation() != null )
+            {
+                WeatherLionApplication.restoringWeatherData = true;
+                WeatherLionApplication.callMethodByName( null,"refreshWeather",
+                        new Class[]{ String.class }, new Object[]{ invoker } );
+            }// end of if block
+        }// end of else block
+    }// end of method checkData
+
+    /**
      * Load a list of previous place that were searched for
      */
     private void loadPreviousSearches()
@@ -1492,8 +1594,7 @@ public class WeatherLionMain extends AppCompatActivity
                 }// end of switch block
             }// end of if block
 
-            WeatherLionApplication.callMethodByName( null, "checkForStoredWeatherData",
-                    null, null );
+            UtilityMethod.checkForStoredWeatherData( this );
 
             View keysDialogView = View.inflate( this, R.layout.wl_data_keys_alt_layout, null);
             WeatherLionApplication.iconSet = WeatherLionApplication.spf.getString(
@@ -1517,74 +1618,142 @@ public class WeatherLionMain extends AppCompatActivity
                         "constructDataAccess", null, null );
             }// end of if block
 
+            File weatherDataFile = new File( this.getFileStreamPath(
+                    WeatherLionApplication.WEATHER_DATA_XML ).toString() );
+
             if( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
             {
-                if( !UtilityMethod.isFileEmpty( this, WeatherLionApplication.WEATHER_DATA_XML ) )
+                if( UtilityMethod.isFileEmpty( this, WeatherLionApplication.WEATHER_DATA_XML ) )
                 {
-                    if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity() != null )
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                "Weather data file is empty file!", TAG + "::onCreate" );
+                    UtilityMethod.removeFile( WeatherLionApplication.WEATHER_DATA_XML );
+
+                    if( attemptDataRestoration() )
                     {
-                        // if data was stored then the original value the location is known
-                        WeatherLionApplication.currentWxLocation =
-                                WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
-
-                        // if there is no location stored in the local preferences, go to the settings activity
-                        if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
-                                Preference.DEFAULT_WEATHER_LOCATION ) )
-                        {
-                            showPreferenceActivity( false );
-                            return;
-                        }// end of if block
-                        else
-                        {
-                            initializeMainWindow();
-                        }// end of if block
-
-                        if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
-                        {
-                            noGpsAlert();
-                        }// end of if block
-
-                        initializeMainWindow();
-                        loadMainActivityWeather();
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                        "Restored data from preferences!", TAG + "::onCreate" );
                     }// end of if block
                 }// end of if block
             }// end of if block
             else if( WeatherLionApplication.storedPreferences != null )
             {
-                if( !WeatherLionApplication.storedPreferences.getLocation().equals(
-                        Preference.DEFAULT_WEATHER_LOCATION ) )
+                if( attemptDataRestoration() )
                 {
-                    /* If the preferences are stored correctly and there is no weather data
-                    stored the service data service must obtain the required data based on
-                    the stored preferences
-                    */
-                    if( UtilityMethod.hasInternetConnection( WeatherLionApplication.getAppContext() ) )
-                    {
-                        WeatherLionApplication.restoringWeatherData = true;
-                        UtilityMethod.refreshRequestedBySystem = true;
-                        UtilityMethod.refreshRequestedByUser = false;
-
-                        String invoker = this.getClass().getSimpleName() + "::onCreate";
-                        WeatherLionApplication.callMethodByName( null,"refreshWeather",
-                                new Class[]{ String.class }, new Object[]{ invoker } );
-
-                        showLoadingDialog( "Restoring Weather Data..." );
-                        initializeWelcomeWindow();
-                        // Have a loading screen displayed in the mean time
-                    }// end of if block
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                        "Restored data from preferences!", TAG + "::onCreate" );
                 }// end of if block
-                else
-                {
-                    initializeWelcomeWindow();
-                }//end of else block
 
             }// end of else if block
             else
             {
+                if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity() != null )
+                {
+                    // if data was stored then the original value the location is known
+                    WeatherLionApplication.currentWxLocation =
+                            WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
+
+                    // if there is no location stored in the local preferences, go to the settings activity
+                    if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
+                            Preference.DEFAULT_WEATHER_LOCATION ) )
+                    {
+                        showPreferenceActivity( false );
+                        return;
+                    }// end of if block
+                    else
+                    {
+                        initializeMainWindow();
+                    }// end of if block
+
+                    if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
+                    {
+                        noGpsAlert();
+                    }// end of if block
+
+                    initializeMainWindow();
+                    checkData();
+                    loadMainActivityWeather();
+                }// end of if block
+
                 initializeWelcomeWindow();
             }//end of else block
         }// end of else block
     }// end of method onCreate
+
+    /**
+     * Attempt recovery from data corruption
+     *
+     * @return True/False if the recovery attempt was successful
+     */
+    private boolean attemptDataRestoration()
+    {
+        if( WeatherLionApplication.storedPreferences != null )
+        {
+            if ( !WeatherLionApplication.storedPreferences.getLocation().equals(
+                    Preference.DEFAULT_WEATHER_LOCATION ) )
+            {
+                /* If the preferences are stored correctly and there is no weather data
+                stored the service data service must obtain the required data based on
+                the stored preferences
+                */
+                if ( UtilityMethod.hasInternetConnection( this ) )
+                {
+                    showLoadingDialog( "Restoring Weather Data..." );
+                    initializeWelcomeWindow();
+
+                    WeatherLionApplication.restoringWeatherData = true;
+                    UtilityMethod.refreshRequestedBySystem = true;
+                    UtilityMethod.refreshRequestedByUser = false;
+
+                    String invoker = this.getClass().getSimpleName() + "::attemptDataRestoration";
+                    WeatherLionApplication.callMethodByName( null, "refreshWeather",
+                            new Class[]{ String.class }, new Object[]{ invoker } );
+
+                    return true;
+                    // Have a loading screen displayed in the mean time
+                }// end of if block
+            }// end of if block
+            else
+            {
+                if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity() != null )
+                {
+                    // if data was stored then the original value the location is known
+                    WeatherLionApplication.currentWxLocation =
+                            WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
+
+                    // if there is no location stored in the local preferences, go to the settings activity
+                    if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
+                            Preference.DEFAULT_WEATHER_LOCATION ) )
+                    {
+                        showPreferenceActivity( false );
+                        return false;
+                    }// end of if block
+                    else
+                    {
+                        initializeMainWindow();
+                    }// end of if block
+
+                    if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
+                    {
+                        noGpsAlert();
+                    }// end of if block
+
+                    initializeMainWindow();
+                    checkData();
+                    loadMainActivityWeather();
+
+                    return true;
+                }// end of if block
+                else
+                {
+                    initializeWelcomeWindow();
+                    return false;
+                }// end of else block
+            }//end of else block
+        }// end of if block
+
+        return false;
+    }// end of method attemptDataRestoration
 
     /**
      * Prepare the main window for activity
@@ -1625,7 +1794,7 @@ public class WeatherLionMain extends AppCompatActivity
 
         UtilityMethod.loadCustomFont( (RelativeLayout) findViewById( R.id.weather_main_container) );
 
-        TextView txvMessage = findViewById(R.id.txvAcknowledements);
+        TextView txvMessage = findViewById(R.id.txvAcknowledgements);
         txvMessage.setText( HtmlCompat.fromHtml( getString( R.string.announcement ), 0 ) );
         View welcomeActivity = findViewById( R.id.weather_main_container);
 
@@ -1714,8 +1883,8 @@ public class WeatherLionMain extends AppCompatActivity
             catch ( ParseException e )
             {
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
-                        TAG + "::onCreate [line: " +
-                                e.getStackTrace()[1].getLineNumber()+ "]" );
+                TAG + "::onCreate [line: " +
+                        e.getStackTrace()[1].getLineNumber()+ "]" );
             }// end of catch block
         }// end of if block
 
@@ -1723,14 +1892,15 @@ public class WeatherLionMain extends AppCompatActivity
         {
             if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity() != null )
             {
-                if( !findViewById( R.id.weather_main_container ).getTag().equals( "main_screen" ) )
-                {
-                    initializeMainWindow();
-                    doGlimpseRotation( findViewById( R.id.imvBlade ) );
-                    loadMainActivityWeather();
-                }// end of if block
+                initializeMainWindow();
+                doGlimpseRotation( findViewById( R.id.imvBlade ) );
+                loadMainActivityWeather();
             }// end of if block
         }// end of if block
+        else
+        {
+            initializeWelcomeWindow();
+        }// end of else block
 
         if( txvLastUpdated != null && UtilityMethod.lastUpdated != null )
         {
@@ -1909,7 +2079,7 @@ public class WeatherLionMain extends AppCompatActivity
         bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
 
         TextView txvDialogTitle = responseDialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvDialogMessage = responseDialogView.findViewById( R.id.txvAcknowledements);
+        TextView txvDialogMessage = responseDialogView.findViewById( R.id.txvAcknowledgements);
 
         Button btnPositive = responseDialogView.findViewById( R.id.btnPositive );
         btnPositive.setBackground( WeatherLionApplication.systemButtonDrawable );
@@ -3024,7 +3194,7 @@ public class WeatherLionMain extends AppCompatActivity
         final View messageDialogView = View.inflate( this, R.layout.wl_message_dialog, null );
         final AlertDialog messageDialog = new AlertDialog.Builder( this ).create();
         TextView txvTitle = messageDialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledements);
+        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledgements);
 
         txvTitle.setText( title );
         txvMessage.setText( message );

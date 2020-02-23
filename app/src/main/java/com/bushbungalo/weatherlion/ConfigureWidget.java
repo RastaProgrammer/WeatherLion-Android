@@ -1145,7 +1145,7 @@ public class ConfigureWidget extends AppCompatActivity
         rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
 
         TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
-        TextView txvDialogMessage = dialogView.findViewById( R.id.txvAcknowledements);
+        TextView txvDialogMessage = dialogView.findViewById( R.id.txvAcknowledgements);
 
         Button btnPositive = dialogView.findViewById( R.id.btnPositive );
         btnPositive.setBackground( WeatherLionApplication.systemButtonDrawable );
@@ -1284,7 +1284,7 @@ public class ConfigureWidget extends AppCompatActivity
         txvTitle.setTypeface( WeatherLionApplication.currentTypeface );
         txvTitle.setText( title );
 
-        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledements);
+        TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledgements);
         txvMessage.setTypeface( WeatherLionApplication.currentTypeface );
 
         Button btnOk = messageDialogView.findViewById( R.id.btnOk );

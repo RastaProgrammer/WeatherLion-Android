@@ -60,7 +60,7 @@ public class WeatherDataXMLService extends JobIntentService
 		super.onDestroy();
 	}// end of method onDestroy
 
-	public static void enqueueWork(Context context, Intent work )
+	public static void enqueueWork( Context context, Intent work )
 	{
 		enqueueWork( context, WeatherDataXMLService.class, JOB_ID, work );
 	}// end of method enqueueWork
@@ -105,55 +105,38 @@ public class WeatherDataXMLService extends JobIntentService
 		File backupWeatherDataFile = new File(
 				this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
 
-		boolean blnBackupCreated;
-
-		try
+		if( UtilityMethod.isFileEmpty( WeatherLionApplication.getAppContext(),
+				WeatherLionApplication.WEATHER_DATA_XML ) )
 		{
-			// ensure that a file is created before making a copy
-			blnBackupCreated = backupWeatherDataFile.createNewFile();
+			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+				"Source file is empty file!", TAG + "::createBackupFile" );
+		}// end of if block
+		else
+		{
+			boolean blnBackupCreated;
 
-			if( blnBackupCreated || backupWeatherDataFile.exists() )
+			try
 			{
-				UtilityMethod.copyFile( backupWeatherDataFile, currentWeatherDataFile );
-			}// end of if block
-		}// end of try block
-		catch( IOException e )
-		{
-			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Error occurred while making backup file!\n"
-				+ e.getMessage(),TAG + "::createBackupFile [line: " +
-					UtilityMethod.getExceptionLineNumber( e )  + "]" );
-		}// end of catch block
+				// ensure that a file is created before making a copy
+				blnBackupCreated = backupWeatherDataFile.createNewFile();
+
+				if(  currentWeatherDataFile.exists() && backupWeatherDataFile.exists() )
+				{
+					if( blnBackupCreated )
+					{
+						UtilityMethod.copyFile( currentWeatherDataFile, backupWeatherDataFile,
+								TAG + "::createBackupFile" );
+					}// end of if block
+				}// end of if block
+			}// end of try block
+			catch( IOException e )
+			{
+				UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Error occurred while making backup file!\n"
+						+ e.getMessage(),TAG + "::createBackupFile [line: " +
+						UtilityMethod.getExceptionLineNumber( e )  + "]" );
+			}// end of catch block
+		}// end of else block
 	}// end of method createBackupFile
-
-	private void removeBackupFile()
-	{
-		File dataBackup = new File( this.getFileStreamPath(
-				WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
-
-		try
-		{
-			if( dataBackup.exists() )
-			{
-				// remove the backup after successful saving the new file
-				boolean removeBackup = new File( this.getFileStreamPath(
-						WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).delete();
-
-				UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Backup weather data removed!",
-						TAG + "::removeBackupFile" );
-			}// end of if block
-			else
-			{
-				UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Backup weather data doesn't exist!",
-				TAG + "::removeBackupFile" );
-			}// end of else block
-		} // end of try block
-		catch ( Exception e )
-		{
-			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to remove backup weather data!\n"
-				+ e.getMessage(),TAG + "::removeBackupFile [line: " +
-					UtilityMethod.getExceptionLineNumber( e )  + "]" );
-		}// end of catch block
-	}// end of method removeBackupFile
 
 	private void saveCurrentWeatherXML()
 	{
@@ -283,7 +266,6 @@ public class WeatherDataXMLService extends JobIntentService
 			WeatherLionApplication.previousWeatherProvider.append( xmlData.getProviderName() );
 
 			broadcastDataStored();
-			removeBackupFile();
 		}// end of try block
 		catch ( IOException e )
 		{

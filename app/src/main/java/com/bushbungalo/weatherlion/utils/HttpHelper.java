@@ -51,7 +51,7 @@ public class HttpHelper
         LocalBroadcastManager manager =
                 LocalBroadcastManager.getInstance( WeatherLionApplication.getAppContext() );
         manager.sendBroadcast( messageIntent );
-    }
+    }// end of method broadcastServiceResponse
 
     /**
      * Returns text from a URL on a web server
