@@ -952,7 +952,8 @@ public class WeatherLionApplication extends Application
                         }// end of if block
                         else if( WidgetUpdateService.hereAppId != null )
                         {
-                            UtilityMethod.showMessageDialog( "Here Maps Weather requires an app_code which is"
+                            UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT,
+                                    "Here Maps Weather requires an app_code which is"
                                             + " not stored in the database.",
                                     PROGRAM_NAME + " - Missing Key", getAppContext() );
                         }// end of if block
@@ -2087,7 +2088,7 @@ public class WeatherLionApplication extends Application
     /**
      * Receives broadcasts sent by the operating system.
      */
-    private class SystemBroadcastReceiver extends BroadcastReceiver
+    private static class SystemBroadcastReceiver extends BroadcastReceiver
     {
         /**
          * {@inheritDoc}

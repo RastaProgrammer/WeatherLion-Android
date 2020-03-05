@@ -8,7 +8,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -151,41 +150,31 @@ public class CityFinderPreference extends DialogPreference
         RelativeLayout dialogBody = dialogView.findViewById( R.id.rlDialogBody );
         RelativeLayout dialogFooter = dialogView.findViewById( R.id.rlDialogFooter );
 
+        UtilityMethod.themeDialog( mContext, rlTitleBar, dialogBody, dialogFooter );
+
         if( widBackgroundColor != null )
         {
             switch ( widBackgroundColor.toLowerCase() )
             {
                 case WeatherLionApplication.AQUA_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.aqua_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.aqua_dialog_bg ) ).toArgb() );
-                    imbClear.getBackground().setColorFilter( mContext.getColor( R.color.aqua_dialog_bg ), PorterDuff.Mode.MULTIPLY );
-                    imbSearch.getBackground().setColorFilter( mContext.getColor( R.color.aqua_dialog_bg ), PorterDuff.Mode.MULTIPLY );
-                    imbWorking.getBackground().setColorFilter( mContext.getColor( R.color.aqua_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbClear.getBackground().setTint( mContext.getColor( R.color.aqua_dialog_bg ) );
+                    imbSearch.getBackground().setTint( mContext.getColor( R.color.aqua_dialog_bg ) );
+                    imbWorking.getBackground().setTint( mContext.getColor( R.color.aqua_dialog_bg ) );
                     break;
                 case WeatherLionApplication.FROSTY_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.frosty_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.frosty_dialog_bg ) ).toArgb() );
-                    imbClear.getBackground().setColorFilter( mContext.getColor( R.color.frosty_dialog_bg ), PorterDuff.Mode.MULTIPLY );
-                    imbSearch.getBackground().setColorFilter( mContext.getColor( R.color.frosty_dialog_bg ), PorterDuff.Mode.MULTIPLY );
-                    imbWorking.getBackground().setColorFilter( mContext.getColor( R.color.frosty_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbClear.getBackground().setTint( mContext.getColor( R.color.frosty_dialog_bg ) );
+                    imbSearch.getBackground().setTint( mContext.getColor( R.color.frosty_dialog_bg ) );
+                    imbWorking.getBackground().setTint( mContext.getColor( R.color.frosty_dialog_bg ) );
                     break;
                 case WeatherLionApplication.RABALAC_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.rabalac_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.rabalac_dialog_bg ) ).toArgb() );
-                    imbClear.getBackground().setColorFilter( mContext.getColor( R.color.rabalac_dialog_bg ), PorterDuff.Mode.MULTIPLY );
-                    imbSearch.getBackground().setColorFilter( mContext.getColor( R.color.rabalac_dialog_bg ), PorterDuff.Mode.MULTIPLY );
-                    imbWorking.getBackground().setColorFilter( mContext.getColor( R.color.rabalac_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbClear.getBackground().setTint( mContext.getColor( R.color.rabalac_dialog_bg ) );
+                    imbSearch.getBackground().setTint( mContext.getColor( R.color.rabalac_dialog_bg ) );
+                    imbWorking.getBackground().setTint( mContext.getColor( R.color.rabalac_dialog_bg ) );
                     break;
                 case WeatherLionApplication.LION_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.lion_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.lion_dialog_bg ) ).toArgb() );
-                    imbClear.getBackground().setColorFilter( mContext.getColor( R.color.lion_dialog_bg ), PorterDuff.Mode.MULTIPLY );
-                    imbSearch.getBackground().setColorFilter( mContext.getColor( R.color.lion_dialog_bg ), PorterDuff.Mode.MULTIPLY );
-                    imbWorking.getBackground().setColorFilter( mContext.getColor( R.color.lion_dialog_bg ), PorterDuff.Mode.MULTIPLY );
+                    imbClear.getBackground().setTint( mContext.getColor( R.color.lion_dialog_bg ) );
+                    imbSearch.getBackground().setTint( mContext.getColor( R.color.lion_dialog_bg ) );
+                    imbWorking.getBackground().setTint( mContext.getColor( R.color.lion_dialog_bg ) );
                     break;
             }// end of switch block
         }// end of if block

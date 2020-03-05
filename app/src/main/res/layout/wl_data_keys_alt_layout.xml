@@ -198,7 +198,7 @@
                 android:layout_marginBottom="0dip"
                 android:autofillHints=""
                 android:background="@drawable/wl_round_textbox"
-                android:inputType="text"
+                android:inputType="textPassword"
                 android:paddingStart="8dip"
                 android:paddingEnd="8dip"
                 android:textCursorDrawable="@drawable/wl_cursor_color"

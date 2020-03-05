@@ -67,7 +67,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     {
         ComponentName largeWidget = new ComponentName( context, LargeWeatherWidgetProvider.class );
         largeWidgetRemoteViews = new RemoteViews( context.getPackageName(),
-                R.layout.wl_large_weather_widget_activity_alternate);
+                R.layout.wl_large_weather_widget_activity_alternate );
 
         int[] allWidgetIds = appWidgetManager.getAppWidgetIds( largeWidget );
 
@@ -254,8 +254,9 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             if( ICON_REFRESH_MESSAGE.equals( updateExtra ) )
             {
                 ComponentName watchWidget = new ComponentName( context, LargeWeatherWidgetProvider.class );
-                largeWidgetRemoteViews = new RemoteViews( context.getPackageName(), R.layout.wl_large_weather_widget_activity_alternate);
-                appWidgetManager.updateAppWidget( watchWidget, largeWidgetRemoteViews);
+                largeWidgetRemoteViews = new RemoteViews( context.getPackageName(),
+                        R.layout.wl_large_weather_widget_activity_alternate );
+                appWidgetManager.updateAppWidget( watchWidget, largeWidgetRemoteViews );
             }// end of if block
         }// end of if block
     }// end of method onReceive

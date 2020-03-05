@@ -10,7 +10,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.preference.DialogPreference;
-import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
@@ -63,41 +62,11 @@ public class LionListPreference extends DialogPreference
     {
         dialogView = View.inflate( mContext, layoutId, null );
 
-        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( getContext() );
-        String widBackgroundColor = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
-                com.bushbungalo.weatherlion.Preference.DEFAULT_WIDGET_BACKGROUND );
         RelativeLayout rlTitleBar = dialogView.findViewById( R.id.rlDialogTitleBar );
         RelativeLayout dialogBody = dialogView.findViewById( R.id.rlDialogBody );
         RelativeLayout dialogFooter = dialogView.findViewById( R.id.rlDialogFooter );
 
-        if( widBackgroundColor != null )
-        {
-            switch ( widBackgroundColor.toLowerCase() )
-            {
-                case WeatherLionApplication.AQUA_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.aqua_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.aqua_dialog_bg ) ).toArgb() );
-                    break;
-                case WeatherLionApplication.FROSTY_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.frosty_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.frosty_dialog_bg ) ).toArgb() );
-                    break;
-                case WeatherLionApplication.RABALAC_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.rabalac_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.rabalac_dialog_bg ) ).toArgb() );
-
-                    break;
-                case WeatherLionApplication.LION_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.lion_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.lion_dialog_bg ) ).toArgb() );
-
-                    break;
-            }// end of switch block
-        }// end of if block
+        UtilityMethod.themeDialog( mContext, rlTitleBar, dialogBody, dialogFooter );
 
         if( WeatherLionApplication.systemColor != null )
         {
@@ -135,6 +104,16 @@ public class LionListPreference extends DialogPreference
                     entryButton.setLayoutParams( params );
                     entryButton.setText( entry );
                     entryButton.setTypeface( WeatherLionApplication.currentTypeface );
+
+                    if( UtilityMethod.isDayTime() )
+                    {
+                        entryButton.setTextColor(WeatherLionApplication.systemColor.toArgb() );
+                    }// end of if block
+                    else
+                    {
+                        entryButton.setTextColor( Color.valueOf( mContext.getColor( R.color.off_white ) )
+                                .toArgb() );
+                    }// end of else block
                     rdgEntries.addView( entryButton );
                 }// end of for each loop
 
@@ -182,6 +161,17 @@ public class LionListPreference extends DialogPreference
                     entryButton.setPadding( 60, 0, 0, 0 );
                     entryButton.setLayoutParams( params );
                     entryButton.setText( entry );
+
+                    if( UtilityMethod.isDayTime() )
+                    {
+                        entryButton.setTextColor(WeatherLionApplication.systemColor.toArgb() );
+                    }// end of if block
+                    else
+                    {
+                        entryButton.setTextColor( Color.valueOf( mContext.getColor( R.color.off_white ) )
+                                .toArgb() );
+                    }// end of else block
+
                     rdgEntries.addView( entryButton );
                 }// end of for each loop
 
@@ -225,6 +215,16 @@ public class LionListPreference extends DialogPreference
                     {
                         entryButton.setTypeface( WeatherLionApplication.fonts.get( font ) );
                     }// end fo if block
+
+                    if( UtilityMethod.isDayTime() )
+                    {
+                        entryButton.setTextColor(WeatherLionApplication.systemColor.toArgb() );
+                    }// end of if block
+                    else
+                    {
+                        entryButton.setTextColor( Color.valueOf( mContext.getColor( R.color.off_white ) )
+                                .toArgb() );
+                    }// end of else block
 
                     rdgEntries.addView( entryButton );
                 }// end of for each loop

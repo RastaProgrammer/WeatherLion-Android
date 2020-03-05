@@ -731,7 +731,7 @@ public class WeatherLionMain extends AppCompatActivity
                                         WeatherLionApplication.CELSIUS : WeatherLionApplication.FAHRENHEIT
                                 ) );
 
-                        UtilityMethod.showMessageDialog( message,
+                        UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT, message,
                                 UtilityMethod.toProperCase( forecastHour ) + " Forecast", mContext );
                     }// end of method onClick
                 });
@@ -2240,7 +2240,6 @@ public class WeatherLionMain extends AppCompatActivity
                         extras.putString( WeatherLionApplication.LAUNCH_METHOD_EXTRA,
                                 WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
 
-
                         Intent methodIntent = new Intent( mContext, WidgetUpdateService.class );
                         methodIntent.putExtras( extras );
                         WidgetUpdateService.enqueueWork( mContext, methodIntent );
@@ -2550,7 +2549,6 @@ public class WeatherLionMain extends AppCompatActivity
         keyEntryDialog.setView( keyDialogView );
 
         RelativeLayout rlTitleBar = keyDialogView.findViewById( R.id.rlDialogTitleBar );
-        //rlTitleBar.setBackgroundColor( WeatherLionApplication.systemColor.toArgb() );
 
         GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
         bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
@@ -2565,58 +2563,6 @@ public class WeatherLionMain extends AppCompatActivity
         TextView txvKeyName = keyDialogView.findViewById( R.id.txvKeyName );
         final TextView txvKeyValue = keyDialogView.findViewById( R.id.txvKeyValue );
 
-        if( widBackgroundColor != null )
-        {
-            switch ( widBackgroundColor.toLowerCase() )
-            {
-                case WeatherLionApplication.AQUA_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.aqua_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.aqua_dialog_bg ) ).toArgb() );
-                    txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.aqua_dialog_bg ) ).toArgb() );
-                    txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.aqua_dialog_bg ) ).toArgb() );
-                    txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.aqua_dialog_bg ) ).toArgb() );
-                    break;
-                case WeatherLionApplication.FROSTY_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.frosty_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.frosty_dialog_bg ) ).toArgb() );
-                    txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.frosty_dialog_bg ) ).toArgb() );
-                    txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.frosty_dialog_bg ) ).toArgb() );
-                    txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.frosty_dialog_bg ) ).toArgb() );
-
-                    break;
-                case WeatherLionApplication.RABALAC_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.rabalac_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.rabalac_dialog_bg ) ).toArgb() );
-                    txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.rabalac_dialog_bg ) ).toArgb() );
-                    txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.rabalac_dialog_bg ) ).toArgb() );
-                    txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.rabalac_dialog_bg ) ).toArgb() );
-                    break;
-                case WeatherLionApplication.LION_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.lion_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.lion_dialog_bg ) ).toArgb() );
-                    txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.lion_dialog_bg ) ).toArgb() );
-                    txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.lion_dialog_bg ) ).toArgb() );
-                    txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
-                            R.color.lion_dialog_bg ) ).toArgb() );
-                    break;
-            }// end of switch block
-        }// end of if block
-
         ImageView imvClose = keyDialogView.findViewById( R.id.imvCloseDialog );
         Spinner spnAccessProvider = keyDialogView.findViewById( R.id.spnAccessProvider );
         rlKeyNameParent = keyDialogView.findViewById( R.id.spnKeyNameParent );
@@ -2625,11 +2571,87 @@ public class WeatherLionMain extends AppCompatActivity
         pwdKeyValue = keyDialogView.findViewById( R.id.edtKeyValue );
         CheckBox chkShowPwd = keyDialogView.findViewById( R.id.cbShowPwd );
 
+        UtilityMethod.themeDialog( this, rlTitleBar, dialogBody, dialogFooter );
+
+        if( UtilityMethod.isDayTime() )
+        {
+            txvAccessProvider.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+            txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
+                    R.color.off_white ) ).toArgb() );
+            txvKeyName.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+            txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
+                    R.color.off_white ) ).toArgb() );
+            txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
+                    R.color.off_white ) ).toArgb() );
+            pwdKeyValue.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+            spnAccessProvider.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_white ) );
+            spnProviderKeys.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_white ) );
+        }// end of if block
+        else
+        {
+            if( widBackgroundColor != null )
+            {
+                switch ( widBackgroundColor.toLowerCase() )
+                {
+                    case WeatherLionApplication.AQUA_THEME:
+                        txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.aqua_dialog_bg ) ).toArgb() );
+                        txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.aqua_dialog_bg ) ).toArgb() );
+                        txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.aqua_dialog_bg ) ).toArgb() );
+                        pwdKeyValue.setTextColor( Color.valueOf( mContext.getColor(
+                                R.color.aqua_dialog_bg ) ).toArgb() );
+                        spnAccessProvider.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_aqua ) );
+                        spnProviderKeys.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_aqua ) );
+                        break;
+                    case WeatherLionApplication.FROSTY_THEME:
+                        txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.frosty_dialog_bg ) ).toArgb() );
+                        txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.frosty_dialog_bg ) ).toArgb() );
+                        txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.frosty_dialog_bg ) ).toArgb() );
+                        pwdKeyValue.setTextColor( Color.valueOf( mContext.getColor(
+                                R.color.frosty_dialog_bg ) ).toArgb() );
+                        spnAccessProvider.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_frosty ) );
+                        spnProviderKeys.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_frosty ) );
+                        break;
+                    case WeatherLionApplication.RABALAC_THEME:
+                        txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.rabalac_dialog_bg ) ).toArgb() );
+                        txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.rabalac_dialog_bg ) ).toArgb() );
+                        txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.rabalac_dialog_bg ) ).toArgb() );
+                        pwdKeyValue.setTextColor( Color.valueOf( mContext.getColor(
+                                R.color.rabalac_dialog_bg ) ).toArgb() );
+                        spnAccessProvider.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_rabalac ) );
+                        spnProviderKeys.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_rabalac ) );
+                        break;
+                    case WeatherLionApplication.LION_THEME:
+                        txvAccessProvider.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.lion_dialog_bg ) ).toArgb() );
+                        txvKeyName.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.lion_dialog_bg ) ).toArgb() );
+                        txvKeyValue.setBackgroundColor( Color.valueOf( mContext.getColor(
+                                R.color.lion_dialog_bg ) ).toArgb() );
+                        pwdKeyValue.setTextColor( Color.valueOf( mContext.getColor(
+                                R.color.lion_dialog_bg ) ).toArgb() );
+                        spnAccessProvider.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_lion ) );
+                        spnProviderKeys.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_lion ) );
+                        break;
+                }// end of switch block
+            }// end of if block
+        }// end of else block
+
         int[][] states = { { android.R.attr.state_checked }, {} };
         int[] colors = { WeatherLionApplication.systemColor.toArgb(),
                 WeatherLionApplication.systemColor.toArgb() };
         CompoundButtonCompat.setButtonTintList( chkShowPwd,
                 new ColorStateList( states, colors ) );
+
+        chkShowPwd.setTextColor( WeatherLionApplication.systemColor.toArgb() );
 
         ImageView imvAccessProviderDropArrow = keyDialogView.findViewById(
                 R.id.imvAccessProviderDropArrow );
@@ -2673,9 +2695,19 @@ public class WeatherLionMain extends AppCompatActivity
             public View getView( int position, View convertView, @NonNull ViewGroup parent )
             {
                 TextView view = (TextView) super.getView( position, convertView, parent );
-                view.setTypeface( WeatherLionApplication.currentTypeface );
-                view.setTextColor( Color.valueOf( mContext.getColor(
-                        R.color.off_white) ).toArgb() );
+
+                if( UtilityMethod.isDayTime() )
+                {
+                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                    view.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                }// end of if block
+                else
+                {
+                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                    view.setTextColor( Color.valueOf( mContext.getColor(
+                            R.color.off_white ) ).toArgb() );
+                }// end of else block
+
                 return view;
             }
 
@@ -2684,7 +2716,19 @@ public class WeatherLionMain extends AppCompatActivity
             public View getDropDownView( int position, View convertView, @NonNull ViewGroup parent )
             {
                 TextView view = (TextView) super.getDropDownView( position, convertView, parent );
-                view.setTypeface( WeatherLionApplication.currentTypeface );
+
+                if( UtilityMethod.isDayTime() )
+                {
+                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                    view.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                }// end of if block
+                else
+                {
+                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                    view.setTextColor( Color.valueOf( mContext.getColor(
+                            R.color.off_white ) ).toArgb() );
+                }// end of else block
+
                 return view;
             }
         };
@@ -2738,7 +2782,18 @@ public class WeatherLionMain extends AppCompatActivity
                             public View getView( int position, View convertView, @NonNull ViewGroup parent )
                             {
                                 TextView view = (TextView) super.getView( position, convertView, parent );
-                                view.setTypeface( WeatherLionApplication.currentTypeface );
+
+                                if( UtilityMethod.isDayTime() )
+                                {
+                                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                                    view.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                                }// end of if block
+                                else
+                                {
+                                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                                    view.setTextColor( Color.valueOf( mContext.getColor(
+                                            R.color.off_white ) ).toArgb() );
+                                }// end of else block
                                 return view;
                             }
 
@@ -2747,7 +2802,19 @@ public class WeatherLionMain extends AppCompatActivity
                             public View getDropDownView( int position, View convertView, @NonNull ViewGroup parent )
                             {
                                 TextView view = (TextView) super.getDropDownView( position, convertView, parent );
-                                view.setTypeface( WeatherLionApplication.currentTypeface );
+
+                                if( UtilityMethod.isDayTime() )
+                                {
+                                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                                    view.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                                }// end of if block
+                                else
+                                {
+                                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                                    view.setTextColor( Color.valueOf( mContext.getColor(
+                                            R.color.off_white ) ).toArgb() );
+                                }// end of else block
+
                                 return view;
                             }
                         };
@@ -2771,7 +2838,19 @@ public class WeatherLionMain extends AppCompatActivity
                             public View getView( int position, View convertView, @NonNull ViewGroup parent )
                             {
                                 TextView view = (TextView) super.getView( position, convertView, parent );
-                                view.setTypeface( WeatherLionApplication.currentTypeface );
+
+                                if( UtilityMethod.isDayTime() )
+                                {
+                                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                                    view.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                                }// end of if block
+                                else
+                                {
+                                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                                    view.setTextColor( Color.valueOf( mContext.getColor(
+                                            R.color.off_white ) ).toArgb() );
+                                }// end of else block
+
                                 return view;
                             }
 
@@ -2780,7 +2859,19 @@ public class WeatherLionMain extends AppCompatActivity
                             public View getDropDownView( int position, View convertView, @NonNull ViewGroup parent )
                             {
                                 TextView view = (TextView) super.getDropDownView( position, convertView, parent );
-                                view.setTypeface( WeatherLionApplication.currentTypeface );
+
+                                if( UtilityMethod.isDayTime() )
+                                {
+                                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                                    view.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                                }// end of if block
+                                else
+                                {
+                                    view.setTypeface( WeatherLionApplication.currentTypeface );
+                                    view.setTextColor( Color.valueOf( mContext.getColor(
+                                            R.color.off_white ) ).toArgb() );
+                                }// end of else block
+
                                 return view;
                             }
                         };
@@ -2799,10 +2890,22 @@ public class WeatherLionMain extends AppCompatActivity
                     break;
 
                 }// end of switch block
-            }
+
+                if( UtilityMethod.isDayTime() )
+                {
+                    edtKeyName.setTypeface( WeatherLionApplication.currentTypeface );
+                    edtKeyName.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                }// end of if block
+                else
+                {
+                    edtKeyName.setTypeface( WeatherLionApplication.currentTypeface );
+                    edtKeyName.setTextColor( Color.valueOf( mContext.getColor(
+                            R.color.off_white ) ).toArgb() );
+                }// end of else block
+            }// end of method onItemSelected
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            public void onNothingSelected( AdapterView<?> parent ) {}
         });
 
         spnProviderKeys.setOnItemSelectedListener( new AdapterView.OnItemSelectedListener()
@@ -2815,7 +2918,7 @@ public class WeatherLionMain extends AppCompatActivity
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+            public void onNothingSelected( AdapterView<?> parent ) {
             }
         });
 
@@ -2984,7 +3087,7 @@ public class WeatherLionMain extends AppCompatActivity
             }
         });
 
-        btnDeleteKey.setOnClickListener(new View.OnClickListener()
+        btnDeleteKey.setOnClickListener( new View.OnClickListener()
         {
             @Override
             public void onClick( View v )
@@ -3040,11 +3143,11 @@ public class WeatherLionMain extends AppCompatActivity
 
                     ValueAnimator sizeAnimator = ValueAnimator
                         .ofFloat( largeSize, smallSize )
-                            .setDuration( WeatherLionMain.LION_ANIMATION_DURATION);
+                            .setDuration( WeatherLionMain.LION_ANIMATION_DURATION );
 
                     ValueAnimator topAnimator = ValueAnimator
                         .ofFloat( origin, destination )
-                            .setDuration( WeatherLionMain.LION_ANIMATION_DURATION);
+                            .setDuration( WeatherLionMain.LION_ANIMATION_DURATION );
 
                     topAnimator.addUpdateListener(
                             new ValueAnimator.AnimatorUpdateListener()
@@ -3075,21 +3178,16 @@ public class WeatherLionMain extends AppCompatActivity
                         public void onAnimationEnd( Animator animation )
                         {
                             super.onAnimationEnd( animation );
-                            txvKeyValue.setTextColor( Color.valueOf( mContext.getColor(
-                                    R.color.black_opacity_80 ) ).toArgb() );
 
-//                            if( widBackgroundColor != null )
-//                            {
-//                                if( widBackgroundColor.toLowerCase().equals( WeatherLionApplication.LION_THEME ) )
-//                                {
-//                                    txvKeyValue.setTextColor( Color.valueOf( mContext.getColor(
-//                                            R.color.black_opacity_80 ) ).toArgb() );
-//                                }// end of if block
-//                                else
-//                                {
-//                                    txvKeyValue.setTextColor( WeatherLionApplication.systemColor.toArgb() );
-//                                }// end of else block
-//                            }// end of if block
+                            if( UtilityMethod.isDayTime() )
+                            {
+                                txvKeyValue.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+                            }// end of if block
+                            else
+                            {
+                                txvKeyValue.setTextColor( Color.valueOf( mContext.getColor(
+                                        R.color.off_white ) ).toArgb() );
+                            }// end of else block
                         }
                     });
 

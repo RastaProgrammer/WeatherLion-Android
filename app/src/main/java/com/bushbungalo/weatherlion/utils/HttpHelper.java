@@ -64,6 +64,19 @@ public class HttpHelper
     {
         InputStream is = null;
 
+        if( weatherData )
+        {
+            if( !UtilityMethod.updateRequired( WeatherLionApplication.getAppContext() ) )
+            {
+                broadcastServiceResponse( WeatherLionApplication.EMPTY_JSON );
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Widget already up to date!",
+                        "HttpHelper::downloadUrl" );
+
+                return null;
+            }// end of if block
+        }// end of if block
+
+        // only run the following if it is required
         try
         {
             URL url = new URL( address );
@@ -102,10 +115,11 @@ public class HttpHelper
             is = conn.getInputStream();
             String data = readStream( is );
 
-            /* the weather data might take a long time to be returned so it should be
-            broadcasted when received */
+            /* The web service might take longer to return weather data than other types of data.
+               That being the case, weather data will be broadcasted when received. */
             if( weatherData )
             {
+                // weather updates will be performed when this broadcast is sent
                 broadcastServiceResponse( data );
             }// end of if block
 
@@ -118,7 +132,7 @@ public class HttpHelper
 
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
                 "HttpHelper::downloadUrl [line: " +
-                    e.getStackTrace()[1].getLineNumber()+ "]" );
+                    e.getStackTrace()[1].getLineNumber() + "]" );
         }// end of catch block
         finally
         {

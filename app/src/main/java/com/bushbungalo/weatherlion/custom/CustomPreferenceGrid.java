@@ -2,6 +2,7 @@ package com.bushbungalo.weatherlion.custom;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -76,6 +77,17 @@ public class CustomPreferenceGrid extends BaseAdapter
 
                 previewImage.setImageDrawable( d );
 
+                if( UtilityMethod.isDayTime() )
+                {
+                    previewText.setTextColor( UtilityMethod.addOpacity(
+                            WeatherLionApplication.systemColor.toArgb(), 80 ) );
+                }// end of if block
+                else
+                {
+                    previewText.setTextColor( Color.valueOf( mContext.getColor(
+                            R.color.off_white ) ).toArgb() );
+                }// end of else block
+
                 switch( requester )
                 {
                     case IconSetPreference.CALLER_NAME:
@@ -89,6 +101,7 @@ public class CustomPreferenceGrid extends BaseAdapter
                             grid.setBackgroundColor( 0xFFC2E9F8 ); // Opaque Blue
                             previewText.setTextColor( WeatherLionApplication.systemColor.toArgb() );
                         }// end of if block
+
                         break;
                     case WidgetBackgroundPreference.CALLER_NAME:
                         selectItem = spf.getString( WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,

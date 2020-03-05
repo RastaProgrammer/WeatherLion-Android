@@ -102,17 +102,19 @@ public class PrefsActivity extends AppCompatActivity
 
         if( WeatherLionApplication.firstRun )
         {
-            UtilityMethod.showMessageDialog( "Please enter your weather location and required settings.",
+            UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT,
+                    "Please enter your weather location and required settings.",
                 "New Installation", this );
         }// end of if block
         else if( !WeatherLionApplication.locationSet )
         {
-            UtilityMethod.showMessageDialog( "Please set the location for the weather data.",
+            UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT,
+                    "Please set the location for the weather data.",
                 "Location Required", this );
         }// end of else if block
         else if( limitExceeded )
         {
-            UtilityMethod.showMessageDialog(
+            UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT,
                 String.format( Locale.ENGLISH, "The daily call limit has been exceeded for %s." +
                     " Please select another in the settings.", wxDataProvider ), "Limit Exceeded",
                     this );

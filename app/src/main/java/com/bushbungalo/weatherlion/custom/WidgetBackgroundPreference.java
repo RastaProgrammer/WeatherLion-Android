@@ -128,6 +128,8 @@ public class WidgetBackgroundPreference extends DialogPreference
             }
         });
 
+        UtilityMethod.themeDialog( mContext, rlTitleBar, dialogBody, dialogFooter );
+
         try
         {
             backgroundNames = mContext.getAssets().list( "backgrounds" );
@@ -159,13 +161,29 @@ public class WidgetBackgroundPreference extends DialogPreference
             @Override
             public void onItemClick( AdapterView<?> parent, View view, int position, long id )
             {
+                TextView selectedIconText = view.findViewById( R.id.grid_text );
+
                 //int color = 0x00FFFFFF; // Transparent
                 for( int i = 0; i < adapter.getCount(); i++ )
                 {
-                    backgroundGrid.getChildAt( i ).setBackgroundColor( 0x00FFFFFF ) ; // Transparent
+                    backgroundGrid.getChildAt( i ).setBackgroundColor( 0x00FFFFFF ); // Transparent
+
+                    if( UtilityMethod.isDayTime() )
+                    {
+                        ( (TextView) backgroundGrid.getChildAt( i ).findViewById( R.id.grid_text ) )
+                                .setTextColor( UtilityMethod.addOpacity(
+                                        WeatherLionApplication.systemColor.toArgb(), 70 ) );
+                    }// end of if block
+                    else
+                    {
+                        ( (TextView) backgroundGrid.getChildAt( i ).findViewById( R.id.grid_text ) )
+                                .setTextColor( Color.valueOf( mContext.getColor( R.color.off_white ) )
+                                        .toArgb() );
+                    }// end of else block
                 }// end of for each loop
 
                 view.setBackgroundColor( 0xFFC2E9F8 ); // Opaque Blue
+                selectedIconText.setTextColor( WeatherLionApplication.systemColor.toArgb() );
 
                 // keep track of the user's selection
                 selectedBackgroundStyle.setLength( 0 );

@@ -202,8 +202,8 @@ public class WidgetUpdateService extends JobIntentService
         spf = PreferenceManager.getDefaultSharedPreferences( this );
 
         LocalBroadcastManager.getInstance( this )
-            .registerReceiver( webServiceData,
-                new IntentFilter( HttpHelper.WEB_SERVICE_DATA_MESSAGE ) );
+                .registerReceiver( webServiceData,
+                        new IntentFilter( HttpHelper.WEB_SERVICE_DATA_MESSAGE ) );
 
     }// end of method onCreate
 
@@ -242,7 +242,7 @@ public class WidgetUpdateService extends JobIntentService
         WidgetHelper.getWidgetIds();
 
         largeWidgetRemoteViews = new RemoteViews( this.getPackageName(),
-            R.layout.wl_large_weather_widget_activity_alternate );
+                R.layout.wl_large_weather_widget_activity_alternate );
 
         smallWidgetRemoteViews = new RemoteViews( this.getPackageName(),
                 R.layout.wl_small_weather_widget_activity );
@@ -288,7 +288,7 @@ public class WidgetUpdateService extends JobIntentService
             else
             {
                 callMethodByName( WidgetUpdateService.this, callMethod,null,
-                null );
+                        null );
             }// end of else block
 
             // If a location has not been set then the weather cannot be processed
@@ -317,8 +317,8 @@ public class WidgetUpdateService extends JobIntentService
             if( WeatherLionApplication.storedPreferences != null )
             {
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-            "Loading weather data requested by " + invoker + "...",
-                TAG + "::handleIntent" );
+                        "Loading weather data requested by " + invoker + "...",
+                        TAG + "::handleIntent" );
 
                 tempUnits = WeatherLionApplication.storedPreferences.getUseMetric() ? CELSIUS : FAHRENHEIT;
                 currentCity.setLength( 0 );
@@ -450,11 +450,11 @@ public class WidgetUpdateService extends JobIntentService
                                         sunsetTime.setLength( 0 );
 
                                         WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
-                                            Locale.ENGLISH ).format(
+                                                Locale.ENGLISH ).format(
                                                 WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
 
                                         WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
-                                            Locale.ENGLISH ).format(
+                                                Locale.ENGLISH ).format(
                                                 WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
 
                                         sunriseTime.append( new SimpleDateFormat( "h:mm a",
@@ -512,11 +512,11 @@ public class WidgetUpdateService extends JobIntentService
                                 catch ( ParseException e )
                                 {
                                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                                    TAG + "::scheduleAstronomyUpdate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                                            TAG + "::scheduleAstronomyUpdate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
                                 }// end of catch block
 
                                 WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
-                                    ZoneId.of( CityData.currentCityData.getTimeZone()
+                                        ZoneId.of( CityData.currentCityData.getTimeZone()
                                         ) ).toLocalDateTime();
 
                                 // Load the time zone info for the current city
@@ -607,7 +607,7 @@ public class WidgetUpdateService extends JobIntentService
                                     catch ( Exception e )
                                     {
                                         UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
-                                            e.getMessage(), TAG + "::handleIntent" );
+                                                e.getMessage(), TAG + "::handleIntent" );
 
                                         return;
                                     }// end of catch block
@@ -719,10 +719,21 @@ public class WidgetUpdateService extends JobIntentService
                                 {
                                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
                                             e.getMessage(), TAG + "::handleIntent" );
+
+                                    // Update the current location and update time stamp
+                                    String ts = new SimpleDateFormat( "MMM dd, h:mm a", Locale.ENGLISH ).format(
+                                            UtilityMethod.lastUpdated );
+
+                                    // ensure that refreshing animations are removed from the widget
+                                    largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+                                    largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+                                    largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
+
+                                    // update the widget
+                                   updateAllAppWidgets( appWidgetManager );
                                 }// end of catch block
                             }// end of if block
                         }// end of if block
-
                     }// end of if block
                     else
                     {
@@ -813,22 +824,22 @@ public class WidgetUpdateService extends JobIntentService
                 break;
             default:
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-            "Could'nt identify the time of day!",
+                        "Could'nt identify the time of day!",
                         TAG + "::astronomyChange" );
 
         }// end of switch block
 
         // Load applicable icon based on the time of day
         String imageFile = String.format( "%s%s/weather_%s",
-             WeatherLionApplication.WEATHER_IMAGES_ROOT, WeatherLionApplication.iconSet
+                WeatherLionApplication.WEATHER_IMAGES_ROOT, WeatherLionApplication.iconSet
                 , currentConditionIcon );
 
         largeWidgetRemoteViews = new RemoteViews(
-            WeatherLionApplication.getAppContext().getPackageName(),
+                WeatherLionApplication.getAppContext().getPackageName(),
                 R.layout.wl_large_weather_widget_activity_alternate);
 
         smallWidgetRemoteViews = new RemoteViews(
-            WeatherLionApplication.getAppContext().getPackageName(),
+                WeatherLionApplication.getAppContext().getPackageName(),
                 R.layout.wl_small_weather_widget_activity );
 
         try( InputStream is = WeatherLionApplication.getAppContext().getAssets().open( imageFile ) )
@@ -1012,6 +1023,8 @@ public class WidgetUpdateService extends JobIntentService
 
             // schedule the update for astronomy switch
             scheduleAstronomyUpdate();
+
+            loadingPreviousWeather = false;
         }// end of else if block
         else
         {
@@ -1120,8 +1133,8 @@ public class WidgetUpdateService extends JobIntentService
                 catch( Exception e )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                TAG + "::updateAllAppWidgets [line: " +
-                            e.getStackTrace()[1].getLineNumber()+ "]" );
+                            TAG + "::updateAllAppWidgets [line: " +
+                                    e.getStackTrace()[1].getLineNumber()+ "]" );
                     WeatherLionApplication.dataLoadedSuccessfully = false;
 
                     // Undo changes made
@@ -1206,19 +1219,9 @@ public class WidgetUpdateService extends JobIntentService
                         WeatherLionApplication.systemPreferences.getSavedPreferences().setProvider(
                                 WeatherLionApplication.previousWeatherProvider.toString() );
 
-                        // Calling from a Non-UI Thread
-                        Handler handler = new Handler( Looper.getMainLooper() );
-
-                        handler.post( new Runnable()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                UtilityMethod.butteredToast( getApplicationContext(),
-                                        WeatherLionApplication.storedPreferences.getProvider() +
-                                                " did not return data!",2, Toast.LENGTH_LONG );
-                            }
-                        });
+                        UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+                        WeatherLionApplication.storedPreferences.getProvider() +
+                                " did not return data!", TAG + "::updateAllAppWidgets" );
                     }// end of if block
                 }// end of else block
             }// end of inner else block
@@ -1247,8 +1250,8 @@ public class WidgetUpdateService extends JobIntentService
                 for ( int largeWidgetId : WeatherLionApplication.largeWidgetIds )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                        String.format( Locale.ENGLISH,
-                            "Updating weather data on widget %d...", largeWidgetId ),
+                            String.format( Locale.ENGLISH,
+                                    "Updating weather data on widget %d...", largeWidgetId ),
                             TAG + "::updateAllAppWidgets" );
 
                     if( widBackgroundColor != null )
@@ -1312,9 +1315,9 @@ public class WidgetUpdateService extends JobIntentService
                     }// end of if block
 
                     largeWidgetRemoteViews.setString( R.id.tcCurrentTime, "setTimeZone",
-                        CityData.currentCityData.getTimeZone() );
+                            CityData.currentCityData.getTimeZone() );
                     largeWidgetRemoteViews.setString( R.id.tcAMPM, "setTimeZone",
-                        CityData.currentCityData.getTimeZone() );
+                            CityData.currentCityData.getTimeZone() );
 
                     appWidgetManager.updateAppWidget( largeWidgetId,
                             largeWidgetRemoteViews );
@@ -1395,7 +1398,7 @@ public class WidgetUpdateService extends JobIntentService
         else if( weatherUpdate && strJSON == null )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Undoing preference change...",
-                TAG + "::updateAllAppWidgets" );
+                    TAG + "::updateAllAppWidgets" );
             // reverse the preference change
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences( WeatherLionApplication.getAppContext() );
             settings.edit().putString( WeatherLionApplication.WEATHER_SOURCE_PREFERENCE,
@@ -1563,7 +1566,7 @@ public class WidgetUpdateService extends JobIntentService
         catch ( IOException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,"Weather icon " +
-                imageFile + " could not be loaded!", TAG + "::loadWeatherIcon [line: " +
+                    imageFile + " could not be loaded!", TAG + "::loadWeatherIcon [line: " +
                     e.getStackTrace()[1].getLineNumber()+ "]" );
 
             String defaultIcon =  WeatherLionApplication.WEATHER_IMAGES_ROOT + WeatherLionApplication.iconSet
@@ -1587,8 +1590,8 @@ public class WidgetUpdateService extends JobIntentService
         catch ( IOException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
-                e.getMessage(), TAG +
-                    "::retrieveWeatherData" );
+                    e.getMessage(), TAG +
+                            "::retrieveWeatherData" );
         }// end of catch block
     }// end of method retrieveWeatherData
 
@@ -1613,7 +1616,7 @@ public class WidgetUpdateService extends JobIntentService
                 getSystemService( Context.ALARM_SERVICE );
 
         String today = new SimpleDateFormat( "MM/dd/yyyy",
-            Locale.ENGLISH ).format( new Date() );
+                Locale.ENGLISH ).format( new Date() );
 
         if( WeatherLionApplication.currentSunriseTime.length() == 0 )
         {
@@ -1652,8 +1655,8 @@ public class WidgetUpdateService extends JobIntentService
         catch ( ParseException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-        TAG + "::scheduleAstronomyUpdate [line: " +
-                    e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                    TAG + "::scheduleAstronomyUpdate [line: " +
+                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
         }// end of catch block
 
         if ( ( rn.before( schedSunriseTime ) || rn.equals( schedSunriseTime ) ) )
@@ -1682,9 +1685,9 @@ public class WidgetUpdateService extends JobIntentService
             sunsetAlarmManager.setExact( AlarmManager.RTC, sunsetUpdate, sunsetAlarmIntent );
 
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-        "Sunset alarm scheduled for " +
-                    new SimpleDateFormat( "h:mm:ss a",
-                        Locale.ENGLISH ).format( sunsetCalendar.getTime() ) + ".",
+                    "Sunset alarm scheduled for " +
+                            new SimpleDateFormat( "h:mm:ss a",
+                                    Locale.ENGLISH ).format( sunsetCalendar.getTime() ) + ".",
                     TAG + "::scheduleAstronomyUpdate" );
         }// end of if block
     }// end of method scheduleAstronomyUpdate
@@ -1707,7 +1710,7 @@ public class WidgetUpdateService extends JobIntentService
         PendingIntent alarmIntent = PendingIntent.getBroadcast( getApplicationContext(),
                 0, intentToFire, 0 );
         AlarmManager alarmManager = (AlarmManager) getApplicationContext().
-            getSystemService( Context.ALARM_SERVICE );
+                getSystemService( Context.ALARM_SERVICE );
 
         // Obtain all default value from the stored preferences
         int timeAmount = UtilityMethod.millisecondsToMinutes(
@@ -1722,8 +1725,8 @@ public class WidgetUpdateService extends JobIntentService
         alarmManager.setExact( AlarmManager.RTC, updateTime, alarmIntent );
 
         UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Next update scheduled for " +
-            new SimpleDateFormat( "h:mm:ss a", Locale.ENGLISH ).format( c.getTime() ) + ".",
-        TAG + "::scheduleNextUpdate" );
+                        new SimpleDateFormat( "h:mm:ss a", Locale.ENGLISH ).format( c.getTime() ) + ".",
+                TAG + "::scheduleNextUpdate" );
 
         // Test Area
 //        int seconds = 120;
@@ -1771,14 +1774,14 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-            String.format( Locale.ENGLISH, "%s %d %s",
-                currentWindDirection.toString(),
-                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                String.format( Locale.ENGLISH, "%s %d %s",
+                        currentWindDirection.toString(),
+                        Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                         ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                            "km/h" : "mph" ) ) );
+                                "km/h" : "mph" ) ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -1837,7 +1840,7 @@ public class WidgetUpdateService extends JobIntentService
         for ( DarkSkyWeatherDataItem.Hourly.Data wxHourlyForecast : darkSky.getHourly().getData() )
         {
             currentForecastHour = UtilityMethod.getDateTime(
-                Integer.parseInt( wxHourlyForecast.getTime() ) ).toInstant().atZone(
+                    Integer.parseInt( wxHourlyForecast.getTime() ) ).toInstant().atZone(
                     ZoneId.systemDefault() ).toLocalDateTime();
 
             String forecastTime = currentForecastHour.format( hourlyFormat );
@@ -1853,22 +1856,22 @@ public class WidgetUpdateService extends JobIntentService
                 else if( currentForecastHour.getHour() > checkTime.getHour() )
                 {
                     currentFiveHourForecast.add(
-                        new FiveHourForecast( currentForecastHour, String.valueOf(
-                            Math.round( hourlyReading.get( forecastTime ) ) ),
-                                UtilityMethod.toProperCase(
-                                    UtilityMethod.validateCondition(
-                                        wxHourlyForecast.getSummary().toLowerCase() ) ) ) );
+                            new FiveHourForecast( currentForecastHour, String.valueOf(
+                                    Math.round( hourlyReading.get( forecastTime ) ) ),
+                                    UtilityMethod.toProperCase(
+                                            UtilityMethod.validateCondition(
+                                                    wxHourlyForecast.getSummary().toLowerCase() ) ) ) );
                     x++;
                 }// end of else if block
             }// end of if block
             else if ( currentForecastHour.isAfter( checkTime ) )
             {
                 currentFiveHourForecast.add(
-                    new FiveHourForecast( currentForecastHour, String.valueOf(
-                        Math.round( hourlyReading.get( forecastTime ) ) ),
-                            UtilityMethod.toProperCase(
-                                UtilityMethod.validateCondition(
-                                    wxHourlyForecast.getSummary().toLowerCase() ) ) ) );
+                        new FiveHourForecast( currentForecastHour, String.valueOf(
+                                Math.round( hourlyReading.get( forecastTime ) ) ),
+                                UtilityMethod.toProperCase(
+                                        UtilityMethod.validateCondition(
+                                                wxHourlyForecast.getSummary().toLowerCase() ) ) ) );
                 x++;
             }// end of if block
 
@@ -1893,7 +1896,7 @@ public class WidgetUpdateService extends JobIntentService
                     "id", this.getPackageName() );
 
             largeWidgetRemoteViews.setTextViewText( fDay, new SimpleDateFormat(
-            "E d", Locale.ENGLISH ).format( fxDate ) );
+                    "E d", Locale.ENGLISH ).format( fxDate ) );
 
             String fConditionIcon = UtilityMethod.getForecastConditionIcon(
                     fCondition );
@@ -1906,16 +1909,16 @@ public class WidgetUpdateService extends JobIntentService
             }// end of if block
 
             currentFiveDayForecast.add(
-                new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
-                    String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
-                    wxForecast.getDewPoint(), wxForecast.getHumidity() * 100,
-                    UtilityMethod.hpaToInHg( wxForecast.getPressure() ),
-                    wxForecast.getWindBearing(), wxForecast.getWindSpeed(),
-                    UtilityMethod.compassDirection( wxForecast.getWindBearing() ),
-                    wxForecast.getUvIndex(),  wxForecast.getVisibility(),
-                    wxForecast.getOzone(),
-                    UtilityMethod.getDateTime( wxForecast.getSunriseTime() ),
-                    UtilityMethod.getDateTime( wxForecast.getSunsetTime() ) ) );
+                    new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
+                            String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
+                            wxForecast.getDewPoint(), wxForecast.getHumidity() * 100,
+                            UtilityMethod.hpaToInHg( wxForecast.getPressure() ),
+                            wxForecast.getWindBearing(), wxForecast.getWindSpeed(),
+                            UtilityMethod.compassDirection( wxForecast.getWindBearing() ),
+                            wxForecast.getUvIndex(),  wxForecast.getVisibility(),
+                            wxForecast.getOzone(),
+                            UtilityMethod.getDateTime( wxForecast.getSunriseTime() ),
+                            UtilityMethod.getDateTime( wxForecast.getSunsetTime() ) ) );
 
             if ( i == 5 )
             {
@@ -1990,14 +1993,14 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-            String.format( Locale.ENGLISH, "%s %d %s",
-                currentWindDirection.toString(),
-                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                String.format( Locale.ENGLISH, "%s %d %s",
+                        currentWindDirection.toString(),
+                        Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                         ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                            "km/h" : "mph" ) ) );
+                                "km/h" : "mph" ) ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2072,7 +2075,7 @@ public class WidgetUpdateService extends JobIntentService
                         "id", this.getPackageName() );
 
                 largeWidgetRemoteViews.setTextViewText( fDayView, new SimpleDateFormat(
-                "E d", Locale.ENGLISH ).format( fxDate ) );
+                        "E d", Locale.ENGLISH ).format( fxDate ) );
 
                 String fConditionIcon = UtilityMethod.getForecastConditionIcon(
                         fCondition );
@@ -2160,14 +2163,14 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-            String.format( Locale.ENGLISH, "%s %d %s",
-                currentWindDirection.toString(),
-                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                String.format( Locale.ENGLISH, "%s %d %s",
+                        currentWindDirection.toString(),
+                        Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                         ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                            "km/h" : "mph" ) ) );
+                                "km/h" : "mph" ) ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2384,11 +2387,11 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-            String.format( Locale.ENGLISH, "%s %d %s",
-                currentWindDirection.toString(),
-                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                String.format( Locale.ENGLISH, "%s %d %s",
+                        currentWindDirection.toString(),
+                        Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                         ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                            "km/h" : "mph" ) ) );
+                                "km/h" : "mph" ) ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2401,7 +2404,7 @@ public class WidgetUpdateService extends JobIntentService
                 : currentHumidity; // remove before parsing
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
 
         Date timeUpdated = null;
 
@@ -2547,8 +2550,8 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 ); // reset
         currentCondition.append( UtilityMethod.toProperCase(
-            UtilityMethod.validateCondition(
-                weatherBitWx.getData().get( 0 ).getWeather().getDescription() ) ) );
+                UtilityMethod.validateCondition(
+                        weatherBitWx.getData().get( 0 ).getWeather().getDescription() ) ) );
 
         currentWindDirection.setLength( 0 );
         currentWindDirection.append( weatherBitWx.getData().get( 0 ).getWind_cdir() );
@@ -2580,11 +2583,11 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-            String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
-                currentWindDirection.toString(),
-                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
+                        currentWindDirection.toString(),
+                        Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                         ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                            "km/h" : "mph" ) ) );
+                                "km/h" : "mph" ) ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2598,7 +2601,7 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunrise, sunriseTime.toString() );
         largeWidgetRemoteViews.setTextViewText( R.id.txvSunset, sunsetTime.toString() );
 
@@ -2663,9 +2666,9 @@ public class WidgetUpdateService extends JobIntentService
                 else if( currentForecastHour.getHour() > checkTime.getHour() )
                 {
                     currentFiveHourForecast.add(
-                        new FiveHourForecast( currentForecastHour, String.valueOf(
-                            Math.round( hourlyReading.get( forecastTime ) ) ),
-                                wxHourlyForecast.getWeather().getDescription() ) );
+                            new FiveHourForecast( currentForecastHour, String.valueOf(
+                                    Math.round( hourlyReading.get( forecastTime ) ) ),
+                                    wxHourlyForecast.getWeather().getDescription() ) );
                     x++;
                 }// end of else if block
             }// end of if block
@@ -2722,7 +2725,7 @@ public class WidgetUpdateService extends JobIntentService
                             "id", this.getPackageName() );
 
                     largeWidgetRemoteViews.setTextViewText( fDay, new SimpleDateFormat(
-                        "E d", Locale.ENGLISH ).format( fxDate ) );
+                            "E d", Locale.ENGLISH ).format( fxDate ) );
 
                     // Load current forecast condition weather image
                     String fConditionIcon = UtilityMethod.getForecastConditionIcon(
@@ -2736,15 +2739,15 @@ public class WidgetUpdateService extends JobIntentService
                     }// end of if block
 
                     currentFiveDayForecast.add(
-                        new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
-                            String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
-                            (float) wxForecast.getDewpt(), 0f,
-                            (float) wxForecast.getPres(), 0f,
-                            (float) wxForecast.getWindSpd(),
-                            UtilityMethod.compassDirection( (float) wxForecast.getWindDir() ),
-                            0f,0f, (float) wxForecast.getOzone(),
-                            UtilityMethod.getDateTime( wxForecast.getSunriseTs() ),
-                            UtilityMethod.getDateTime( wxForecast.getSunsetTs() ) ) );
+                            new FiveDayForecast( fxDate, String.valueOf( Math.round( hl[ i - 1 ][ 0 ] ) ),
+                                    String.valueOf( Math.round( hl[ i - 1 ][ 1 ] ) ), fCondition,
+                                    (float) wxForecast.getDewpt(), 0f,
+                                    (float) wxForecast.getPres(), 0f,
+                                    (float) wxForecast.getWindSpd(),
+                                    UtilityMethod.compassDirection( (float) wxForecast.getWindDir() ),
+                                    0f,0f, (float) wxForecast.getOzone(),
+                                    UtilityMethod.getDateTime( wxForecast.getSunriseTs() ),
+                                    UtilityMethod.getDateTime( wxForecast.getSunsetTs() ) ) );
 
                     i++; // increment sentinel
 
@@ -2804,7 +2807,7 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 ); // reset
         currentCondition.append(
-            UtilityMethod.validateCondition( yahoo19.getCurrentObservation().getCondition().getText() ) );
+                UtilityMethod.validateCondition( yahoo19.getCurrentObservation().getCondition().getText() ) );
 
         currentHumidity.setLength( 0 );
         currentHumidity.append( Math.round( yahoo19.getCurrentObservation().getAtmosphere().getHumidity() ) );
@@ -2821,14 +2824,14 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition, UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-            String.format( Locale.ENGLISH, "%s %d %s",
-                currentWindDirection.toString(),
-                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                String.format( Locale.ENGLISH, "%s %d %s",
+                        currentWindDirection.toString(),
+                        Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                         ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                            "km/h" : "mph" ) ) );
+                                "km/h" : "mph" ) ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2888,7 +2891,7 @@ public class WidgetUpdateService extends JobIntentService
             // Load current forecast condition weather image
             String fCondition = UtilityMethod.toProperCase(
                     UtilityMethod.validateCondition( UtilityMethod.yahooWeatherCodes[
-                    fdf.get( i ).getCode() ] ) );
+                            fdf.get( i ).getCode() ] ) );
             int  fDay = this.getResources().getIdentifier( "txvDay" +  (i + 1),
                     "id", this.getPackageName() );
             int  fIcon = this.getResources().getIdentifier( "imvDay" +  (i + 1) + "Icon",
@@ -2952,7 +2955,7 @@ public class WidgetUpdateService extends JobIntentService
 
         currentCondition.setLength( 0 ); // reset
         currentCondition.append( UtilityMethod.toProperCase(
-            UtilityMethod.validateCondition( yr.getForecast().get( 0 ).getSymbolName() ) ) );
+                UtilityMethod.validateCondition( yr.getForecast().get( 0 ).getSymbolName() ) ) );
 
         currentHumidity.setLength( 0 );
         currentHumidity.append( currentHumidity.toString().length() == 0 ? currentHumidity : String.valueOf( 0 ) ); // use the humidity reading from previous providers
@@ -2974,14 +2977,14 @@ public class WidgetUpdateService extends JobIntentService
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-            String.format( Locale.ENGLISH, "%s %d %s",
-                currentWindDirection.toString(),
-                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                String.format( Locale.ENGLISH, "%s %d %s",
+                        currentWindDirection.toString(),
+                        Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                         ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                            "km/h" : "mph" ) ) );
+                                "km/h" : "mph" ) ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -3073,18 +3076,18 @@ public class WidgetUpdateService extends JobIntentService
                 else if( currentForecastHour.getHour() > checkTime.getHour() )
                 {
                     currentFiveHourForecast.add(
-                        new FiveHourForecast( currentForecastHour, String.valueOf(
-                            Math.round( hourlyReading.get( forecastTime ) ) ),
-                                wxTempReading.getSymbolName() ) );
+                            new FiveHourForecast( currentForecastHour, String.valueOf(
+                                    Math.round( hourlyReading.get( forecastTime ) ) ),
+                                    wxTempReading.getSymbolName() ) );
                     x++;
                 }// end of else if block
             }// end of if block
             else if ( currentForecastHour.isAfter( checkTime ) )
             {
                 currentFiveHourForecast.add(
-                    new FiveHourForecast( currentForecastHour, String.valueOf(
-                        Math.round( hourlyReading.get( forecastTime ) ) ),
-                            wxTempReading.getSymbolName() ) );
+                        new FiveHourForecast( currentForecastHour, String.valueOf(
+                                Math.round( hourlyReading.get( forecastTime ) ) ),
+                                wxTempReading.getSymbolName() ) );
 
                 x++;
             }// end of if block
@@ -3159,16 +3162,16 @@ public class WidgetUpdateService extends JobIntentService
                     UtilityMethod.validateCondition( wxDailyForecast.getSymbolName() ) );
 
             currentFiveDayForecast.add(
-                new FiveDayForecast( forecastDate, String.valueOf(
-                    Math.round( dailyReading.get( df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 0 ] ) ),
-                        String.valueOf( Math.round( dailyReading.get(
-                                df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 1 ] ) ), fCondition,
-                        0f, 0f,
-                        UtilityMethod.hpaToInHg( wxDailyForecast.getPressureValue() ), 0f,
-                        UtilityMethod.mpsToMph( wxDailyForecast.getWindSpeedMps() ),
-                        wxDailyForecast.getWindDirCode(),
-                        0f,0f, wxDailyForecast.getPrecipValue(),
-                        null,null ) );
+                    new FiveDayForecast( forecastDate, String.valueOf(
+                            Math.round( dailyReading.get( df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 0 ] ) ),
+                            String.valueOf( Math.round( dailyReading.get(
+                                    df.format( wxDailyForecast.getTimeFrom() ) ) [ 0 ][ 1 ] ) ), fCondition,
+                            0f, 0f,
+                            UtilityMethod.hpaToInHg( wxDailyForecast.getPressureValue() ), 0f,
+                            UtilityMethod.mpsToMph( wxDailyForecast.getWindSpeedMps() ),
+                            wxDailyForecast.getWindDirCode(),
+                            0f,0f, wxDailyForecast.getPrecipValue(),
+                            null,null ) );
         }// end of for loop
 
         // if the code gets to here then all was loaded successfully
@@ -3352,7 +3355,7 @@ public class WidgetUpdateService extends JobIntentService
     {
         SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( this );
         String widBackgroundColor = spf.getString(
-            WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
+                WeatherLionApplication.WIDGET_BACKGROUND_PREFERENCE,
                 Preference.DEFAULT_WIDGET_BACKGROUND );
 
         int largeDrawableId = 0;
@@ -3410,7 +3413,7 @@ public class WidgetUpdateService extends JobIntentService
                 //largeWidgetRemoteViews.setViewVisibility( R.id.relNextAlarm, View.VISIBLE );
                 largeWidgetRemoteViews.setTextViewText( R.id.txvAlarmTime, alarmTime );
                 String message = String.format( Locale.ENGLISH, "System clock alarm set for %s which is %s from now.",
-                    alarmTime.toLowerCase(),
+                        alarmTime.toLowerCase(),
                         UtilityMethod.getDetailedTimeDifference( nextAlarmDate, new Date() ) );
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, message,
                         TAG + "::updateUserSetAlarm" );
@@ -3473,7 +3476,7 @@ public class WidgetUpdateService extends JobIntentService
         // if this location has already been used there is no need to query the
         // web service as the location data has been stored locally
         CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage(
-            WeatherLionApplication.currentWxLocation );
+                WeatherLionApplication.currentWxLocation );
 
         float lat;
         float lng;
@@ -3481,8 +3484,8 @@ public class WidgetUpdateService extends JobIntentService
         if( CityData.currentCityData == null )
         {
             String cityJSON =
-                UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
-                    WeatherLionApplication.currentWxLocation );
+                    UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                            WeatherLionApplication.currentWxLocation );
             CityData.currentCityData = UtilityMethod.createGeoNamesCityData( cityJSON );
 
             lat = CityData.currentCityData.getLatitude();
@@ -3546,11 +3549,11 @@ public class WidgetUpdateService extends JobIntentService
                     WeatherLionApplication.currentSunsetTime = new StringBuilder();
 
                     WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
-                        Locale.ENGLISH ).format(
+                            Locale.ENGLISH ).format(
                             WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
 
                     WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
-                        Locale.ENGLISH ).format(
+                            Locale.ENGLISH ).format(
                             WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
                 }// end of if block
                 else
@@ -3559,11 +3562,11 @@ public class WidgetUpdateService extends JobIntentService
                     WeatherLionApplication.currentSunsetTime = new StringBuilder();
 
                     WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
-                        Locale.ENGLISH ).format(
+                            Locale.ENGLISH ).format(
                             WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
 
                     WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
-                        Locale.ENGLISH ).format(
+                            Locale.ENGLISH ).format(
                             WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
                 }// end of else block
             }// end of if block
@@ -3639,14 +3642,14 @@ public class WidgetUpdateService extends JobIntentService
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
                     largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-                        String.format( Locale.ENGLISH, "%s %d %s",
-                            currentWindDirection.toString(),
-                                Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                            String.format( Locale.ENGLISH, "%s %d %s",
+                                    currentWindDirection.toString(),
+                                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                                     ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                                        "km/h" : "mph" ) ) );
+                                            "km/h" : "mph" ) ) );
 
                     largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-                        String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
 
                     // Display weather data on the small widget
                     smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
@@ -3674,7 +3677,7 @@ public class WidgetUpdateService extends JobIntentService
                     for ( DarkSkyWeatherDataItem.Hourly.Data wxHourlyForecast : darkSky.getHourly().getData() )
                     {
                         currentForecastHour = UtilityMethod.getDateTime(
-                            Integer.parseInt( wxHourlyForecast.getTime() ) ).toInstant().atZone(
+                                Integer.parseInt( wxHourlyForecast.getTime() ) ).toInstant().atZone(
                                 ZoneId.systemDefault() ).toLocalDateTime();
 
                         float fTemp = wxHourlyForecast.getTemperature();
@@ -3878,11 +3881,11 @@ public class WidgetUpdateService extends JobIntentService
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
                     largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-                        String.format( Locale.ENGLISH, "%s %d %s",
-                            currentWindDirection.toString(),
-                                Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                            String.format( Locale.ENGLISH, "%s %d %s",
+                                    currentWindDirection.toString(),
+                                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                                     ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                                        "km/h" : "mph" ) ) );
+                                            "km/h" : "mph" ) ) );
 
                     largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
                             String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
@@ -3990,14 +3993,14 @@ public class WidgetUpdateService extends JobIntentService
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
                     largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-                        String.format( Locale.ENGLISH, "%s %d %s",
-                            currentWindDirection.toString(),
-                                Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                            String.format( Locale.ENGLISH, "%s %d %s",
+                                    currentWindDirection.toString(),
+                                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                                     ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                                        "km/h" : "mph" ) ) );
+                                            "km/h" : "mph" ) ) );
 
                     largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-                        String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
 
                     // Display weather data on the small widget
                     smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
@@ -4058,7 +4061,7 @@ public class WidgetUpdateService extends JobIntentService
                         currentFeelsLikeTemp.setLength( 0 );
                         currentFeelsLikeTemp.append(
                                 UtilityMethod.calculateWindChill( Math.round( UtilityMethod.fahrenheitToCelsius( (float) fl ) ),
-                                (int) Math.round( UtilityMethod.mphToKmh( weatherBitWx.getData().get( 0 ).getWindSpeed() ) ) ) );
+                                        (int) Math.round( UtilityMethod.mphToKmh( weatherBitWx.getData().get( 0 ).getWindSpeed() ) ) ) );
 
                         // not supplied by provider
                         currentHigh.setLength( 0 );
@@ -4102,14 +4105,14 @@ public class WidgetUpdateService extends JobIntentService
                     largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
                     largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-                        String.format( Locale.ENGLISH, "%s %d %s",
-                            currentWindDirection.toString(),
-                                Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                            String.format( Locale.ENGLISH, "%s %d %s",
+                                    currentWindDirection.toString(),
+                                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                                     ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                                        "km/h" : "mph" ) ) );
+                                            "km/h" : "mph" ) ) );
 
                     largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
-                        String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+                            String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
 
                     // Display weather data on the small widget
                     smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
@@ -4137,7 +4140,7 @@ public class WidgetUpdateService extends JobIntentService
                     for ( WeatherBitWeatherDataItem.FortyEightHourForecastData.Data wxHourlyForecast : wFhf )
                     {
                         currentForecastHour = LocalDateTime.parse(
-                            wxHourlyForecast.getTimestampLocal(), localDateFormat );
+                                wxHourlyForecast.getTimestampLocal(), localDateFormat );
                         String forecastTime = currentForecastHour.format( hourFormat );
 
                         fTemp = Math.round( wxHourlyForecast.getTemp() );
@@ -4148,7 +4151,7 @@ public class WidgetUpdateService extends JobIntentService
                         {
                             // we don't need the current hour's forecast data or any before
                             if( currentForecastHour.getHour() == checkTime.getHour() ||
-                                currentForecastHour.getHour() < checkTime.getHour())
+                                    currentForecastHour.getHour() < checkTime.getHour())
                             {
                                 continue;
                             }// end of if block
@@ -4214,8 +4217,11 @@ public class WidgetUpdateService extends JobIntentService
 
                             smallWidgetRemoteViews.setTextViewText( R.id.txvDayLow, currentLow + DEGREES );
 
-                            Temps = wFdf.get( i ).getMaxTemp() > Double.parseDouble( currentTemp.toString().replace( "°F" , "" ) )
-                                    ? wFdf.get( i ).getMaxTemp() : Double.parseDouble( currentTemp.toString().replace( "°F" , "" ) );
+//                            Temps = wFdf.get( i ).getMaxTemp() > Double.parseDouble( currentTemp.toString().replace( "°F" , "" ) )
+//                                    ? wFdf.get( i ).getMaxTemp() : Double.parseDouble( currentTemp.toString().replace( "°F" , "" ) );
+                            Temps = Math.max( wFdf.get( i ).getMaxTemp(),
+                                    Double.parseDouble( currentTemp.toString().replace(
+                                    "°F", "" ) ) );
                         }// end of if block
                         else
                         {
@@ -4303,11 +4309,11 @@ public class WidgetUpdateService extends JobIntentService
                             "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
 
                     largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-                        String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
-                            currentWindDirection.toString(),
-                                Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                            String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
+                                    currentWindDirection.toString(),
+                                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                                     ( WeatherLionApplication.storedPreferences.getUseMetric() ?
-                                        "km/h" : "mph" ) ) );
+                                            "km/h" : "mph" ) ) );
 
                     // Display weather data on the small widget
                     smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, currentTemp.toString() + DEGREES );
@@ -4396,10 +4402,10 @@ public class WidgetUpdateService extends JobIntentService
                     currentWindSpeed.setLength( 0 );
                     currentWindSpeed.append(
                             Math.round(
-                                UtilityMethod.mpsToMph( yr.getForecast().get( 0 ).getWindSpeedMps() ) ) );
+                                    UtilityMethod.mpsToMph( yr.getForecast().get( 0 ).getWindSpeedMps() ) ) );
 
                     int feelsLike = UtilityMethod.calculateWindChill(
-                        Integer.parseInt( currentTemp.toString() ),
+                            Integer.parseInt( currentTemp.toString() ),
                             Integer.parseInt( currentWindSpeed.toString() ) );
 
                     currentFeelsLikeTemp.setLength( 0 );
@@ -4467,7 +4473,7 @@ public class WidgetUpdateService extends JobIntentService
                         }// end of if block
                         else if ( currentForecastHour.isAfter( checkTime ) )
                         {
-                           hourlyReading.put( forecastTime, fTemp );
+                            hourlyReading.put( forecastTime, fTemp );
                             x++;
                         }// end of if block
 
@@ -4506,16 +4512,16 @@ public class WidgetUpdateService extends JobIntentService
                                 currentWindDirection.toString(),
                                 currentWindSpeed, "km/h" );
 
-                         // Display weather data on the large widget using metric values
+                        // Display weather data on the large widget using metric values
                         largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature, metricCurrentTemp );
                         largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, metricCurrentHigh );
                         largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow, metricCurrentLow );
                         largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, metricCurrentFeelsLike );
 
                         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-                            String.format( Locale.ENGLISH, "%s %s %s", getString( R.string.wind ),
-                                currentWindDirection.toString(),
-                                    metricCurrentWindReading ) );
+                                String.format( Locale.ENGLISH, "%s %s %s", getString( R.string.wind ),
+                                        currentWindDirection.toString(),
+                                        metricCurrentWindReading ) );
 
                         // Display weather data on the small widget using metric values
                         smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature,  metricCurrentTemp );
@@ -4532,9 +4538,9 @@ public class WidgetUpdateService extends JobIntentService
                                 "%s %s%s", FEELS_LIKE, currentFeelsLikeTemp, DEGREES ) );
 
                         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-                            String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
-                                currentWindDirection.toString(),
-                                    Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                                String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
+                                        currentWindDirection.toString(),
+                                        Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                                         "mph" ) );
 
                         // Display weather data on the small widget using imperial values
@@ -4625,13 +4631,13 @@ public class WidgetUpdateService extends JobIntentService
                             if( WeatherLionApplication.storedPreferences.getUseMetric() )
                             {
                                 String metricForecastHigh = String.format( "%s%s",
-                                    Math.round(
-                                        UtilityMethod.fahrenheitToCelsius( fHigh ) ),
-                                            DEGREES );
+                                        Math.round(
+                                                UtilityMethod.fahrenheitToCelsius( fHigh ) ),
+                                        DEGREES );
                                 String metricForecastLow = String.format( "%s%s",
-                                    Math.round(
-                                        UtilityMethod.fahrenheitToCelsius( fLow ) ),
-                                            DEGREES );
+                                        Math.round(
+                                                UtilityMethod.fahrenheitToCelsius( fLow ) ),
+                                        DEGREES );
 
                                 largeWidgetRemoteViews.setTextViewText( R.id.txvDayHigh, metricForecastHigh );
                                 largeWidgetRemoteViews.setTextViewText( R.id.txvDayLow,  metricForecastLow );
@@ -4756,9 +4762,9 @@ public class WidgetUpdateService extends JobIntentService
                 largeWidgetRemoteViews.setTextViewText( R.id.txvFeelsLike, metricCurrentFeelsLike );
 
                 largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-                    String.format( Locale.ENGLISH, "%s %s %s", getString( R.string.wind ),
-                        currentWindDirection.toString(),
-                            metricCurrentWindReading ) );
+                        String.format( Locale.ENGLISH, "%s %s %s", getString( R.string.wind ),
+                                currentWindDirection.toString(),
+                                metricCurrentWindReading ) );
 
                 // Display weather data on the small widget using metric values
                 smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentTemperature,  metricCurrentTemp );
@@ -4776,9 +4782,9 @@ public class WidgetUpdateService extends JobIntentService
 
 
                 largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
-                    String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
-                        currentWindDirection.toString(),
-                            Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
+                        String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
+                                currentWindDirection.toString(),
+                                Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                                 "mph" ) );
 
                 // Display weather data on the small widget using imperial values
@@ -4800,13 +4806,13 @@ public class WidgetUpdateService extends JobIntentService
                 if( WeatherLionApplication.storedPreferences.getUseMetric() )
                 {
                     String metricForecastHigh = String.format( "%s%s",
-                        Math.round(
-                            UtilityMethod.fahrenheitToCelsius( fHigh ) ),
-                                DEGREES );
+                            Math.round(
+                                    UtilityMethod.fahrenheitToCelsius( fHigh ) ),
+                            DEGREES );
                     String metricForecastLow = String.format( "%s%s",
-                        Math.round(
-                            UtilityMethod.fahrenheitToCelsius( fLow ) ),
-                                DEGREES );
+                            Math.round(
+                                    UtilityMethod.fahrenheitToCelsius( fLow ) ),
+                            DEGREES );
 
                     temps = String.format( "%s %s", metricForecastHigh, metricForecastLow );
                 }// end of if block
@@ -4836,14 +4842,14 @@ public class WidgetUpdateService extends JobIntentService
 
         int inputValue = WeatherLionApplication.storedPreferences.getUseMetric()
                 ? (int) UtilityMethod.fahrenheitToCelsius( Integer.parseInt(
-                    currentTemp.toString().replaceAll( "\\D+","" ) ) )
+                currentTemp.toString().replaceAll( "\\D+","" ) ) )
                 : Integer.parseInt( currentTemp.toString().replaceAll( "\\D+","" ) );
         int colour = UtilityMethod.temperatureColor( inputValue );
 
         // Update the color of the temperature label
         largeWidgetRemoteViews.setTextColor( R.id.txvCurrentTemperature, colour );
         smallWidgetRemoteViews.setTextColor( R.id.txvCurrentTemperature, colour );
-    }// end of method updateTemps  
+    }// end of method updateTemps
 
     /**
      * This broadcast receiver waits for a broadcast from HttpHelper before

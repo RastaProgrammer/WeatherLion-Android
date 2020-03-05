@@ -19,6 +19,7 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.text.HtmlCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.util.TypedValue;
@@ -1309,7 +1310,7 @@ public abstract class UtilityMethod
 
         if( opacityLevel < 100 )
         {
-            String hexString = Integer.toHexString( Math.round( 255 * opacityLevel / 100 ) );
+            String hexString = Integer.toHexString( Math.round( 255 * opacityLevel / 100f ) );
             String conversion = ( hexString.length() < 2 ? "0" : "" ) + hexString;
 
             if( color.trim().length() == 6 )
@@ -3900,7 +3901,7 @@ public abstract class UtilityMethod
      * Display a dialog with a specific message
      * @param message   The message to be displayed in the alert dialog
      */
-    public static void showMessageDialog( String message, String title, Context c )
+    public static void showMessageDialog( MsgType messageType, String message, String title, Context c )
     {
         final View messageDialogView = View.inflate( c, R.layout.wl_message_dialog, null );
         final AlertDialog messageDialog = new AlertDialog.Builder( c ).create();
@@ -3909,7 +3910,15 @@ public abstract class UtilityMethod
         TextView txvMessage = messageDialogView.findViewById( R.id.txvAcknowledgements );
 
         txvTitle.setText( title );
-        txvMessage.setText( message );
+
+        if( messageType == MsgType.HTML )
+        {
+            txvMessage.setText( HtmlCompat.fromHtml( message, 0 ) );
+        }// end of if block
+        else
+        {
+            txvMessage.setText( message );
+        }// end of else block
 
         RelativeLayout rlTitleBar = messageDialogView.findViewById( R.id.rlDialogTitleBar );
         RelativeLayout dialogBody = messageDialogView.findViewById( R.id.rlDialogBody );
@@ -4154,14 +4163,7 @@ public abstract class UtilityMethod
 
         Color textColour;
 
-        LocalTime lt = LocalTime.now();
-
-        String t = get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
-        int h = Integer.parseInt( t.split( ":" )[ 0 ] );    // the current hour
-        int m = Integer.parseInt( t.split( ":" )[ 1 ] );    // the current minute
-
-        if( lt.isAfter( LocalTime.of( h,  m, 0 ) ) &&
-                lt.isBefore( LocalTime.of( 20,59,59 ) ) )
+        if( isDayTime() )
         {
             // daytime theme
             textColour = Color.valueOf( c.getColor( R.color.black_opacity_80 ) );
@@ -4191,7 +4193,7 @@ public abstract class UtilityMethod
                 ( (TextView) v ).setTextColor( Color.valueOf(
                     c.getColor( R.color.off_white ) ).toArgb() );
             }// end of if block
-            else
+            else if( v instanceof TextView )
             {
                 ( (TextView) v ).setTextColor( textColour.toArgb() );
             }// end of else block
@@ -4627,6 +4629,22 @@ public abstract class UtilityMethod
 
         return Math.max( janOffset, julOffset ) != dateOffset;
     }// end of method isDaylightSavings
+
+    /**
+     * Determine the day light conditions
+     *
+     * @return True/False based on the evaluation
+     */
+    public static boolean isDayTime()
+    {
+        LocalTime lt = LocalTime.now();
+        String t = get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
+        int h = Integer.parseInt( t.split( getAppContext().getString( R.string.colon ) )[ 0 ] );    // the current hour
+        int m = Integer.parseInt( t.split( getAppContext().getString( R.string.colon ) )[ 1 ] );    // the current minute
+
+        return lt.isAfter( LocalTime.of( h, m, 0 ) ) &&
+                lt.isBefore( LocalTime.of( 20, 59, 59 ) );
+    }// end of method isDayTime
 
     /**
      * Get the duration of time that has elapsed since a certain date.

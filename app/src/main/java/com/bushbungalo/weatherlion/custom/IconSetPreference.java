@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.preference.PreferenceManager;
@@ -78,12 +77,6 @@ public class IconSetPreference extends DialogPreference
         RelativeLayout dialogBody = dialogView.findViewById( R.id.rlDialogBody );
         RelativeLayout dialogFooter = dialogView.findViewById( R.id.rlDialogFooter );
 
-        if( WeatherLionApplication.systemColor != null )
-        {
-            GradientDrawable bgShape = (GradientDrawable) rlTitleBar.getBackground().getCurrent();
-            bgShape.setColor( WeatherLionApplication.systemColor.toArgb() );
-        }// end of if block
-
         TextView txvDialogTitle = dialogView.findViewById( R.id.txvDialogTitle );
         txvDialogTitle.setTypeface( WeatherLionApplication.currentTypeface );
 
@@ -98,34 +91,7 @@ public class IconSetPreference extends DialogPreference
             }
         });
 
-        if( widBackgroundColor != null )
-        {
-            switch ( widBackgroundColor.toLowerCase() )
-            {
-                case WeatherLionApplication.AQUA_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.aqua_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.aqua_dialog_bg ) ).toArgb() );
-                    break;
-                case WeatherLionApplication.FROSTY_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.frosty_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.frosty_dialog_bg ) ).toArgb() );
-                    break;
-                case WeatherLionApplication.RABALAC_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.rabalac_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.rabalac_dialog_bg ) ).toArgb() );
-
-                    break;
-                case WeatherLionApplication.LION_THEME:
-                    dialogBody.setBackgroundColor( Color.valueOf( mContext.getColor( R.color.lion_dialog_bg ) ).toArgb() );
-                    ( (GradientDrawable) dialogFooter.getBackground() ).setColor( Color.valueOf( mContext.getColor(
-                            R.color.lion_dialog_bg ) ).toArgb() );
-
-                    break;
-            }// end of switch block
-        }// end of if block
+        UtilityMethod.themeDialog( mContext, rlTitleBar, dialogBody, dialogFooter );
 
         try
         {
@@ -156,19 +122,35 @@ public class IconSetPreference extends DialogPreference
         iconGrid = dialogView.findViewById( R.id.grdIconSet );
         iconGrid.setAdapter( adapter );
 
-        iconGrid.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        iconGrid.setOnItemClickListener( new AdapterView.OnItemClickListener()
         {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id)
+            public void onItemClick( AdapterView<?> parent, View view,
+                                    int position, long id )
             {
+                TextView selectedIconText = view.findViewById( R.id.grid_text );
+
                 //int color = 0x00FFFFFF; // Transparent
                 for( int i = 0; i < adapter.getCount(); i++ )
                 {
                     iconGrid.getChildAt( i ).setBackgroundColor( 0x00FFFFFF ); // Transparent
+
+                    if( UtilityMethod.isDayTime() )
+                    {
+                       ( (TextView) iconGrid.getChildAt( i ).findViewById( R.id.grid_text ) )
+                                .setTextColor( UtilityMethod.addOpacity(
+                                        WeatherLionApplication.systemColor.toArgb(), 70 ) );
+                    }// end of if block
+                    else
+                    {
+                        ( (TextView) iconGrid.getChildAt( i ).findViewById( R.id.grid_text ) )
+                                .setTextColor( Color.valueOf( mContext.getColor( R.color.off_white ) )
+                                        .toArgb() );
+                    }// end of else block
                 }// end of for each loop
 
                 view.setBackgroundColor( 0xFFC2E9F8 ); // Opaque Blue
+                selectedIconText.setTextColor( WeatherLionApplication.systemColor.toArgb() );
 
                 // keep track of the user's selection
                 selectedIconSet.setLength( 0 );
