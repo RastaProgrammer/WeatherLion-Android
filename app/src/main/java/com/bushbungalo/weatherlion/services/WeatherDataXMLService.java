@@ -22,6 +22,7 @@ import org.jdom2.output.XMLOutputter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
@@ -87,7 +88,7 @@ public class WeatherDataXMLService extends JobIntentService
 	 */
 	private static void broadcastDataStored()
 	{
-		UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Broadcasting xml success",
+		UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Broadcasting xml success...",
 				TAG + "::broadcastDataStored" );
 		Intent messageIntent = new Intent( WEATHER_XML_STORAGE_MESSAGE );
 		LocalBroadcastManager manager =
@@ -113,28 +114,16 @@ public class WeatherDataXMLService extends JobIntentService
 		}// end of if block
 		else
 		{
-			boolean blnBackupCreated;
-
-			try
+			if( currentWeatherDataFile.exists() )
 			{
-				// ensure that a file is created before making a copy
-				blnBackupCreated = backupWeatherDataFile.createNewFile();
+				UtilityMethod.copyFile( currentWeatherDataFile, backupWeatherDataFile,
+					TAG + "::createBackupFile" );
 
-				if(  currentWeatherDataFile.exists() && backupWeatherDataFile.exists() )
-				{
-					if( blnBackupCreated )
-					{
-						UtilityMethod.copyFile( currentWeatherDataFile, backupWeatherDataFile,
-								TAG + "::createBackupFile" );
-					}// end of if block
-				}// end of if block
-			}// end of try block
-			catch( IOException e )
-			{
-				UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Error occurred while making backup file!\n"
-						+ e.getMessage(),TAG + "::createBackupFile [line: " +
-						UtilityMethod.getExceptionLineNumber( e )  + "]" );
-			}// end of catch block
+				UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+					String.format( Locale.ENGLISH, "Backup weather data created at %s...",
+						new SimpleDateFormat( "h:mm a", Locale.ENGLISH ).format( new Date() ) ),
+							TAG + "::createBackupFile" );
+			}// end of if block
 		}// end of else block
 	}// end of method createBackupFile
 

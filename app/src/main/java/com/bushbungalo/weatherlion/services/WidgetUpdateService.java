@@ -1158,13 +1158,6 @@ public class WidgetUpdateService extends JobIntentService
                 // if the last update is not present then it can be assumed that data is being restored
                 if( WeatherLionApplication.restoringWeatherData ) UtilityMethod.lastUpdated = new Date();
 
-                // Update the current location and update time stamp
-                largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
-                        currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
-
-                smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
-                        currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
-
                 String storedProviderName = WeatherLionApplication.storedPreferences.getProvider()
                         .equalsIgnoreCase( WeatherLionApplication.YAHOO_WEATHER ) ?
                         WeatherLionApplication.storedPreferences.getProvider()
@@ -1228,13 +1221,6 @@ public class WidgetUpdateService extends JobIntentService
         }// end of else if block
 
         WidgetHelper.getWidgetIds();
-
-        // Set the current location
-        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
-                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
-
-        smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
-                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
 
         // refresh widget background due to the possibility of previous data corruption
         loadWidgetBackground();
@@ -1406,13 +1392,6 @@ public class WidgetUpdateService extends JobIntentService
         }// end of else if block
         else
         {
-            // Set the current location
-            largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
-                    currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
-
-            smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
-                    currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
-
             if( WeatherLionApplication.largeWidgetIds.length > 0 )
             {
                 for ( int largeWidgetId : WeatherLionApplication.largeWidgetIds )
@@ -1773,6 +1752,9 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
+        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                 String.format( Locale.ENGLISH, "%s %d %s",
                         currentWindDirection.toString(),
@@ -1782,6 +1764,9 @@ public class WidgetUpdateService extends JobIntentService
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
                 String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+
+        smallWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -1992,6 +1977,9 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
+        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                 String.format( Locale.ENGLISH, "%s %d %s",
                         currentWindDirection.toString(),
@@ -2001,6 +1989,9 @@ public class WidgetUpdateService extends JobIntentService
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
                 String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+
+        smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
+                UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2162,6 +2153,9 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
+        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                 String.format( Locale.ENGLISH, "%s %d %s",
                         currentWindDirection.toString(),
@@ -2171,6 +2165,9 @@ public class WidgetUpdateService extends JobIntentService
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
                 String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+
+        smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
+                UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2386,12 +2383,18 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
+        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                 String.format( Locale.ENGLISH, "%s %d %s",
                         currentWindDirection.toString(),
                         Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                         ( WeatherLionApplication.storedPreferences.getUseMetric() ?
                                 "km/h" : "mph" ) ) );
+
+        smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
+                UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2582,12 +2585,18 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
+        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                 String.format( Locale.ENGLISH, "%s %s %d %s", getString( R.string.wind ),
                         currentWindDirection.toString(),
                         Math.round( Float.parseFloat( currentWindSpeed.toString() ) ),
                         ( WeatherLionApplication.storedPreferences.getUseMetric() ?
                                 "km/h" : "mph" ) ) );
+
+        smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
+                UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2821,7 +2830,11 @@ public class WidgetUpdateService extends JobIntentService
         updateTemps( true ); // call update temps here
         formatWeatherCondition();
 
-        largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition, UtilityMethod.toProperCase( currentCondition.toString() ) );
+        largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
+                UtilityMethod.toProperCase( currentCondition.toString() ) );
+
+        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                 String.format( Locale.ENGLISH, "%s %d %s",
@@ -2832,6 +2845,9 @@ public class WidgetUpdateService extends JobIntentService
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
                 String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+
+        smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
+                UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -2976,6 +2992,9 @@ public class WidgetUpdateService extends JobIntentService
         largeWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
 
+        largeWidgetRemoteViews.setTextViewText( R.id.txvCurrentLocation,
+                currentLocation.substring( 0, currentLocation.indexOf( "," ) ) );
+
         largeWidgetRemoteViews.setTextViewText( R.id.txvWindSpeed,
                 String.format( Locale.ENGLISH, "%s %d %s",
                         currentWindDirection.toString(),
@@ -2985,6 +3004,9 @@ public class WidgetUpdateService extends JobIntentService
 
         largeWidgetRemoteViews.setTextViewText( R.id.txvHumidity,
                 String.format( Locale.ENGLISH, "%s%% Humid", currentHumidity.toString() ) );
+
+        smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
+                UtilityMethod.toProperCase( currentCondition.toString() ) );
 
         smallWidgetRemoteViews.setTextViewText( R.id.txvWeatherCondition,
                 UtilityMethod.toProperCase( currentCondition.toString() ) );
@@ -4869,6 +4891,8 @@ public class WidgetUpdateService extends JobIntentService
 
                 if( expectedJSONSize == strJSON.size() )
                 {
+                    UtilityMethod.serviceCall(
+                            WeatherLionApplication.storedPreferences.getProvider() );
                     updateAllAppWidgets( appWidgetManager );
                 }// end of if block
             }// end of if block
