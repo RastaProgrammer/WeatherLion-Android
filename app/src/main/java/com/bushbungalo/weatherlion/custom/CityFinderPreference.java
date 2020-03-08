@@ -142,10 +142,23 @@ public class CityFinderPreference extends DialogPreference
 
         edtCityName.setTypeface( WeatherLionApplication.currentTypeface );
 
-        edtCityName.setTextColor( WeatherLionApplication.systemColor.toArgb() );
-        edtCityName.setHintTextColor( UtilityMethod.addOpacity( WeatherLionApplication.systemColor.toArgb(),
-                40 ) );
-        txvDialogMessage.setTextColor( Color.WHITE );
+        if( UtilityMethod.isDayTime() )
+        {
+            edtCityName.getBackground().setTint( Color.parseColor( "#EDEDED" ) );
+            edtCityName.setHintTextColor( UtilityMethod.addOpacity(
+                    Color.BLACK, 40 ) );
+            edtCityName.setTextColor( Color.BLACK );
+            txvDialogMessage.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+        }// end of if block
+        else
+        {
+            edtCityName.getBackground().setTint( Color.parseColor( "#38383D" ) );
+            edtCityName.setHintTextColor( UtilityMethod.addOpacity(
+                WeatherLionApplication.systemColor.toArgb(), 40 ) );
+            edtCityName.setTextColor( WeatherLionApplication.systemColor.toArgb() );
+            txvDialogMessage.setTextColor( Color.valueOf( mContext.getColor(
+                    R.color.off_white ) ).toArgb() );
+        }// end of else block
 
         RelativeLayout dialogBody = dialogView.findViewById( R.id.rlDialogBody );
         RelativeLayout dialogFooter = dialogView.findViewById( R.id.rlDialogFooter );

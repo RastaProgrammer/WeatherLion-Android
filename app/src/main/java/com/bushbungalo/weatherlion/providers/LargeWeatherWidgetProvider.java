@@ -20,6 +20,9 @@ import com.bushbungalo.weatherlion.WeatherLionApplication;
 import com.bushbungalo.weatherlion.WeatherLionMain;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 import static android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID;
 
 /*
@@ -37,6 +40,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
     private BroadcastReceiver mSystemBroadcastReceiver;
 
     public static final String REFRESH_BUTTON_CLICKED = "Refresh";
+    public static final String CANCEL_REFRESH_BUTTON_CLICKED = "CancelRefresh";
     public static final String CLOCK_UPDATE_MESSAGE = "ClockUpdateMessage";
     public static final String WIDGET_UPDATE_MESSAGE = "WidgetUpdateMessage";
     public static final String ICON_REFRESH_MESSAGE = "WidgetIconRefreshMessage";
@@ -99,6 +103,21 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             largeWidgetRemoteViews.setOnClickPendingIntent(
                     R.id.imvRefresh,
                     getPendingSelfIntent( context, REFRESH_BUTTON_CLICKED )
+            );
+
+            largeWidgetRemoteViews.setOnClickPendingIntent(
+                    R.id.imvOffline,
+                    getPendingSelfIntent( context, OFFLINE )
+            );
+
+            // set the click listener for the refreshing image
+            PendingIntent cancelRefreshIntent = PendingIntent.getBroadcast( context,
+                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
+            largeWidgetRemoteViews.setOnClickPendingIntent( R.id.imvRefreshing, cancelRefreshIntent );
+
+            largeWidgetRemoteViews.setOnClickPendingIntent(
+                    R.id.imvRefreshing,
+                    getPendingSelfIntent( context, CANCEL_REFRESH_BUTTON_CLICKED )
             );
 
             largeWidgetRemoteViews.setOnClickPendingIntent(
@@ -212,6 +231,26 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             }// end of else block      
 
         }// end of if block
+        else if ( CANCEL_REFRESH_BUTTON_CLICKED.equals( intent.getAction() ) )
+        {
+            UtilityMethod.refreshRequestedByUser = false;
+            UtilityMethod.refreshRequestedBySystem = false;
+
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Cancelling refresh request...",
+                    TAG + "::onReceive" );
+
+            // Update the current location and update time stamp
+            String ts = new SimpleDateFormat( "MMM dd, h:mm a", Locale.ENGLISH ).format(
+                    UtilityMethod.lastUpdated );
+
+            // ensure that refreshing animations are removed from the widget
+            largeWidgetRemoteViews.setTextViewText( R.id.txvLastUpdated, ts );
+            largeWidgetRemoteViews.setViewVisibility( R.id.imvRefresh, View.VISIBLE );
+            largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.INVISIBLE );
+
+            // update the widget
+            appWidgetManager.updateAppWidget( appWidgetIds, largeWidgetRemoteViews );
+        }// end of else if block
         else if ( OFFLINE.equals( intent.getAction() ) )
         {
             // Calling from a Non-UI Thread

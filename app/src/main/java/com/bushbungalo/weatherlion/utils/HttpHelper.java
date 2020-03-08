@@ -69,8 +69,8 @@ public class HttpHelper
             if( !UtilityMethod.updateRequired( WeatherLionApplication.getAppContext() ) )
             {
                 broadcastServiceResponse( WeatherLionApplication.EMPTY_JSON );
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Widget already up to date!",
-                        "HttpHelper::downloadUrl" );
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+            "Widget already up to date!", "HttpHelper::downloadUrl" );
 
                 return null;
             }// end of if block
@@ -119,6 +119,9 @@ public class HttpHelper
                That being the case, weather data will be broadcasted when received. */
             if( weatherData )
             {
+                // call was made to the provider so update the call log
+                UtilityMethod.serviceCall( WeatherLionApplication.storedPreferences.getProvider() );
+
                 // weather updates will be performed when this broadcast is sent
                 broadcastServiceResponse( data );
             }// end of if block

@@ -2357,7 +2357,14 @@ public abstract class UtilityMethod
      */
     public static boolean areFilesTheSame( File firstFile, File secondFile )
     {
-        return compareFilesByByte( firstFile, secondFile );
+        if( !firstFile.exists() || !secondFile.exists() )
+        {
+            return false;
+        }// end of if block
+        else
+        {
+            return compareFilesByByte( firstFile, secondFile );
+        }// end of else block
     }// end of method areFilesTheSame
 
     /**
@@ -2368,7 +2375,7 @@ public abstract class UtilityMethod
      * @return  True/False depending on the outcome of the evaluation
      */
     @SuppressWarnings( "ResultOfMethodCallIgnored" )
-    public static boolean compareFilesByByte(File firstFile, File secondFile )
+    public static boolean compareFilesByByte( File firstFile, File secondFile )
     {
         FileInputStream first;
         FileInputStream second;
@@ -2401,6 +2408,8 @@ public abstract class UtilityMethod
                         return false;
                     }// end of if block
                 }// end of while loop
+
+                return true;
             }// end of if block
             else
             {
@@ -2414,7 +2423,7 @@ public abstract class UtilityMethod
                     TAG + "::copyFileStream" );
         }// end of catch block
 
-        return true;
+        return false;
     }// end of method compareFilesByByte
 
     /**

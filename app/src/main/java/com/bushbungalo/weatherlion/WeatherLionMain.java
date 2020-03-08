@@ -1632,7 +1632,7 @@ public class WeatherLionMain extends AppCompatActivity
                     if( attemptDataRestoration() )
                     {
                         UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                        "Restored data from preferences!", TAG + "::onCreate" );
+                        "Data restoration completed successfully!", TAG + "::onCreate" );
                     }// end of if block
                 }// end of if block
             }// end of if block
@@ -1641,7 +1641,7 @@ public class WeatherLionMain extends AppCompatActivity
                 if( attemptDataRestoration() )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                        "Restored data from preferences!", TAG + "::onCreate" );
+                        "Data restoration completed successfully!", TAG + "::onCreate" );
                 }// end of if block
 
             }// end of else if block
@@ -1687,7 +1687,17 @@ public class WeatherLionMain extends AppCompatActivity
      */
     private boolean attemptDataRestoration()
     {
-        if( WeatherLionApplication.storedPreferences != null )
+        if( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists()
+                && !( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() ) )
+        {
+            // if a backup file is present but, the original is not present, restore from the backup
+            UtilityMethod.copyFile( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ),
+                    new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ),
+                    TAG + "::attemptDataRestoration" );
+
+            return true;
+        }// end of if block
+        else if( WeatherLionApplication.storedPreferences != null )
         {
             if ( !WeatherLionApplication.storedPreferences.getLocation().equals(
                     Preference.DEFAULT_WEATHER_LOCATION ) )
@@ -1750,7 +1760,7 @@ public class WeatherLionMain extends AppCompatActivity
                     return false;
                 }// end of else block
             }//end of else block
-        }// end of if block
+        }// end of else if block
 
         return false;
     }// end of method attemptDataRestoration
@@ -2571,6 +2581,12 @@ public class WeatherLionMain extends AppCompatActivity
         pwdKeyValue = keyDialogView.findViewById( R.id.edtKeyValue );
         CheckBox chkShowPwd = keyDialogView.findViewById( R.id.cbShowPwd );
 
+        int[][] states = { { android.R.attr.state_checked }, {} };
+        int[] colors = { WeatherLionApplication.systemColor.toArgb(),
+                WeatherLionApplication.systemColor.toArgb() };
+        CompoundButtonCompat.setButtonTintList( chkShowPwd,
+                new ColorStateList( states, colors ) );
+
         UtilityMethod.themeDialog( this, rlTitleBar, dialogBody, dialogFooter );
 
         if( UtilityMethod.isDayTime() )
@@ -2586,6 +2602,8 @@ public class WeatherLionMain extends AppCompatActivity
             pwdKeyValue.setTextColor( WeatherLionApplication.systemColor.toArgb() );
             spnAccessProvider.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_white ) );
             spnProviderKeys.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_white ) );
+
+            chkShowPwd.setTextColor( WeatherLionApplication.systemColor.toArgb() );
         }// end of if block
         else
         {
@@ -2642,16 +2660,14 @@ public class WeatherLionMain extends AppCompatActivity
                         spnProviderKeys.setPopupBackgroundDrawable( this.getDrawable( R.drawable.wl_round_list_popup_lion ) );
                         break;
                 }// end of switch block
+
+                chkShowPwd.setTextColor( Color.valueOf( mContext.getColor(
+                        R.color.off_white ) ).toArgb() );
             }// end of if block
+
+            pwdKeyValue.setTextColor( Color.valueOf( mContext.getColor(
+                    R.color.off_white ) ).toArgb() );
         }// end of else block
-
-        int[][] states = { { android.R.attr.state_checked }, {} };
-        int[] colors = { WeatherLionApplication.systemColor.toArgb(),
-                WeatherLionApplication.systemColor.toArgb() };
-        CompoundButtonCompat.setButtonTintList( chkShowPwd,
-                new ColorStateList( states, colors ) );
-
-        chkShowPwd.setTextColor( WeatherLionApplication.systemColor.toArgb() );
 
         ImageView imvAccessProviderDropArrow = keyDialogView.findViewById(
                 R.id.imvAccessProviderDropArrow );

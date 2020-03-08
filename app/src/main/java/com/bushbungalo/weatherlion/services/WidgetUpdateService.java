@@ -4869,8 +4869,6 @@ public class WidgetUpdateService extends JobIntentService
 
                 if( expectedJSONSize == strJSON.size() )
                 {
-                    UtilityMethod.serviceCall(
-                            WeatherLionApplication.storedPreferences.getProvider() );
                     updateAllAppWidgets( appWidgetManager );
                 }// end of if block
             }// end of if block
