@@ -34,7 +34,7 @@ public class UpdateAlarmBroadcastReceiver extends BroadcastReceiver
                 if( UtilityMethod.updateRequired( context ) )
                 {
                     WeatherLionApplication.callMethodByName( null,
-            "refreshWeather", new Class[]{ String.class }, new Object[]{ invoker } );
+            "refreshWeather", new Class[]{ String.class }, new Object[]{ invoker }, invoker );
                 }// end of if block
             }// end of if block
             else

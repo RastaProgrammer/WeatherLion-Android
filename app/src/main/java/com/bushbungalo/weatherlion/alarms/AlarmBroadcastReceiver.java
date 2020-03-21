@@ -3,10 +3,8 @@ package com.bushbungalo.weatherlion.alarms;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 
 import com.bushbungalo.weatherlion.WeatherLionApplication;
-import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 
 /**
@@ -31,7 +29,7 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver
                 String invoker = this.getClass().getSimpleName() + "::onReceive";
                 WeatherLionApplication.callMethodByName( null,
                         "refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker } );
+                        new Class[]{ String.class }, new Object[]{ invoker }, invoker );
             }// end of if block
         }// end of if block
     }// end of method onReceive

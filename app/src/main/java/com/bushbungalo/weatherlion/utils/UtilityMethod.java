@@ -1203,7 +1203,7 @@ public abstract class UtilityMethod
         WARNING
     }
 
-    public enum MsgType
+    public enum MsgFormat
     {
         HTML,
         TEXT
@@ -3727,7 +3727,7 @@ public abstract class UtilityMethod
             else
             {
                 WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
-                null, null );
+                null, null, TAG + "::okToUseService" );
 
                 ok = true;
             }// end of else block
@@ -3741,7 +3741,7 @@ public abstract class UtilityMethod
         "Recreating log file that could not be imported.", "::okToUseService" );
 
             WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
-    null, null );
+    null, null, TAG + "::okToUseService" );
 
             ok = true;
         }// end of else block
@@ -3795,7 +3795,8 @@ public abstract class UtilityMethod
 
                 if( callCount < WeatherLionApplication.DAILY_CALL_LIMIT )
                 {
-                    importedServiceMap.put( provider, ++callCount );
+                    callCount++;
+                    importedServiceMap.put( provider, callCount );
 
                     Gson gson = new GsonBuilder().create();
 
@@ -3822,7 +3823,7 @@ public abstract class UtilityMethod
         else
         {
             WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
-    null, null );
+    null, null, TAG + "::serviceCall" );
         }// end of else block
     }// end of method serviceCall
 
@@ -3908,9 +3909,13 @@ public abstract class UtilityMethod
 
     /**
      * Display a dialog with a specific message
+     *
+     * @param messageFormat The format of the message, whether text of html
      * @param message   The message to be displayed in the alert dialog
+     * @param title The title of the message dialog
+     * @param c The application context
      */
-    public static void showMessageDialog( MsgType messageType, String message, String title, Context c )
+    public static void showMessageDialog( MsgFormat messageFormat, String message, String title, Context c )
     {
         final View messageDialogView = View.inflate( c, R.layout.wl_message_dialog, null );
         final AlertDialog messageDialog = new AlertDialog.Builder( c ).create();
@@ -3920,7 +3925,7 @@ public abstract class UtilityMethod
 
         txvTitle.setText( title );
 
-        if( messageType == MsgType.HTML )
+        if( messageFormat == MsgFormat.HTML )
         {
             txvMessage.setText( HtmlCompat.fromHtml( message, 0 ) );
         }// end of if block

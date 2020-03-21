@@ -85,6 +85,7 @@ import com.bushbungalo.weatherlion.utils.DividerItemDecoration;
 import com.bushbungalo.weatherlion.utils.JSONHelper;
 import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
+import com.google.gson.internal.LinkedTreeMap;
 import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -111,6 +112,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -731,7 +733,7 @@ public class WeatherLionMain extends AppCompatActivity
                                         WeatherLionApplication.CELSIUS : WeatherLionApplication.FAHRENHEIT
                                 ) );
 
-                        UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT, message,
+                        UtilityMethod.showMessageDialog( UtilityMethod.MsgFormat.TEXT, message,
                                 UtilityMethod.toProperCase( forecastHour ) + " Forecast", mContext );
                     }// end of method onClick
                 });
@@ -1075,6 +1077,17 @@ public class WeatherLionMain extends AppCompatActivity
 
         // load the applicable typeface in use
         UtilityMethod.loadCustomFont( rootView );
+
+        RelativeLayout providerInfo = findViewById( R.id.rlWeatherFooter );
+
+        providerInfo.setOnClickListener( new View.OnClickListener()
+        {
+            @Override
+            public void onClick( View v )
+            {
+                showCallStats();
+            }
+        });
     }// end of method loadMainActivityWeather
 
     private void createLineGraph( LinkedHashMap<Date, Integer> firstDataPoints,
@@ -1263,8 +1276,6 @@ public class WeatherLionMain extends AppCompatActivity
                 dailyHighCustomPaint.setTypeface( WeatherLionApplication.currentTypeface );
                 dailyHighCustomPaint.setTextSize( 30 );
 
-
-
                 dailyHighTempsPointSeries.setCustomShape( new PointsGraphSeries.CustomShape()
                 {
                     @Override
@@ -1329,7 +1340,7 @@ public class WeatherLionMain extends AppCompatActivity
                     WeatherLionApplication.storedData.getLocation().getCity() ) )
             {
                 WeatherLionApplication.callMethodByName( null,"refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker } );
+                        new Class[]{ String.class }, new Object[]{ invoker }, invoker );
             }// end of if block
 
             // if this location has already been used there is no need to query the
@@ -1411,7 +1422,7 @@ public class WeatherLionMain extends AppCompatActivity
             {
                 WeatherLionApplication.restoringWeatherData = true;
                 WeatherLionApplication.callMethodByName( null,"refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker } );
+                        new Class[]{ String.class }, new Object[]{ invoker }, invoker );
             }// end of if block
         }// end of else block
     }// end of method checkData
@@ -1717,7 +1728,7 @@ public class WeatherLionMain extends AppCompatActivity
 
                     String invoker = this.getClass().getSimpleName() + "::attemptDataRestoration";
                     WeatherLionApplication.callMethodByName( null, "refreshWeather",
-                            new Class[]{ String.class }, new Object[]{ invoker } );
+                            new Class[]{ String.class }, new Object[]{ invoker }, invoker );
 
                     return true;
                     // Have a loading screen displayed in the mean time
@@ -1936,7 +1947,7 @@ public class WeatherLionMain extends AppCompatActivity
                     "::onResume";
             WeatherLionApplication.callMethodByName( null,
                     "refreshWeather",
-                    new Class[]{ String.class }, new Object[]{ invoker } );
+                    new Class[]{ String.class }, new Object[]{ invoker }, invoker );
         }// end of if block
     }// end of method onResume
 
@@ -1996,7 +2007,8 @@ public class WeatherLionMain extends AppCompatActivity
 
                 String invoker = this.getClass().getSimpleName() + "::refreshWeather";
                 WeatherLionApplication.callMethodByName( null,
-            "refreshWeather", new Class[]{ String.class }, new Object[]{ invoker } );
+            "refreshWeather", new Class[]{ String.class }, new Object[]{ invoker },
+                        invoker );
             }// end of if block
         }// end of if block
     }// end of method refreshWeather
@@ -2154,6 +2166,53 @@ public class WeatherLionMain extends AppCompatActivity
                 ViewGroup.LayoutParams.WRAP_CONTENT );
         dialogWindow.setGravity( Gravity.CENTER );
     }// end of method responseDialog
+
+    private void showCallStats()
+    {
+        Map<String, Object> importedServiceLog = JSONHelper.importJsonData(
+                mContext.getFileStreamPath(
+                        WeatherLionApplication.SERVICE_CALL_LOG ).toString(), false );
+        String date = (String) importedServiceLog.get( "Date" );
+        Date logDate = null;
+        Map importedServiceMap = (LinkedTreeMap) Objects.requireNonNull( importedServiceLog )
+                .get( "Service" );
+
+        SimpleDateFormat ldf = new SimpleDateFormat( "MMM dd, yyyy hh:mm:ss a",
+                Locale.ENGLISH );
+        SimpleDateFormat sdf = new SimpleDateFormat( "MMM dd, yyyy", Locale.ENGLISH );
+
+        int callCount = 0;
+
+        try
+        {
+            logDate = ldf.parse( date );
+        } // end of try block
+        catch ( ParseException e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                    TAG + "::showCallStats [line: " +
+                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+        }// end of catch block
+
+        // if we are working with today's log which we should be
+        if( sdf.format( logDate ).equals( sdf.format( new Date() ) ) )
+        {
+            if( importedServiceMap != null )
+            {
+                callCount = (int) (double) importedServiceMap.get(
+                        WeatherLionApplication.storedData.getProvider().getName() );
+            }// end of if block
+        }// end of if block
+
+        String msg = String.format( Locale.ENGLISH,
+                "Weather Provider: %s\nCalls Today: %d\nLast Called: %s",
+                WeatherLionApplication.storedData.getProvider().getName(),
+                callCount, new SimpleDateFormat( "MMM dd, h:mm a",
+                        Locale.ENGLISH ).format( UtilityMethod.lastUpdated ) );
+
+        UtilityMethod.showMessageDialog( UtilityMethod.MsgFormat.TEXT, msg,
+                "Call Statistics", mContext );
+    }// end of method showCallStats
 
     /**
      * Displays a custom popup menu
@@ -2473,7 +2532,7 @@ public class WeatherLionMain extends AppCompatActivity
                     String invoker = this.getClass().getSimpleName() + "::showPreviousSearches";
                     WeatherLionApplication.callMethodByName( null,
                             "refreshWeather",
-                            new Class[]{ String.class }, new Object[]{ invoker } );
+                            new Class[]{ String.class }, new Object[]{ invoker }, invoker );
 
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
                             "Switching cities",
@@ -3871,7 +3930,7 @@ public class WeatherLionMain extends AppCompatActivity
                             "::systemEventsBroadcastReceiver::onReceive";
                     WeatherLionApplication.callMethodByName( null,
                             "refreshWeather",
-                            new Class[]{ String.class }, new Object[]{ invoker } );
+                            new Class[]{ String.class }, new Object[]{ invoker }, invoker );
                 }// end of if block
             }// end of else if block
         }// end of method onReceive

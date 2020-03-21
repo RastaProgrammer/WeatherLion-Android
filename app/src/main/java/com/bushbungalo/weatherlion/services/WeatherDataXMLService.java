@@ -136,7 +136,7 @@ public class WeatherDataXMLService extends JobIntentService
 
 		String noDate = "Wed Dec 31 19:00:00 EST 1969";
 
-		createBackupFile();
+		createBackupFile(); // perform initial backup of data
 
 		try
 		{
@@ -248,12 +248,13 @@ public class WeatherDataXMLService extends JobIntentService
 			xmlOutput.setFormat( Format.getPrettyFormat() );
 			xmlOutput.output( doc, new FileWriter( wxData ) );
 
-			UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, xmlData.getProviderName() + "'s weather data was stored locally!",
-				TAG + "::saveCurrentWeatherXML" );
+			UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, xmlData.getProviderName()
+				+ "'s weather data was stored locally!", TAG + "::saveCurrentWeatherXML" );
 
 			WeatherLionApplication.previousWeatherProvider.setLength( 0 );
 			WeatherLionApplication.previousWeatherProvider.append( xmlData.getProviderName() );
 
+			createBackupFile(); // perform backup of data just received
 			broadcastDataStored();
 		}// end of try block
 		catch ( IOException e )

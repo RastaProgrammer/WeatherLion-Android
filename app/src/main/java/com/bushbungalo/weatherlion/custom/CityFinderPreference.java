@@ -429,7 +429,8 @@ public class CityFinderPreference extends DialogPreference
                                 String invoker = this.getClass().getSimpleName() + "::onDialogClosed";
                                 WeatherLionApplication.callMethodByName( null,
                                         "refreshWeather",
-                                        new Class[]{ String.class }, new Object[]{ invoker } );
+                                        new Class[]{ String.class }, new Object[]{ invoker },
+                                        invoker );
 
                                 // send out a broadcast to the city storage service to store the city name if it has not already been stored
                                 Intent storeCityIntent = new Intent( WeatherLionApplication.getAppContext(),

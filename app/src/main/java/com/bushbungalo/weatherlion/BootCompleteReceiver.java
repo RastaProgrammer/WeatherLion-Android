@@ -24,7 +24,7 @@ public class BootCompleteReceiver extends BroadcastReceiver
 
                 WeatherLionApplication.callMethodByName( null,
                         "refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker } );
+                        new Class[]{ String.class }, new Object[]{ invoker }, invoker );
 
             }// end of if block
         }// end of if block

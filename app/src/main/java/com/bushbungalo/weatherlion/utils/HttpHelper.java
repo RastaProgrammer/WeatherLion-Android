@@ -25,6 +25,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Random;
 
@@ -121,6 +122,11 @@ public class HttpHelper
             {
                 // call was made to the provider so update the call log
                 UtilityMethod.serviceCall( WeatherLionApplication.storedPreferences.getProvider() );
+
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+                String.format( Locale.ENGLISH, "Returning data from %s...",
+                        WeatherLionApplication.storedPreferences.getProvider() ),
+                        "HttpHelper::downloadUrl" );
 
                 // weather updates will be performed when this broadcast is sent
                 broadcastServiceResponse( data );

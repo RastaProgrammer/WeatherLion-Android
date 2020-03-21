@@ -102,19 +102,19 @@ public class PrefsActivity extends AppCompatActivity
 
         if( WeatherLionApplication.firstRun )
         {
-            UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT,
+            UtilityMethod.showMessageDialog( UtilityMethod.MsgFormat.TEXT,
                     "Please enter your weather location and required settings.",
                 "New Installation", this );
         }// end of if block
         else if( !WeatherLionApplication.locationSet )
         {
-            UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT,
+            UtilityMethod.showMessageDialog( UtilityMethod.MsgFormat.TEXT,
                     "Please set the location for the weather data.",
                 "Location Required", this );
         }// end of else if block
         else if( limitExceeded )
         {
-            UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT,
+            UtilityMethod.showMessageDialog( UtilityMethod.MsgFormat.TEXT,
                 String.format( Locale.ENGLISH, "The daily call limit has been exceeded for %s." +
                     " Please select another in the settings.", wxDataProvider ), "Limit Exceeded",
                     this );
@@ -347,7 +347,8 @@ public class PrefsActivity extends AppCompatActivity
                                 String invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
                                 WeatherLionApplication.callMethodByName( null,
                                         "refreshWeather",
-                                        new Class[]{ String.class }, new Object[]{ invoker } );
+                                        new Class[]{ String.class }, new Object[]{ invoker },
+                                        invoker );
 
                                 break;
                             case WeatherLionApplication.UPDATE_INTERVAL:
@@ -387,7 +388,8 @@ public class PrefsActivity extends AppCompatActivity
                                 invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
                                 WeatherLionApplication.callMethodByName( null,
                                         "refreshWeather",
-                                        new Class[]{ String.class }, new Object[]{ invoker } );
+                                        new Class[]{ String.class }, new Object[]{ invoker },
+                                        invoker );
 
                                 break;
                             case WeatherLionApplication.ICON_SET_PREFERENCE:
@@ -481,7 +483,8 @@ public class PrefsActivity extends AppCompatActivity
                     String invoker = TAG + "::useGpsSwitch.setOnPreferenceChangeListener";
                     WeatherLionApplication.callMethodByName( null,
                             "geolocationIndication",
-                            new Class[]{ String.class }, new Object[]{ invoker } );
+                            new Class[]{ String.class }, new Object[]{ invoker },
+                            invoker );
 
                     return gpsReady;
                 }
@@ -725,7 +728,8 @@ public class PrefsActivity extends AppCompatActivity
                     String invoker = this.getClass().getSimpleName() + "::setGpsLocation";
                     WeatherLionApplication.callMethodByName( null,
                             "refreshWeather",
-                            new Class[]{ String.class }, new Object[]{ invoker } );
+                            new Class[]{ String.class }, new Object[]{ invoker },
+                            invoker );
 
                 }// end of if block
                 else

@@ -92,7 +92,7 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
             {
                 String invoker = this.getClass().getSimpleName() + "::onUpdate";
                 WeatherLionApplication.callMethodByName( null, "refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker } );
+                        new Class[]{ String.class }, new Object[]{ invoker }, invoker );
             }// end of if block
 
             // set the click listener for the refresh image
@@ -189,7 +189,7 @@ public class SmallWeatherWidgetProvider extends AppWidgetProvider
 
                 String invoker = this.getClass().getSimpleName() + "::onReceive";
                 WeatherLionApplication.callMethodByName( null, "refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker } );
+                        new Class[]{ String.class }, new Object[]{ invoker }, invoker );
 
                 // update the widget
                 appWidgetManager.updateAppWidget( appWidgetIds, smallWidgetRemoteViews );

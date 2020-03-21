@@ -476,7 +476,7 @@ public class ConfigureWidget extends AppCompatActivity
 
                     WeatherLionApplication.callMethodByName( null,
                         "loadAccessProviders",
-                        null, null );
+                        null, null,TAG + "::onCreate"  );
                     broadcastKeyUpdate();
 
                     if( edtKeyName.getVisibility() == View.VISIBLE )
@@ -636,7 +636,7 @@ public class ConfigureWidget extends AppCompatActivity
                 {
                     String msg = "Use the search feature to locate the city which the weather will be required!";
 
-                    showMessageDialog( UtilityMethod.MsgType.TEXT, msg, "Set Weather Location",
+                    showMessageDialog( UtilityMethod.MsgFormat.TEXT, msg, "Set Weather Location",
                             null, null, null );
                 }// end of if block
                 else
@@ -1268,7 +1268,7 @@ public class ConfigureWidget extends AppCompatActivity
      * @param title   The alert dialog title
      */
     @SuppressWarnings({"SameParameterValue"})
-    private void showMessageDialog( UtilityMethod.MsgType messageType, String message, String title,
+    private void showMessageDialog(UtilityMethod.MsgFormat messageType, String message, String title,
                                    final String methodToCall, final Object[] params, final Class[] paramClassTypes )
     {
         final View messageDialogView = View.inflate( this,
@@ -1291,7 +1291,7 @@ public class ConfigureWidget extends AppCompatActivity
         btnOk.setBackground( WeatherLionApplication.systemButtonDrawable );
         btnOk.setTypeface( WeatherLionApplication.currentTypeface );
 
-        if( messageType != null && messageType.equals( UtilityMethod.MsgType.HTML ) )
+        if( messageType != null && messageType.equals( UtilityMethod.MsgFormat.HTML ) )
         {
             txvMessage.setText( HtmlCompat.fromHtml( message, 0 ) );
         }// end of if block
@@ -1314,11 +1314,13 @@ public class ConfigureWidget extends AppCompatActivity
 
                 if( params == null || params.length == 0 )
                 {
-                    WeatherLionApplication.callMethodByName( null, methodToCall,null, null );
+                    WeatherLionApplication.callMethodByName( null, methodToCall,null,
+                            null, TAG + "::showMessageDialog" );
                 }// end of if block
                 else
                 {
-                    WeatherLionApplication.callMethodByName( null, methodToCall, paramClassTypes, params );
+                    WeatherLionApplication.callMethodByName( null, methodToCall, paramClassTypes,
+                        params, TAG + "::showMessageDialog" );
                 }// end of else block
 
                 messageDialog.dismiss();

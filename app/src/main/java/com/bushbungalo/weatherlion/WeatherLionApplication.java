@@ -382,7 +382,7 @@ public class WeatherLionApplication extends Application
      * @param paramValues    An array representing the param value example new Object[]{"GeoNames"} or null can be passed.
      */
     public static void callMethodByName( Object obj, String methodName,
-                                         Class[] parameterTypes, Object[] paramValues )
+                                         Class[] parameterTypes, Object[] paramValues, String caller )
     {
         Method method;
 
@@ -407,8 +407,8 @@ public class WeatherLionApplication extends Application
                 IllegalAccessException | InvocationTargetException e)
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::callMethodByName [line: " +
-                            UtilityMethod.getExceptionLineNumber( e )  + "]" );
+        TAG + "::callMethodByName [line: " +
+                    UtilityMethod.getExceptionLineNumber( e )  + "]::caller->" + caller );
         }// end of catch block
     }// end of method callNMethodByName
 
@@ -952,7 +952,7 @@ public class WeatherLionApplication extends Application
                         }// end of if block
                         else if( WidgetUpdateService.hereAppId != null )
                         {
-                            UtilityMethod.showMessageDialog( UtilityMethod.MsgType.TEXT,
+                            UtilityMethod.showMessageDialog( UtilityMethod.MsgFormat.TEXT,
                                     "Here Maps Weather requires an app_code which is"
                                             + " not stored in the database.",
                                     PROGRAM_NAME + " - Missing Key", getAppContext() );
@@ -1523,12 +1523,14 @@ public class WeatherLionApplication extends Application
                 if( params == null || params.length == 0 )
                 {
                     callMethodByName( this, positiveAction,
-                            null, null );
+                        null, null,
+                            "btnPositive.setOnClickListener" );
                 }// end of if block
                 else
                 {
                     callMethodByName( this,
-                            positiveAction, paramClassTypes, params );
+                        positiveAction, paramClassTypes, params,
+                            "btnPositive.setOnClickListener" );
                 }// end of else block
 
                 response.dismiss();
@@ -1543,7 +1545,8 @@ public class WeatherLionApplication extends Application
                 if( negativeAction != null )
                 {
                     callMethodByName( this, negativeAction,
-                            null, null );
+                    null, null,
+                        "btnNegative.setOnClickListener" );
                 }// end of if block
 
                 response.dismiss();
@@ -1597,8 +1600,18 @@ public class WeatherLionApplication extends Application
                         storedData.getCurrent().getCondition() ),
                 null );
 
-        String fileName = String.format( "weather_images/%s/weather_%s",
-                iconSet, currentConditionIcon );
+        String fileName;
+
+        if( storedPreferences.getIconSet().equalsIgnoreCase( "mono" ) )
+        {
+            fileName = String.format( "weather_images/%s/weather_notif_%s",
+                    iconSet, currentConditionIcon );
+        }// end of if block
+        else
+        {
+            fileName = String.format( "weather_images/%s/weather_%s",
+                    iconSet, currentConditionIcon );
+        }// end of else block
 
         loadWeatherIcon( notificationLayout, R.id.weather_icon, fileName );
         loadWeatherIcon( notificationLayoutExpanded, R.id.weather_icon, fileName );
@@ -1706,10 +1719,21 @@ public class WeatherLionApplication extends Application
                         UtilityMethod.validateCondition(
                                 wxHourForecast.getCondition() ) );
                 String fConditionIcon = UtilityMethod.getConditionIcon( fCondition, onTime );
+                String fIconImage;
+
+                if( storedPreferences.getIconSet().equalsIgnoreCase( "mono" ) )
+                {
+                    fIconImage = String.format( "weather_images/%s/weather_notif_%s",
+                            iconSet, fConditionIcon );
+                }// end of if block
+                else
+                {
+                    fIconImage = String.format( "weather_images/%s/weather_%s",
+                            iconSet, fConditionIcon );
+                }// end of else block
 
                 loadWeatherIcon( notificationHourly, R.id.notification_hourly_weather_icon,
-                        String.format( "weather_images/%s/weather_%s",
-                                iconSet, fConditionIcon ) );
+                        fIconImage );
 
                 notificationLayoutExpanded.addView( R.id.view_container, notificationHourly );
 
@@ -1783,11 +1807,13 @@ public class WeatherLionApplication extends Application
             {
                 if( params == null || params.length == 0 )
                 {
-                    callMethodByName( this, methodToCall,null, null );
+                    callMethodByName( this, methodToCall,null,
+                null, "btnOk.setOnClickListener" );
                 }// end of if block
                 else
                 {
-                    callMethodByName( this, methodToCall, paramClassTypes, params );
+                    callMethodByName( this, methodToCall, paramClassTypes,
+                        params, "btnOk.setOnClickListener" );
                 }// end of else block
 
                 messageDialog.dismiss();
@@ -2025,7 +2051,7 @@ public class WeatherLionApplication extends Application
                             "Reloading access keys...", TAG + "::keyUpdateReceiver" );
 
                     callMethodByName( this, methodToCall,
-                            null, null );
+            null, null, "AppBroadcastReceiver::onReceive" );
 
                     // Load only the providers who have access keys assigned to them
                     ArrayList<String> wxOnly = webAccessGranted;
@@ -2115,7 +2141,8 @@ public class WeatherLionApplication extends Application
 
                             callMethodByName( WeatherLionApplication.class,
                                     "refreshWeather",
-                                    new Class[]{ String.class }, new Object[]{ invoker } );
+                                    new Class[]{ String.class }, new Object[]{ invoker },
+                                    invoker );
                         }// end of if block
                     }// end of if block
 
