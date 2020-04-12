@@ -27,9 +27,7 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver
                 UtilityMethod.refreshRequestedByUser = false;
 
                 String invoker = this.getClass().getSimpleName() + "::onReceive";
-                WeatherLionApplication.callMethodByName( null,
-                        "refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker }, invoker );
+                WeatherLionApplication.refreshWeather( invoker );
             }// end of if block
         }// end of if block
     }// end of method onReceive

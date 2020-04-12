@@ -87,14 +87,8 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
             UtilityMethod.refreshRequestedBySystem = true;
             UtilityMethod.refreshRequestedByUser = false;
 
-            // avoid bottle neck requests
-            if( UtilityMethod.updateRequired( context ) )
-            {
-                String invoker = this.getClass().getSimpleName() + "::onUpdate";
-                WeatherLionApplication.callMethodByName( null, "refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker },
-                        invoker );
-            }// end of if block
+            String invoker = this.getClass().getSimpleName() + "::onUpdate";
+            WeatherLionApplication.refreshWeather( invoker );
 
             // set the click listener for the refresh image
             PendingIntent refreshIntent = PendingIntent.getBroadcast( context,
@@ -208,9 +202,7 @@ public class LargeWeatherWidgetProvider extends AppWidgetProvider
                 largeWidgetRemoteViews.setViewVisibility( R.id.view_flipper, View.VISIBLE );
 
                 String invoker = this.getClass().getSimpleName() + "::onReceive";
-                WeatherLionApplication.callMethodByName( null, "refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker },
-                        invoker );
+                WeatherLionApplication.refreshWeather( invoker );
 
                 // update the widget
                 appWidgetManager.updateAppWidget( appWidgetIds, largeWidgetRemoteViews );

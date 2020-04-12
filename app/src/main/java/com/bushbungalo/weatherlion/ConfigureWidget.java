@@ -52,21 +52,15 @@ import com.bushbungalo.weatherlion.services.CityDataService;
 import com.bushbungalo.weatherlion.services.CityStorageService;
 import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.JSONHelper;
-import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
 import com.bushbungalo.weatherlion.utils.WidgetHelper;
 import com.google.gson.JsonArray;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Locale;
 import java.util.Objects;
 
 import static android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID;
@@ -725,7 +719,7 @@ public class ConfigureWidget extends AppCompatActivity
                         {
                             WidgetUpdateService.widgetRefreshRequired = false;
                             UtilityMethod.butteredToast( mContext,
-                                    "Incomplete city name. Perform a search an select one from the list.",
+                            "Incomplete city name. Perform a search an select one from the list.",
                                     2, Toast.LENGTH_LONG );
                         }// end of else block
                     }// end of if block
@@ -772,43 +766,6 @@ public class ConfigureWidget extends AppCompatActivity
             spnAccessProvider.setSelection( accessProvidersAdapter.getPosition( WeatherLionApplication.GEO_NAMES ) );
         }// end of else block
     }// end of method onCreate
-
-    /**
-     * Check to see if any previous weather data was stored locally and use it if so.
-     */
-    private boolean checkForStoredWeatherData()
-    {
-        if( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() )
-        {
-            // If the weather data xml file exists, that means the program has previously received
-            // data from a web service. The data must then be loaded into memory.
-            WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
-                    UtilityMethod.readAll(
-                            this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
-                            .replaceAll( "\t", "" ).trim() );
-
-            WeatherLionApplication.storedData = WeatherLionApplication.lastDataReceived.getWeatherData();
-            DateFormat df = new SimpleDateFormat( "EEE MMM dd kk:mm:ss z yyyy", Locale.ENGLISH);
-
-            try
-            {
-                UtilityMethod.lastUpdated = df.parse( WeatherLionApplication.storedData.getProvider().getDate() );
-            }// end of try block
-            catch ( ParseException e )
-            {
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
-                        TAG + "::onCreate [line: " +
-                                e.getStackTrace()[1].getLineNumber()+ "]" );
-            }// end of catch block
-
-            WeatherLionApplication.currentSunriseTime = new StringBuilder( WeatherLionApplication.storedData.getAstronomy().getSunrise() );
-            WeatherLionApplication.currentSunsetTime = new StringBuilder( WeatherLionApplication.storedData.getAstronomy().getSunset() );
-
-            return true;
-        }// end of if block
-
-        return false;
-    }// end of method checkForStoredWeatherData
 
     /**
      * Loads the new widget with weather data
@@ -918,7 +875,7 @@ public class ConfigureWidget extends AppCompatActivity
         // set the applicable flags that main will use to start the service
         WeatherLionApplication.changeWidgetUnit =  false;
 
-        if( checkForStoredWeatherData() )
+        if( UtilityMethod.checkForStoredWeatherData( this ) )
         {
             Bundle previousWeatherExtras = new Bundle();
             previousWeatherExtras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );

@@ -90,10 +90,13 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1267,6 +1270,93 @@ public abstract class UtilityMethod
     {
         return WeatherLionApplication.getAppContext();
     }// end of method getAppContext
+
+    /**
+     * Get a {@code String} representation of the astronomical time of day
+     * whether it is sunrise or sunset time
+     *
+     * @return A {@code String} representation of the astronomical time of day
+     */
+    public static String getAstronomyTimeOfDay()
+    {
+        Calendar rightNow = Calendar.getInstance();
+
+        if ( WeatherLionApplication.storedData != null ||
+                checkForStoredWeatherData( getAppContext() ) )
+        {
+            if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
+                    WeatherLionApplication.storedData.getLocation().getTimezone() ) )
+            {
+                if( WeatherLionApplication.localDateTime == null )
+                {
+                    // check for weather data stored locally
+                    if( checkForStoredWeatherData( getAppContext() ) )
+                    {
+                        WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
+                            ZoneId.of( WeatherLionApplication.storedData.getLocation().getTimezone() )
+                        ).toLocalDateTime();
+                    }// end of if block
+                }// end of if block
+
+                rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
+            }// end of if block
+        }// end of if block
+        else
+        {
+            if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
+                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+            {
+                rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
+            }// end of if block
+        }// end of else block
+
+        Calendar nightFall = Calendar.getInstance();
+        Calendar sunUp = Calendar.getInstance();
+        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                Locale.ENGLISH ).format( rightNow.getTime() )
+                + " " + get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
+        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                Locale.ENGLISH ).format( rightNow.getTime() )
+                + " " + get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
+        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
+        Date rn = null; // date time right now (rn)
+        Date nf = null; // date time night fall (nf)
+        Date su = null; // date time sun up (su)
+
+        String timeOfDayToUse = null;
+
+        try
+        {
+            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
+            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
+            nightFall.set( Calendar.MINUTE,
+                    Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
+            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
+
+            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
+            su = sdf.parse( sdf.format( sunUp.getTime() ) );
+        } // end of try block
+        catch ( ParseException e )
+        {
+            logMessage( LogLevel.SEVERE, e.getMessage(),
+                    TAG + ":: getAstronomyTimeOfDay [line: " +
+                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+        }// end of catch block
+
+        if( rn != null )
+        {
+            if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
+            {
+                timeOfDayToUse = WidgetUpdateService.SUNSET;
+            }// end of if block
+            else if ( (rn.equals( su ) || rn.after( su ) ) && rn.before( nf ) )
+            {
+                timeOfDayToUse = WidgetUpdateService.SUNRISE;
+            }// end of if block
+        }// end of if block
+
+        return timeOfDayToUse;
+    }// end of method getAstronomyTimeOfDay
 
     /**
      * Get the {@code String} equivalent of a {@code View}'s id
@@ -2454,6 +2544,24 @@ public abstract class UtilityMethod
     }// end of method compassDirection
 
     /**
+     * Add a specific number of minutes to a {@code Date}.
+     *
+     * @param minutes   The number of minutes to add
+     * @param previousTime   The time that will have minutes added to it
+     * @return  A date object with the specified number of minutes added to it
+     * @author jeznag
+     * <br />
+     * {@link 'https://stackoverflow.com/a/24322216'}
+     */
+    public static Date addMinutesToDate( int minutes, Date previousTime )
+    {
+        final long ONE_MINUTE_IN_MILLIS = 60000;
+        long curTimeInMs = previousTime.getTime();
+
+        return new Date( curTimeInMs + ( minutes * ONE_MINUTE_IN_MILLIS ) );
+    }// end of method addMinutesToDate
+
+    /**
      * Accepts a numeric value of type long that represents
      * a Unix time value.
      *
@@ -3561,42 +3669,70 @@ public abstract class UtilityMethod
      * @param context The calling context.
      * @return  True/False depending on the result of the check.
      */
-    public static boolean updateRequired( Context context )
+    synchronized public static boolean updateRequired( Context context )
     {
+        boolean allowUpdate;
+
         // allow update if requested by the user
         if( lastUpdated == null || refreshRequestedByUser )
         {
-            return true;
-        }// end of if block
+            allowUpdate = true;
 
-        SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( context );
-        int interval = Integer.parseInt( Objects.requireNonNull(
-            spf.getString( WeatherLionApplication.UPDATE_INTERVAL, context.getString( R.string.default_update_interval ) ) ) );
+            if( lastUpdated == null )
+            {
+                logMessage( LogLevel.INFO,
+            "Allowing update due to last update not known!",
+                    TAG + "::updateRequired" );
+            }// end of if block
 
-        //milliseconds
-        long difference = Math.abs( new Date().getTime() - lastUpdated.getTime() );
-        long elapsedMinutes = difference / 60000;
-
-        // the system might send back-to-back requests dependent on the situation
-        // so only one update should be allowed within a minute interval
-        if( refreshRequestedBySystem && elapsedMinutes > 1 )
-        {
-            return true;
+            if( refreshRequestedByUser )
+            {
+                logMessage( LogLevel.INFO,
+            "Allowing update as requested by the user...",
+                TAG + "::updateRequired" );
+            }// end of else if block
         }// end of if block
         else
         {
-            if( refreshRequestedBySystem )
-            {
-                logMessage( LogLevel.WARNING,
-            "Simultaneous updates by the system were rejected!",
-                TAG + "::updateRequired" );
+            SharedPreferences spf = PreferenceManager.getDefaultSharedPreferences( context );
+            int interval = Integer.parseInt( Objects.requireNonNull(
+                    spf.getString( WeatherLionApplication.UPDATE_INTERVAL, context.getString( R.string.default_update_interval ) ) ) );
 
-                return false;
+            //milliseconds
+            long difference = Math.abs( new Date().getTime() - lastUpdated.getTime() );
+            long elapsedMinutes = difference / 60000;
+
+            // the system might send back-to-back requests dependent on the situation
+            // so only one update should be allowed within a minute interval
+            if( refreshRequestedBySystem && elapsedMinutes >= millisecondsToMinutes( interval ) )
+            {
+                allowUpdate = true;
+
+                logMessage( LogLevel.INFO,
+                        String.format( Locale.ENGLISH,
+                                "Last update was %d minutes ago. Allowing system update...", elapsedMinutes ),
+                        TAG + "::updateRequired" );
             }// end of if block
+            else
+            {
+                allowUpdate = false;
+
+                if( refreshRequestedBySystem && elapsedMinutes < 1 )
+                {
+                    logMessage( LogLevel.WARNING,
+                    "Simultaneous updates by the system were rejected!",
+                            TAG + "::updateRequired" );
+
+                    logMessage( LogLevel.INFO, "Next update scheduled for " +
+                        new SimpleDateFormat( "h:mm a", Locale.ENGLISH )
+                            .format( addMinutesToDate( millisecondsToMinutes( interval ),
+                                lastUpdated ) ) + ".",
+                        TAG + "::updateRequired" );
+                }// end of if block
+            }// end of else block
         }// end of else block
 
-        return elapsedMinutes >= millisecondsToMinutes( interval );
-
+        return allowUpdate;
     }// end of method updateRequired
 
     /**
@@ -3971,6 +4107,46 @@ public abstract class UtilityMethod
     }// end of method showMessageDialog
 
     /**
+     * Sort a map into ascending or descending order
+     * @param map   The map to be sorted
+     * @param asc   Whether or not hte map should be sorted in ascending order
+     * @param <K>   The map key
+     * @param <V>   The map value
+     * @return  A map that has been sorted in the specified order
+     */
+    public static <K, V> Map<K, V> sortByValue( Map<K, V> map, final boolean asc )
+    {
+        List<Map.Entry<K, V>> list = new LinkedList<>( map.entrySet() );
+
+        Collections.sort( list, new Comparator<Object>()
+        {
+            @SuppressWarnings("unchecked")
+            public int compare( Object o1, Object o2 )
+            {
+                if( asc )
+                {
+                    return ( (Comparable<V>) ((Map.Entry<K, V>) (o1) )
+                            .getValue() ).compareTo( ( (Map.Entry<K, V>) ( o2 ) ).getValue() );
+                }// end of if block
+                else
+                {
+                    return ( (Comparable<V>) ((Map.Entry<K, V>) (o2) )
+                            .getValue() ).compareTo( ( (Map.Entry<K, V>) ( o1 ) ).getValue() );
+                }// end of else block
+            }
+        });
+
+        Map<K, V> result = new LinkedHashMap<>();
+
+        for ( Map.Entry<K, V> entry : list )
+        {
+            result.put( entry.getKey(), entry.getValue() );
+        }// end of for each loop
+
+        return result;
+    }// end of method sortByValue
+
+    /**
      * Check to see if any previous weather data was stored locally and use it if so.
      *
      * @return True/False depending on the result of the check
@@ -3998,9 +4174,130 @@ public abstract class UtilityMethod
                 return loadWeatherData( context );
             }// end of else block
         }// end of if block
+        if( new File( context.getFileStreamPath(
+                WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists() )
+        {
+            if( !isFileEmpty( context, WeatherLionApplication.WEATHER_DATA_BACKUP ) )
+            {
+                // check for the backup file
+                // restore the original weather data from the backup file
+                File currentWeatherDataFile = new File(
+                        context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() );
+
+                File backupWeatherDataFile = new File(
+                        context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
+
+                copyFile( backupWeatherDataFile, currentWeatherDataFile,
+                        TAG + "::checkForStoredWeatherData" );
+                return loadWeatherData( context );
+            }// end of if block
+            else
+            {
+                return loadWeatherData( context );
+            }// end of else block
+        }// end of if block
 
         return false;
     }// end of method checkForStoredWeatherData
+
+    /**
+     * Check weather data in case of data corruption
+     */
+    public static void checkData()
+    {
+        String invoker ="UtilityMethod::checkData";
+
+        if( checkForStoredWeatherData( getAppContext() ) )
+        {
+            // weather data might not have been saved as intended
+            if( WeatherLionApplication.currentWxLocation.equals(
+                    WeatherLionApplication.storedData.getLocation().getCity() ) )
+            {
+                WeatherLionApplication.refreshWeather( invoker );
+            }// end of if block
+
+            // if this location has already been used there is no need to query the
+            // web service as the location data has been stored locally
+            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage(
+                    WeatherLionApplication.currentWxLocation );
+            String json;
+            float lat;
+            float lng;
+
+            if( CityData.currentCityData == null )
+            {
+                // contact GeoNames for data about this city
+                json =
+                        UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                                WeatherLionApplication.currentWxLocation );
+                CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
+
+                lat = CityData.currentCityData.getLatitude();
+                lng = CityData.currentCityData.getLongitude();
+
+                if( WeatherLionApplication.currentLocationTimeZone == null)
+                {
+                    WeatherLionApplication.currentLocationTimeZone =
+                            UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                }// end of if block
+
+                CityData.currentCityData.setTimeZone(
+                        WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+            }// end of if block
+            else
+            {
+                String today = new SimpleDateFormat( "MM/dd/yyyy",
+                        Locale.ENGLISH ).format( new Date() );
+
+                String sst = String.format( "%s %s", today,
+                        WeatherLionApplication.currentSunsetTime.toString() );
+                String srt = String.format( "%s %s", today,
+                        WeatherLionApplication.currentSunriseTime.toString() );
+
+                Date schedSunriseTime = null;
+                Date schedSunsetTime = null;
+
+                SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
+                        Locale.ENGLISH );
+
+                try
+                {
+                    schedSunsetTime = sdf.parse( sst );
+                    schedSunriseTime = sdf.parse( srt );
+                } // end of try block
+                catch ( ParseException e )
+                {
+                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                            TAG + "::onCreate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                }// end of catch block
+
+                WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
+                        ZoneId.of( CityData.currentCityData.getTimeZone()
+                        ) ).toLocalDateTime();
+
+                // Load the time zone info for the current city
+                WeatherLionApplication.currentLocationTimeZone = new TimeZoneInfo(
+                        CityData.currentCityData.getCountryCode(),
+                        CityData.currentCityData.getCountryName(),
+                        CityData.currentCityData.getLatitude(),
+                        CityData.currentCityData.getLongitude(),
+                        CityData.currentCityData.getTimeZone(),
+                        UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ),
+                        schedSunriseTime,
+                        schedSunsetTime );
+            }// end of else block
+        }// end of if block
+        else
+        {
+            // generate some stored data by calling the provider for the
+            // data using the user's stored settings
+            if( WeatherLionApplication.storedPreferences.getLocation() != null )
+            {
+                WeatherLionApplication.restoringWeatherData = true;
+                WeatherLionApplication.refreshWeather( invoker );
+            }// end of if block
+        }// end of else block
+    }// end of method checkData
 
     /**
      *  Load the data from the weather xml file
@@ -4034,12 +4331,16 @@ public abstract class UtilityMethod
                                 e.getStackTrace()[1].getLineNumber()+ "]" );
             }// end of catch block
 
-            WeatherLionApplication.currentSunriseTime = new StringBuilder(
-                    WeatherLionApplication.storedData.getAstronomy().getSunrise() );
-            WeatherLionApplication.currentSunsetTime = new StringBuilder(
-                    WeatherLionApplication.storedData.getAstronomy().getSunset() );
+            if( WeatherLionApplication.storedData.getAstronomy().getSunrise() != null &&
+                    WeatherLionApplication.storedData.getAstronomy().getSunset() != null )
+            {
+                WeatherLionApplication.currentSunriseTime = new StringBuilder(
+                        WeatherLionApplication.storedData.getAstronomy().getSunrise() );
+                WeatherLionApplication.currentSunsetTime = new StringBuilder(
+                        WeatherLionApplication.storedData.getAstronomy().getSunset() );
 
-            return true;
+                return true;
+            }// end of if block
         }// end of if block
 
         return false;
@@ -4872,72 +5173,186 @@ public abstract class UtilityMethod
 
         if ( WeatherLionApplication.storedData != null )
         {
-            if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
+            if ( !ZoneId.systemDefault().getId().equalsIgnoreCase(
                     WeatherLionApplication.storedData.getLocation().getTimezone() ) )
             {
+                if( WeatherLionApplication.localDateTime == null )
+                {
+                    WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
+                        ZoneId.of( CityData.currentCityData.getTimeZone()
+                            ) ).toLocalDateTime();
+                }// end of if block
+
                 rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
             }// end of if block
         }// end of if block
         else
         {
+            if( WeatherLionApplication.currentLocationTimeZone == null)
+            {
+                WeatherLionApplication.currentLocationTimeZone =
+                       retrieveGeoNamesTimeZoneInfo( CityData.currentCityData.getLatitude(),
+                                CityData.currentCityData.getLongitude() );
+            }// end of if block
+
+            CityData.currentCityData.setTimeZone(
+                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+
             if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
                     WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
             {
+                if( WeatherLionApplication.localDateTime == null )
+                {
+                    WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
+                            ZoneId.of( CityData.currentCityData.getTimeZone()
+                            ) ).toLocalDateTime();
+                }// end of if block
+
                 rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
             }// end of if block
         }// end of else block
 
-        Calendar nightFall = Calendar.getInstance();
-        Calendar sunUp = Calendar.getInstance();
-        String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
-        String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
-                Locale.ENGLISH ).format( rightNow.getTime() )
-                + " " + get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
-        SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
-        Date rn = null; // date time right now (rn)
-        Date nf = null; // date time night fall (nf)
-        Date su = null; // date time sun up (su)
-
-        try
+        if( WeatherLionApplication.currentLocationTimeZone != null )
         {
-            rn = sdf.parse( sdf.format( rightNow.getTime() ) );
-            nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
-            nightFall.set( Calendar.MINUTE,
-                    Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
-            sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
+            Calendar nightFall = Calendar.getInstance();
+            Calendar sunUp = Calendar.getInstance();
+            String sunsetTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                    Locale.ENGLISH ).format( rightNow.getTime() )
+                    + " " + get24HourTime( WeatherLionApplication.currentSunsetTime.toString() );
+            String sunriseTwenty4HourTime = new SimpleDateFormat( "yyyy-MM-dd",
+                    Locale.ENGLISH ).format( rightNow.getTime() )
+                    + " " + get24HourTime( WeatherLionApplication.currentSunriseTime.toString() );
+            SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm", Locale.ENGLISH );
+            Date rn = null; // date time right now (rn)
+            Date nf = null; // date time night fall (nf)
+            Date su = null; // date time sun up (su)
 
-            nf = sdf.parse( sdf.format( nightFall.getTime() ) );
-            su = sdf.parse( sdf.format( sunUp.getTime() ) );
-        } // end of try block
-        catch ( ParseException e )
-        {
-            logMessage( LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::getConditionIcon [line: " +
-                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-        }// end of catch block
-
-        if( onTime == null )
-        {
-            if( rn != null )
+            try
             {
-                if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
+                rn = sdf.parse( sdf.format( rightNow.getTime() ) );
+                nightFall.setTime( sdf.parse( sunsetTwenty4HourTime ) );
+                nightFall.set( Calendar.MINUTE,
+                        Integer.parseInt( sunsetTwenty4HourTime.split( ":" )[ 1 ].trim() ) );
+                sunUp.setTime( sdf.parse( sunriseTwenty4HourTime ) );
+
+                nf = sdf.parse( sdf.format( nightFall.getTime() ) );
+                su = sdf.parse( sdf.format( sunUp.getTime() ) );
+            } // end of try block
+            catch ( ParseException e )
+            {
+                logMessage( LogLevel.SEVERE, e.getMessage(),
+                        TAG + "::getConditionIcon [line: " +
+                                e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+            }// end of catch block
+
+            if( onTime == null )
+            {
+                if( rn != null )
                 {
-                    if( nightIcon )
+                    if ( rn.equals( nf ) || rn.after( nf ) || rn.before( su ) )
                     {
-                        currentConditionIcon = weatherImages.get(
-                                currentCondition.toString().toLowerCase() );
+                        if( nightIcon )
+                        {
+                            currentConditionIcon = weatherImages.get(
+                                    currentCondition.toString().toLowerCase() );
+                        }// end of if block
+                        else
+                        {
+                            // Yahoo has a habit of having sunny nights
+                            if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                            {
+                                currentCondition.setLength( 0 );
+                                currentCondition.append( "Clear" );
+                            }// end of if block
+
+                            if ( weatherImages.containsKey(
+                                    currentCondition.toString().toLowerCase() + " (night)") )
+                            {
+                                currentConditionIcon =
+                                        weatherImages.get(
+                                                currentCondition.toString().toLowerCase() + " (night)" );
+                            }// end of if block
+                            else
+                            {
+                                currentConditionIcon = weatherImages.get(
+                                        currentCondition.toString().toLowerCase() );
+                            }// end of else block
+                        }// end of else block
+
+                        if( weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
+                        {
+                            // sometimes the JSON data received is incomplete so this has to be taken into account
+                            for ( Map.Entry<String, String> e : weatherImages.entrySet() )
+                            {
+                                if ( e.getKey().startsWith( currentCondition.toString().toLowerCase() ) )
+                                {
+                                    currentConditionIcon =  weatherImages.get( e.getKey() ); // use the closest match
+                                    break; // exit the loop
+                                }// end of if block
+                            }// end of for block
+
+                            // if a match still could not be found, use the not available icon
+                            if( currentConditionIcon == null )
+                            {
+                                currentConditionIcon = "na.png";
+                            }// end of if block
+                        }// end of if block
                     }// end of if block
                     else
                     {
-                        // Yahoo has a habit of having sunny nights
-                        if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                        currentConditionIcon =
+                                weatherImages.get(
+                                        currentCondition.toString().toLowerCase() );
+                    }// end of else block
+                }// end of if block
+            }// end of if block
+            else
+            {
+                if( rn != null )
+                {
+                    // Daytime icons should be used
+                    if ( ( onTime.equals( su ) || onTime.after( su ) ) && onTime.before( nf ) )
+                    {
+                        if( nightIcon )
                         {
-                            currentCondition.setLength( 0 );
-                            currentCondition.append( "Clear" );
+                            currentConditionIcon = weatherImages.get(
+                                    currentCondition.toString().toLowerCase() );
                         }// end of if block
+                        else
+                        {
+                            // Yahoo has a habit of having sunny nights
+                            if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
+                            {
+                                currentCondition.setLength( 0 );
+                                currentCondition.append( "Clear" );
+                            }// end of if block
 
+                            currentConditionIcon = weatherImages.get(
+                                    currentCondition.toString().toLowerCase() );
+
+                        }// end of else block
+
+                        if( weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
+                        {
+                            // sometimes the JSON data received is incomplete so this has to be taken into account
+                            for ( Map.Entry<String, String> e : weatherImages.entrySet() )
+                            {
+                                if ( e.getKey().startsWith( currentCondition.toString().toLowerCase() ) )
+                                {
+                                    currentConditionIcon = weatherImages.get( e.getKey() ); // use the closest match
+                                    break; // exit the loop
+                                }// end of if block
+                            }// end of for block
+
+                            // if a match still could not be found, use the not available icon
+                            if( currentConditionIcon == null )
+                            {
+                                currentConditionIcon = "na.png";
+                            }// end of if block
+                        }// end of if block
+                    }// end of if block
+                    else
+                    {
                         if ( weatherImages.containsKey(
                                 currentCondition.toString().toLowerCase() + " (night)") )
                         {
@@ -4951,96 +5366,16 @@ public abstract class UtilityMethod
                                     currentCondition.toString().toLowerCase() );
                         }// end of else block
                     }// end of else block
-
-                    if( weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-                    {
-                        // sometimes the JSON data received is incomplete so this has to be taken into account
-                        for ( Map.Entry<String, String> e : weatherImages.entrySet() )
-                        {
-                            if ( e.getKey().startsWith( currentCondition.toString().toLowerCase() ) )
-                            {
-                                currentConditionIcon =  weatherImages.get( e.getKey() ); // use the closest match
-                                break; // exit the loop
-                            }// end of if block
-                        }// end of for block
-
-                        // if a match still could not be found, use the not available icon
-                        if( currentConditionIcon == null )
-                        {
-                            currentConditionIcon = "na.png";
-                        }// end of if block
-                    }// end of if block
                 }// end of if block
-                else
-                {
-                    currentConditionIcon =
-                        weatherImages.get(
-                            currentCondition.toString().toLowerCase() );
-                }// end of else block
-            }// end of if block
+            }// end of else block
         }// end of if block
         else
         {
-            if( rn != null )
-            {
-                // Daytime icons should be used
-                if ( ( onTime.equals( su ) || onTime.after( su ) ) && onTime.before( nf ) )
-                {
-                    if( nightIcon )
-                    {
-                        currentConditionIcon = weatherImages.get(
-                                currentCondition.toString().toLowerCase() );
-                    }// end of if block
-                    else
-                    {
-                        // Yahoo has a habit of having sunny nights
-                        if ( currentCondition.toString().equalsIgnoreCase( "sunny" ) )
-                        {
-                            currentCondition.setLength( 0 );
-                            currentCondition.append( "Clear" );
-                        }// end of if block
-
-                        currentConditionIcon = weatherImages.get(
+            currentConditionIcon =
+                    weatherImages.get(
                             currentCondition.toString().toLowerCase() );
-
-                    }// end of else block
-
-                    if( weatherImages.get( currentCondition.toString().toLowerCase() ) == null )
-                    {
-                        // sometimes the JSON data received is incomplete so this has to be taken into account
-                        for ( Map.Entry<String, String> e : weatherImages.entrySet() )
-                        {
-                            if ( e.getKey().startsWith( currentCondition.toString().toLowerCase() ) )
-                            {
-                                currentConditionIcon = weatherImages.get( e.getKey() ); // use the closest match
-                                break; // exit the loop
-                            }// end of if block
-                        }// end of for block
-
-                        // if a match still could not be found, use the not available icon
-                        if( currentConditionIcon == null )
-                        {
-                            currentConditionIcon = "na.png";
-                        }// end of if block
-                    }// end of if block
-                }// end of if block
-                else
-                {
-                    if ( weatherImages.containsKey(
-                            currentCondition.toString().toLowerCase() + " (night)") )
-                    {
-                        currentConditionIcon =
-                                weatherImages.get(
-                                        currentCondition.toString().toLowerCase() + " (night)" );
-                    }// end of if block
-                    else
-                    {
-                        currentConditionIcon = weatherImages.get(
-                                currentCondition.toString().toLowerCase() );
-                    }// end of else block
-                }// end of else block
-            }// end of if block
         }// end of else block
+
 
         return currentConditionIcon;
     }// end of method verifyAstronomyData

@@ -21,11 +21,7 @@ public class BootCompleteReceiver extends BroadcastReceiver
 
                 UtilityMethod.refreshRequestedBySystem = true;
                 UtilityMethod.refreshRequestedByUser = false;
-
-                WeatherLionApplication.callMethodByName( null,
-                        "refreshWeather",
-                        new Class[]{ String.class }, new Object[]{ invoker }, invoker );
-
+                WeatherLionApplication.refreshWeather( invoker );
             }// end of if block
         }// end of if block
     }// end of method onReceive

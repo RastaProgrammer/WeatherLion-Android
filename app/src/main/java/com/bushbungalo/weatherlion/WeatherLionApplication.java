@@ -57,7 +57,6 @@ import com.bushbungalo.weatherlion.services.WidgetUpdateService;
 import com.bushbungalo.weatherlion.utils.JSONHelper;
 import com.bushbungalo.weatherlion.utils.LastWeatherDataXmlParser;
 import com.bushbungalo.weatherlion.utils.UtilityMethod;
-import com.bushbungalo.weatherlion.utils.WidgetHelper;
 import com.bushbungalo.weatherlion.utils.XMLHelper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -180,6 +179,9 @@ public class WeatherLionApplication extends Application
     public static final String UNIT_NOT_CHANGED = "false";
     public static final String UNIT_CHANGED = "true";
 
+    public static final String ERROR_SUNRISE_TIME = "5:00 AM";
+    public static final String ERROR_SUNSET_TIME = "10:00 pM";
+
     public static String widBackgroundColor;
     public static String currentWxLocation; // this location must always reflect the user's last selection
     public static String iconSet = null; // To be updated
@@ -269,18 +271,26 @@ public class WeatherLionApplication extends Application
      */
     private void checkFirstRun()
     {
-        if ( spf.getBoolean( FIRST_RUN, Preference.DEFAULT_FIRST_RUN ) )
+        if( spf != null )
         {
-            firstRun = true;
-            Preference.createDefaultPreferencesPropertiesFile();
-            constructDataAccess();
-            firstLaunchCompleted = true;
+            if ( spf.getBoolean( FIRST_RUN, Preference.DEFAULT_FIRST_RUN ) )
+            {
+                firstRun = true;
+                Preference.createDefaultPreferencesPropertiesFile();
+                constructDataAccess();
+                firstLaunchCompleted = true;
 
-            systemColor = Color.valueOf( getColor( R.color.lion ) );
-            systemButtonDrawable = getDrawable( R.drawable.wl_lion_rounded_btn_bg );
-            widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg_large);
-            setTheme( R.style.LionThemeLight);
-        }//end of if block
+                systemColor = Color.valueOf( getColor( R.color.lion ) );
+                systemButtonDrawable = getDrawable( R.drawable.wl_lion_rounded_btn_bg );
+                widgetBackgroundDrawable = getDrawable( R.drawable.wl_lion_bg_large );
+                setTheme( R.style.LionThemeLight );
+            }//end of if block
+            else
+            {
+                firstRun = false;
+                firstLaunchCompleted = false;
+            }// end of else block
+        }// end of if block
         else
         {
             firstRun = false;
@@ -295,11 +305,9 @@ public class WeatherLionApplication extends Application
      * @param uriData   The uri data that should be passed to the weather service class
      * @param methodName    A method that should be run instead of the normal routine
      */
-    private void actionWeatherService( String uriData, String methodName )
+    private static void actionWeatherService( String uriData, String methodName )
     {
-        String invoker = this.getClass().getSimpleName() + "::" +
-            Objects.requireNonNull(
-                new Object() {}.getClass().getEnclosingMethod() ).getName();
+        String invoker = TAG + "::" + "actionWeatherService";
         Bundle extras = new Bundle();
 
         extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
@@ -308,13 +316,14 @@ public class WeatherLionApplication extends Application
         if( methodName == null )
         {
             extras.putString( LAUNCH_METHOD_EXTRA, null );
+            UtilityMethod.refreshRequestedBySystem = true;
         }// end of if block
         else
         {
             extras.putString( LAUNCH_METHOD_EXTRA, methodName );
         }// end of else block
 
-        Intent methodIntent = new Intent( this, WidgetUpdateService.class );
+        Intent methodIntent = new Intent( context, WidgetUpdateService.class );
         methodIntent.putExtras( extras );
         WidgetUpdateService.enqueueWork( context, methodIntent );
     }// end of method actionWeatherService
@@ -404,11 +413,11 @@ public class WeatherLionApplication extends Application
 
         } // end of try block
         catch ( SecurityException | NoSuchMethodException  | IllegalArgumentException |
-                IllegalAccessException | InvocationTargetException e)
+                IllegalAccessException | InvocationTargetException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
         TAG + "::callMethodByName [line: " +
-                    UtilityMethod.getExceptionLineNumber( e )  + "]::caller->" + caller );
+                    UtilityMethod.getExceptionLineNumber( e )  + "]::caller -> " + caller );
         }// end of catch block
     }// end of method callNMethodByName
 
@@ -1147,28 +1156,16 @@ public class WeatherLionApplication extends Application
         //create the service log to track calls to each provider
         createServiceCallLog();
 
-        String invoker = this.getClass().getSimpleName() + "::" +
-            Objects.requireNonNull(
-                new Object() {}.getClass().getEnclosingMethod() ).getName();
+        String invoker;
 
         // setup a broadcast receiver that will listen local app broadcasts
-        IntentFilter appFilter = new IntentFilter();
-        appFilter.addAction( GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE );
-        appFilter.addAction( WeatherLionMain.KEY_UPDATE_MESSAGE );
-        appFilter.addAction( WidgetUpdateService.WEATHER_XML_SERVICE_MESSAGE );
-        appFilter.addAction( WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE );
-        LocalBroadcastManager.getInstance( this ).registerReceiver( appBroadcastReceiver,
-                appFilter );
+        registerAppBroadcastReceivers();
 
         // setup a broadcast receiver that will listen for system broadcasts specifically
         // network connectivity and system clock changes
-        IntentFilter systemFilter = new IntentFilter();
-        systemFilter.addAction( ConnectivityManager.CONNECTIVITY_ACTION );
-        systemFilter.addAction( AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED );
-        this.registerReceiver( systemBroadcastReceiver, systemFilter );
+        registerSystemBroadcastReceivers();
 
         spf = PreferenceManager.getDefaultSharedPreferences( this );
-
         currentWxLocation = spf.getString( CURRENT_LOCATION_PREFERENCE, Preference.DEFAULT_WEATHER_LOCATION );
         useGps = spf.getBoolean( USE_GPS_LOCATION_PREFERENCE, Preference.DEFAULT_USE_GPS );
         useMetric = spf.getBoolean( USE_METRIC_PREFERENCE, Preference.DEFAULT_USE_METRIC );
@@ -1183,14 +1180,26 @@ public class WeatherLionApplication extends Application
         // retrieve user preferences
         storedPreferences = systemPreferences.getSavedPreferences();
 
+        // check for weather data stored locally
+        if( UtilityMethod.checkForStoredWeatherData( this ) )
+        {
+            localDateTime = new Date().toInstant().atZone(
+                ZoneId.of( storedData.getLocation().getTimezone() ) ).toLocalDateTime();
+        }// end of if block
+
         previousWeatherProvider.setLength( 0 );
         previousWeatherProvider.append( storedPreferences.getProvider() );
 
         iconSet = spf.getString( ICON_SET_PREFERENCE, Preference.DEFAULT_ICON_SET );
 
         // run the weather service and  call the method that loads the previous weather data
-        actionWeatherService( UNIT_NOT_CHANGED,
-                WidgetUpdateService.LOAD_TIMEZONE_DATA );
+        actionWeatherService( UNIT_NOT_CHANGED, WidgetUpdateService.LOAD_TIMEZONE_DATA );
+
+        // initialize the time of day variable
+        if( timeOfDayToUse == null )
+        {
+            timeOfDayToUse = UtilityMethod.getAstronomyTimeOfDay();
+        }// end of if block
 
         if( iconSet == null )
         {
@@ -1203,35 +1212,89 @@ public class WeatherLionApplication extends Application
         String uiFont = spf.getString( UI_FONT, Preference.DEFAULT_UI_FONT );
 
         // load system/user selected font
-        helveticaNeue = Typeface.createFromAsset( getAssets(), "fonts/helvetica_neue_lt_pro.otf" );
-        productsSans = Typeface.createFromAsset( getAssets(), "fonts/product_sans.ttf" );
-        samsungSans = Typeface.createFromAsset( getAssets(), "fonts/samsung_sans_regular.ttf" );
-
-        fonts = new LinkedHashMap<>();
-        fonts.put( "Helvetica Neue", helveticaNeue );
-        fonts.put( "Product Sans", productsSans );
-        fonts.put( "Samsung Sans", samsungSans );
-
-        if( uiFont != null )
-        {
-            switch( uiFont )
-            {
-                case SYSTEM_FONT:
-                    currentTypeface = null;
-                    break;
-                case HELVETICA_FONT:
-                    currentTypeface = helveticaNeue;
-                    break;
-                case PRODUCT_SANS_FONT:
-                    currentTypeface = productsSans;
-                    break;
-                case SAMSUNG_SANS_FONT:
-                    currentTypeface = samsungSans;
-                    break;
-            }// end of switch block
-        }// end of if block
+        loadAppFonts( uiFont );
 
         // the system should have a consistent flow based on the selected widget background
+        themeApp();
+
+        setupApp();
+    }// end of method onCreate
+
+    /**
+     * Setup the application for running
+     */
+    private void setupApp()
+    {
+        String invoker;
+
+        if( geoNamesAccountLoaded )
+        {
+            // see if the user specified a location
+            checkCurrentCityStatus();
+
+            // check to see if backup weather data exists on there is not original data
+            if( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists()
+                    && UtilityMethod.isFileEmpty( this, WeatherLionApplication.WEATHER_DATA_BACKUP ) )
+            {
+                UtilityMethod.removeFile( WeatherLionApplication.WEATHER_DATA_BACKUP );
+            }// end of if block
+            else if( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists()
+                    && !( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() ) )
+            {
+                // if a backup file is present but, the original is not present, restore from the backup
+                UtilityMethod.copyFile( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ),
+                        new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ),
+                        TAG + "::onCreate" );
+            }// end of else if block
+
+            // if the user has already selected a location
+            if( locationSet )
+            {
+                // check if any weather data exists locally
+                if( UtilityMethod.checkForStoredWeatherData( getAppContext() ) )
+                {
+                    // run the weather service and call the method that loads the previous weather data
+                    actionWeatherService( UNIT_NOT_CHANGED,
+                            WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
+
+                    UtilityMethod.refreshRequestedBySystem = true;
+                    UtilityMethod.refreshRequestedByUser = false;
+
+                    // perform a weather update
+                    refreshWeather( TAG + "::onCreate" );
+
+                }// end of if block
+                else
+                {
+                    // generate some stored data by calling the provider for the
+                    // data using the user's stored settings
+                    if( storedPreferences.getLocation() != null )
+                    {
+                        restoringWeatherData = true;
+                        invoker = TAG + "::onCreate()";
+
+                        UtilityMethod.refreshRequestedBySystem = true;
+                        UtilityMethod.refreshRequestedByUser = false;
+                        refreshWeather( invoker );
+                    }// end of if block
+                }// end od else block
+            }// end of if block
+        }// end of if block
+
+        // check if this the first time that the program is being run i.e new installation
+        if( firstRun )
+        {
+            // set a flag in the stored preferences indicating that the first run has already
+            // been completed.
+            storedPreferences.setFirstRun( false );
+        }// end of if block
+    }// end of method setupApp
+
+    /**
+     * Theme the application based on the user/system selected background
+     */
+    private void themeApp()
+    {
         if( widBackgroundColor != null )
         {
             switch( widBackgroundColor.toLowerCase() )
@@ -1265,210 +1328,85 @@ public class WeatherLionApplication extends Application
                     break;
             }// end of switch block
         }// end of if block
+    }// end of method themeApp
 
-        if( geoNamesAccountLoaded )
+    /**
+     * Load the custom fonts that will be used in the application
+     *
+     * @param uiFont    The font to be used throughout the UI
+     */
+    private void loadAppFonts( String uiFont )
+    {
+        helveticaNeue = Typeface.createFromAsset( getAssets(), "fonts/helvetica_neue_lt_pro.otf" );
+        productsSans = Typeface.createFromAsset( getAssets(), "fonts/product_sans.ttf" );
+        samsungSans = Typeface.createFromAsset( getAssets(), "fonts/samsung_sans_regular.ttf" );
+
+        fonts = new LinkedHashMap<>();
+        fonts.put( "Helvetica Neue", helveticaNeue );
+        fonts.put( "Product Sans", productsSans );
+        fonts.put( "Samsung Sans", samsungSans );
+
+        if( uiFont != null )
         {
-            // see if the user specified a location
-            checkCurrentCityStatus();
-
-            // check to see if backup weather data exists on there is not original data
-            if( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists()
-                    && UtilityMethod.isFileEmpty( this, WeatherLionApplication.WEATHER_DATA_BACKUP ) )
+            switch( uiFont )
             {
-                UtilityMethod.removeFile( WeatherLionApplication.WEATHER_DATA_BACKUP );
-            }// end of if block
-            else if( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists()
-                    && !( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ).exists() ) )
-            {
-                // if a backup file is present but, the original is not present, restore from the backup
-                UtilityMethod.copyFile( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ),
-                        new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ),
-                        TAG + "::onCreate" );
-            }// end of else if block
-
-            // if the user has already selected a location
-            if( locationSet )
-            {
-                // load all widget ids associated with the application
-                WidgetHelper.getWidgetIds();
-
-                if( largeWidgetIds.length > 0 || smallWidgetIds.length > 0 )
-                {
-                    Bundle extras = new Bundle();
-                    extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                    extras.putString( LAUNCH_METHOD_EXTRA,
-                            WidgetUpdateService.LOAD_WIDGET_BACKGROUND );
-                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                            UNIT_NOT_CHANGED );
-
-                    // set the widget background to the current theme color if the widget if a
-                    // widget if on screen
-                    Intent methodIntent = new Intent( this, WidgetUpdateService.class );
-                    methodIntent.putExtras( extras );
-                    WidgetUpdateService.enqueueWork( context, methodIntent );
-                }// end of if block
-
-                Bundle extras = new Bundle();
-                extras.putString ( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                extras.putString( LAUNCH_METHOD_EXTRA,
-                        "updateUserSetAlarm" );
-                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                        UNIT_NOT_CHANGED );
-
-                // instruct the service to check if there were any alarms set by the user
-                // which will be indicated on the widget
-                Intent nextUserSetAlarmIntent = new Intent( getAppContext(), WidgetUpdateService.class );
-                nextUserSetAlarmIntent.putExtras( extras );
-                WidgetUpdateService.enqueueWork( getAppContext(), nextUserSetAlarmIntent );
-
-                // check if any weather data exists locally
-                if( UtilityMethod.checkForStoredWeatherData( getAppContext() ) )
-                {
-                    // check data integrity.
-                    // weather data might not have been saved as intended or got corrupted
-                    if( currentWxLocation.equals(
-                            WeatherLionApplication.storedData.getLocation().getCity() ) )
-                    {
-                        invoker = this.getClass().getSimpleName() + "::onCreate";
-
-                        refreshWeather( invoker );
-                    }// end of if block
-
-                    // if this location has already been used there is no need to query the
-                    // web service as the location data has been stored locally
-                    CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage( currentWxLocation );
-                    String json;
-                    float lat;
-                    float lng;
-
-                    if( CityData.currentCityData == null )
-                    {
-                        // contact GeoNames for data about this city
-                        json =
-                                UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
-                                        currentWxLocation );
-                        CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
-
-                        lat = CityData.currentCityData.getLatitude();
-                        lng = CityData.currentCityData.getLongitude();
-
-                        if( currentLocationTimeZone == null)
-                        {
-                            currentLocationTimeZone =
-                                    UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
-                        }// end of if block
-
-                        CityData.currentCityData.setTimeZone(
-                                currentLocationTimeZone.getTimezoneId() );
-                    }// end of if block
-                    else
-                    {
-                        String today = new SimpleDateFormat( "MM/dd/yyyy",
-                                Locale.ENGLISH ).format( new Date() );
-
-                        String sst = String.format( "%s %s", today, currentSunsetTime.toString() );
-                        String srt = String.format( "%s %s", today, currentSunriseTime.toString() );
-
-                        Date schedSunriseTime = null;
-                        Date schedSunsetTime = null;
-
-                        SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
-                                Locale.ENGLISH );
-
-                        try
-                        {
-                            schedSunsetTime = sdf.parse( sst );
-                            schedSunriseTime = sdf.parse( srt );
-                        } // end of try block
-                        catch ( ParseException e )
-                        {
-                            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                                    TAG + "::onCreate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-                        }// end of catch block
-
-                        localDateTime = new Date().toInstant().atZone(
-                                ZoneId.of( CityData.currentCityData.getTimeZone()
-                                ) ).toLocalDateTime();
-
-                        // Load the time zone info for the current city
-                        currentLocationTimeZone = new TimeZoneInfo(
-                                CityData.currentCityData.getCountryCode(),
-                                CityData.currentCityData.getCountryName(),
-                                CityData.currentCityData.getLatitude(),
-                                CityData.currentCityData.getLongitude(),
-                                CityData.currentCityData.getTimeZone(),
-                                UtilityMethod.getDateTime( localDateTime ),
-                                schedSunriseTime,
-                                schedSunsetTime );
-                    }// end of else block
-
-                    // run the weather service and  call the method that loads the previous weather data
-                    actionWeatherService( UNIT_NOT_CHANGED,
-                            WidgetUpdateService.LOAD_PREVIOUS_WEATHER );
-
-                    if( UtilityMethod.updateRequired( this ) )
-                    {
-                        extras = new Bundle();
-                        extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                        extras.putString( LAUNCH_METHOD_EXTRA, null );
-                        extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                                UNIT_NOT_CHANGED );
-
-                        UtilityMethod.refreshRequestedBySystem = true;
-                        Intent updateIntent = new Intent( context, WidgetUpdateService.class );
-                        updateIntent.putExtras( extras );
-                        WidgetUpdateService.enqueueWork( context, updateIntent );
-                    }// end of if block
-                }// end of if block
-                else
-                {
-                    // generate some stored data by calling the provider for the
-                    // data using the user's stored settings
-                    if( storedPreferences.getLocation() != null )
-                    {
-                        restoringWeatherData = true;
-                        invoker = TAG + "::onCreate()";
-                        refreshWeather( invoker );
-                    }// end of if block
-                }// end od else block
-            }// end of if block
+                case SYSTEM_FONT:
+                    currentTypeface = null;
+                    break;
+                case HELVETICA_FONT:
+                    currentTypeface = helveticaNeue;
+                    break;
+                case PRODUCT_SANS_FONT:
+                    currentTypeface = productsSans;
+                    break;
+                case SAMSUNG_SANS_FONT:
+                    currentTypeface = samsungSans;
+                    break;
+            }// end of switch block
         }// end of if block
+    }// end of method loadAppFonts
 
-        // check if this the first time that the program is being run i.e new installation
-        if( firstRun )
-        {
-            // set a flag in the stored preferences indicating that the first run has already
-            // been completed.
-            storedPreferences.setFirstRun( false );
-        }// end of if block
-    }// end of method onCreate
+    /**
+     * Register to receive broadcast sent out by the system
+     */
+    private void registerSystemBroadcastReceivers()
+    {
+        IntentFilter systemFilter = new IntentFilter();
+        systemFilter.addAction( ConnectivityManager.CONNECTIVITY_ACTION );
+        systemFilter.addAction( AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED );
+        this.registerReceiver( systemBroadcastReceiver, systemFilter );
+    }// end of method registerSystemBroadcastReceivers
+
+    /**
+     * Register to receive broadcast sent out within the application
+     */
+    private void registerAppBroadcastReceivers()
+    {
+        IntentFilter appFilter = new IntentFilter();
+        appFilter.addAction( GeoLocationService.GEO_LOCATION_SERVICE_MESSAGE );
+        appFilter.addAction( WeatherLionMain.KEY_UPDATE_MESSAGE );
+        appFilter.addAction( WidgetUpdateService.WEATHER_XML_SERVICE_MESSAGE );
+        appFilter.addAction( WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE );
+        LocalBroadcastManager.getInstance( this ).registerReceiver( appBroadcastReceiver,
+                appFilter );
+    }// end of method registerAppBroadcastReceivers
 
     /**
      * Invokes a weather data refresh
      */
-    private void refreshWeather( String invoker )
+    synchronized public static void refreshWeather( String invoker )
     {
         if( UtilityMethod.hasInternetConnection( getAppContext() ) )
         {
             // do not execute back-to-back requests
             if( UtilityMethod.updateRequired( context ) )
             {
-                Bundle extras = new Bundle();
-                extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                extras.putString( LAUNCH_METHOD_EXTRA, null );
-                extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                        UNIT_NOT_CHANGED );
-
-                Intent updateIntent = new Intent( this, WidgetUpdateService.class );
-                updateIntent.putExtras( extras );
-                WidgetUpdateService.enqueueWork( this, updateIntent );
-
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                "Update requested by " + invoker, TAG +
-                    "::refreshWeather" );
+            "Update requested by " + invoker, TAG + "::refreshWeather" );
+                actionWeatherService( UNIT_NOT_CHANGED, null );
             }// end of if block
         }// end of if block
-    }// end of method refreshWeather
+    }// end of method synchronized refreshWeather
 
     /**
      * Display a dialog eliciting a response from the user
@@ -2032,7 +1970,7 @@ public class WeatherLionApplication extends Application
     private class AppBroadcastReceiver extends BroadcastReceiver
     {
         @Override
-        public void onReceive(Context context, @NonNull Intent intent )
+        public void onReceive( Context context, @NonNull Intent intent )
         {
             final String action = Objects.requireNonNull( intent.getAction() );
 
@@ -2133,48 +2071,18 @@ public class WeatherLionApplication extends Application
                     // an the system will always imply that the connection state has changed.
                     if( UtilityMethod.lastUpdated != null )
                     {
-                        if( UtilityMethod.updateRequired( getAppContext() ) &&
-                                UtilityMethod.hasInternetConnection( getAppContext() ) )
-                        {
-                            UtilityMethod.refreshRequestedBySystem = true;
-                            UtilityMethod.refreshRequestedByUser = false;
+                        UtilityMethod.refreshRequestedBySystem = true;
+                        UtilityMethod.refreshRequestedByUser = false;
 
-                            callMethodByName( WeatherLionApplication.class,
-                                    "refreshWeather",
-                                    new Class[]{ String.class }, new Object[]{ invoker },
-                                    invoker );
-                        }// end of if block
+                        WeatherLionApplication.refreshWeather( invoker );
                     }// end of if block
 
-                    extras = new Bundle();
-                    extras.putString ( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                    extras.putString( LAUNCH_METHOD_EXTRA,
-                            "updateConnectivity" );
-                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                            UNIT_NOT_CHANGED );
+                    actionWeatherService( UNIT_NOT_CHANGED, WidgetUpdateService.UPDATE_CONNECTIVITY );
 
-                    // connectivity check
-                    Intent connectivityIntent = new Intent( getAppContext(),
-                            WidgetUpdateService.class );
-                    connectivityIntent.putExtras( extras );
-                    WidgetUpdateService.enqueueWork( getAppContext(),
-                            connectivityIntent );
                     break;
 
                 case AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED:
-                    extras = new Bundle();
-                    extras.putString ( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
-                    extras.putString( LAUNCH_METHOD_EXTRA,
-                            "updateUserSetAlarm" );
-                    extras.putString( WidgetUpdateService.WEATHER_DATA_UNIT_CHANGED,
-                            UNIT_NOT_CHANGED );
-
-                    // connectivity check
-                    Intent wakeUpAlarmIntent = new Intent( getAppContext(),
-                            WidgetUpdateService.class );
-                    wakeUpAlarmIntent.putExtras( extras );
-                    WidgetUpdateService.enqueueWork( getAppContext(),
-                            wakeUpAlarmIntent );
+                    actionWeatherService( UNIT_NOT_CHANGED, WidgetUpdateService.LOAD_USER_ALARMS );
 
                     break;
             }// end of switch block

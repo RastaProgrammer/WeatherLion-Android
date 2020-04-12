@@ -96,7 +96,7 @@ public class WeatherDataXMLService extends JobIntentService
 		manager.sendBroadcast( messageIntent );
 	}// end of method broadcastDataStored
 
-	private void createBackupFile()
+	private boolean createBackupFile()
 	{
 		// check for the backup file
 		// make a copy of the existing weather data
@@ -111,6 +111,8 @@ public class WeatherDataXMLService extends JobIntentService
 		{
 			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
 				"Source file is empty file!", TAG + "::createBackupFile" );
+
+			return false;
 		}// end of if block
 		else
 		{
@@ -119,12 +121,11 @@ public class WeatherDataXMLService extends JobIntentService
 				UtilityMethod.copyFile( currentWeatherDataFile, backupWeatherDataFile,
 					TAG + "::createBackupFile" );
 
-				UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-					String.format( Locale.ENGLISH, "Backup weather data created at %s...",
-						new SimpleDateFormat( "h:mm a", Locale.ENGLISH ).format( new Date() ) ),
-							TAG + "::createBackupFile" );
+				return true;
 			}// end of if block
 		}// end of else block
+
+		return false;
 	}// end of method createBackupFile
 
 	private void saveCurrentWeatherXML()
@@ -136,7 +137,35 @@ public class WeatherDataXMLService extends JobIntentService
 
 		String noDate = "Wed Dec 31 19:00:00 EST 1969";
 
-		createBackupFile(); // perform initial backup of data
+		boolean backupCreated = createBackupFile(); // perform initial backup of data
+
+		if( !backupCreated )
+		{
+			boolean previousBackupExists = new File( WeatherLionApplication.getAppContext().getFileStreamPath(
+					WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists();
+			if( previousBackupExists )
+			{
+				// restore the original from the backup
+				UtilityMethod.copyFile(
+						new File( WeatherLionApplication.getAppContext().getFileStreamPath(
+						WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ),
+						new File( WeatherLionApplication.getAppContext().getFileStreamPath(
+						WeatherLionApplication.WEATHER_DATA_XML ).toString() ),
+						TAG + "::saveCurrentWeatherXML" );
+
+				UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+						String.format( Locale.ENGLISH, "Weather data file restored at %s...",
+								new SimpleDateFormat( "h:mm a", Locale.ENGLISH ).format( new Date() ) ),
+						TAG + "::saveCurrentWeatherXML" );
+			}// end of if block
+		}// end of if block
+		else
+		{
+			UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+					String.format( Locale.ENGLISH, "Backup weather data created at %s...",
+							new SimpleDateFormat( "h:mm a", Locale.ENGLISH ).format( new Date() ) ),
+					TAG + "::saveCurrentWeatherXML" );
+		}// end of if block
 
 		try
 		{
@@ -254,7 +283,16 @@ public class WeatherDataXMLService extends JobIntentService
 			WeatherLionApplication.previousWeatherProvider.setLength( 0 );
 			WeatherLionApplication.previousWeatherProvider.append( xmlData.getProviderName() );
 
-			createBackupFile(); // perform backup of data just received
+			backupCreated = createBackupFile(); // perform backup of data just received
+
+			if( backupCreated )
+			{
+				UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
+						String.format( Locale.ENGLISH, "Backup weather data created at %s...",
+								new SimpleDateFormat( "h:mm a", Locale.ENGLISH ).format( new Date() ) ),
+						TAG + "::saveCurrentWeatherXML" );
+			}// end of if block
+
 			broadcastDataStored();
 		}// end of try block
 		catch ( IOException e )

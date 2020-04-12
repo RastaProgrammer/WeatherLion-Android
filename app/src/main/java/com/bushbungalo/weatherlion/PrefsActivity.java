@@ -345,10 +345,7 @@ public class PrefsActivity extends AppCompatActivity
                                 summary = WeatherLionApplication.storedPreferences.getProvider();
 
                                 String invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
-                                WeatherLionApplication.callMethodByName( null,
-                                        "refreshWeather",
-                                        new Class[]{ String.class }, new Object[]{ invoker },
-                                        invoker );
+                                WeatherLionApplication.refreshWeather( invoker );
 
                                 break;
                             case WeatherLionApplication.UPDATE_INTERVAL:
@@ -386,10 +383,7 @@ public class PrefsActivity extends AppCompatActivity
                                 summary = WeatherLionApplication.storedPreferences.getLocation();
 
                                 invoker = this.getClass().getSimpleName() + "::onSharedPreferenceChanged";
-                                WeatherLionApplication.callMethodByName( null,
-                                        "refreshWeather",
-                                        new Class[]{ String.class }, new Object[]{ invoker },
-                                        invoker );
+                                WeatherLionApplication.refreshWeather( invoker );
 
                                 break;
                             case WeatherLionApplication.ICON_SET_PREFERENCE:

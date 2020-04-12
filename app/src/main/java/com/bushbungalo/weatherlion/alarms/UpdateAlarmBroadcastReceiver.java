@@ -30,12 +30,8 @@ public class UpdateAlarmBroadcastReceiver extends BroadcastReceiver
                 UtilityMethod.refreshRequestedBySystem = true;
                 UtilityMethod.refreshRequestedByUser = false;
 
-                // avoid bottle neck requests
-                if( UtilityMethod.updateRequired( context ) )
-                {
-                    WeatherLionApplication.callMethodByName( null,
-            "refreshWeather", new Class[]{ String.class }, new Object[]{ invoker }, invoker );
-                }// end of if block
+                WeatherLionApplication.refreshWeather( invoker );
+
             }// end of if block
             else
             {

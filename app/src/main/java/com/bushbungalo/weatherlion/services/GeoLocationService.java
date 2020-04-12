@@ -46,7 +46,7 @@ public class GeoLocationService extends IntentService
                 catch ( IOException e )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                            "::handleWeatherData [line: " +
+                            "GeoLocationService::onHandleIntent [line: " +
                                     e.getStackTrace()[1].getLineNumber()+ "]" );
                     return;
                 }// end of catch block
