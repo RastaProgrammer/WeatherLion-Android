@@ -474,6 +474,13 @@ public class WeatherLionMain extends AppCompatActivity
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,"Weather backdrop " +
                     imageFile + " could not be loaded!", TAG + "::loadWeatherBackdrop" );
         }// end of catch block
+        catch ( Exception e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+            "Error occurred while loading weather backdrop!"
+                , TAG + "::loadWeatherBackdrop [line: "
+                    + e.getStackTrace()[1].getLineNumber() + "]" );
+        }// end of catch block
     }// end of method loadWeatherIcon
 
     /**
@@ -499,6 +506,12 @@ public class WeatherLionMain extends AppCompatActivity
                     + "/weather_na.png";
 
             loadWeatherIcon( imv, defaultIcon );
+        }// end of catch block
+        catch ( Exception e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+        "Error occurred while loading weather icon!",
+            TAG + "::loadWeatherIcon" );
         }// end of catch block
     }// end of method loadWeatherIcon
 
@@ -798,7 +811,18 @@ public class WeatherLionMain extends AppCompatActivity
             hourlyLowTemp = UtilityMethod.getTensNumber( hourlyLowTemp );
             hourlyHighTemp = UtilityMethod.getTensNumber( hourlyHighTemp );
 
-            createLineGraph( hourlyGraphDataPoints,null, 1 );
+            // The plugin may sometimes throw an unexpected error
+            try
+            {
+                createLineGraph( hourlyGraphDataPoints,null, 1 );
+            } // end of try block
+            catch ( Exception e )
+            {
+                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+            TAG + "::loadMainActivity [line: " +
+                        e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+                hourlyForecast.setVisibility( View.GONE );
+            }// end of catch block
 //            createLineGraph( (LinkedHashMap<Date, Integer>) UtilityMethod.sortByValue(
 //                    hourlyGraphDataPoints, true ),null, 1 );
             //createBarChartGraph( graphDataPoints );
@@ -888,8 +912,18 @@ public class WeatherLionMain extends AppCompatActivity
         dailyLowestLowTemp = UtilityMethod.getTensNumber( dailyLowestLowTemp );
         dailyHighestHighTemp = UtilityMethod.getTensNumber( dailyHighestHighTemp );
 
-        createLineGraph( dailyHighGraphDataPoints, dailyLowGraphDataPoints,
-                2 );
+        try
+        {
+            createLineGraph( dailyHighGraphDataPoints, dailyLowGraphDataPoints,
+                    2 );
+        } // end of try block
+        catch ( Exception e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                    TAG + "::loadMainActivity [line: " +
+                            e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+            dailyGraph.setVisibility( View.GONE );
+        }// end of catch block
 
 //        createLineGraph( (LinkedHashMap<Date, Integer>) UtilityMethod.sortByValue(
 //                dailyHighGraphDataPoints, true ),

@@ -369,8 +369,6 @@
             </LinearLayout>
         </LinearLayout>
 
-
-
         <RelativeLayout
             android:id="@+id/astronomyGrid"
             android:layout_width="match_parent"

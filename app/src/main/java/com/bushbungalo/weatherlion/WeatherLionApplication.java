@@ -104,14 +104,14 @@ import javax.crypto.spec.SecretKeySpec;
 @SuppressLint("StaticFieldLeak")
 public class WeatherLionApplication extends Application
 {
-    private static Context context;
-    private static List< String > keysMissing;
-    private static String TAG = "WeatherLionApplication";
+    private static Context m_Context;
+    private static List< String > m_KeysMissing;
+    private static String m_TAG = "WeatherLionApplication";
 
-    private int methodResponse = 0;
+    private int m_MethodResponse = 0;
 
-    private BroadcastReceiver systemBroadcastReceiver = new SystemBroadcastReceiver();
-    private BroadcastReceiver appBroadcastReceiver = new AppBroadcastReceiver();
+    private BroadcastReceiver m_SystemBroadcastReceiver = new SystemBroadcastReceiver();
+    private BroadcastReceiver m_AppBroadcastReceiver = new AppBroadcastReceiver();
 
     public static final int DAILY_CALL_LIMIT = 1000;
 
@@ -307,7 +307,7 @@ public class WeatherLionApplication extends Application
      */
     private static void actionWeatherService( String uriData, String methodName )
     {
-        String invoker = TAG + "::" + "actionWeatherService";
+        String invoker = m_TAG + "::" + "actionWeatherService";
         Bundle extras = new Bundle();
 
         extras.putString( WidgetUpdateService.WEATHER_SERVICE_INVOKER, invoker );
@@ -323,9 +323,9 @@ public class WeatherLionApplication extends Application
             extras.putString( LAUNCH_METHOD_EXTRA, methodName );
         }// end of else block
 
-        Intent methodIntent = new Intent( context, WidgetUpdateService.class );
+        Intent methodIntent = new Intent(m_Context, WidgetUpdateService.class );
         methodIntent.putExtras( extras );
-        WidgetUpdateService.enqueueWork( context, methodIntent );
+        WidgetUpdateService.enqueueWork(m_Context, methodIntent );
     }// end of method actionWeatherService
 
     /**
@@ -416,7 +416,7 @@ public class WeatherLionApplication extends Application
                 IllegalAccessException | InvocationTargetException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-        TAG + "::callMethodByName [line: " +
+        m_TAG + "::callMethodByName [line: " +
                     UtilityMethod.getExceptionLineNumber( e )  + "]::caller -> " + caller );
         }// end of catch block
     }// end of method callNMethodByName
@@ -451,7 +451,7 @@ public class WeatherLionApplication extends Application
         catch( Exception e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::getSiteKeyFromDatabase [line: " +
+                    m_TAG + "::getSiteKeyFromDatabase [line: " +
                             UtilityMethod.getExceptionLineNumber( e )  + "]" );
         }// end of catch block
 
@@ -506,7 +506,7 @@ public class WeatherLionApplication extends Application
             {
                 UtilityMethod.logMessage(UtilityMethod.LogLevel.INFO,
                     String.format( "%s was added to the database",
-                        systemLocation ),TAG + ":: checkSystemLocationStatus" );
+                        systemLocation ), m_TAG + ":: checkSystemLocationStatus" );
             }// end of if block
 
             JSONHelper.exportCityToJSON( currentCityData );
@@ -531,7 +531,7 @@ public class WeatherLionApplication extends Application
      */
     private void checkForMissingKeys()
     {
-        String mks = keysMissing.toString().replaceAll( "[\\[\\](){}]", "" );
+        String mks = m_KeysMissing.toString().replaceAll( "[\\[\\](){}]", "" );
         String fMks;
 
 
@@ -549,9 +549,9 @@ public class WeatherLionApplication extends Application
         }// end of else block
 
         String prompt = "Yahoo! Weather requires the following missing " +
-                ( keysMissing.size() > 1 ? "keys" : "key" ) + ":\n"
+                ( m_KeysMissing.size() > 1 ? "keys" : "key" ) + ":\n"
                 + fMks + "\nDo you wish to add " +
-                ( keysMissing.size() > 1 ? "them" : "it" ) + " now?";
+                ( m_KeysMissing.size() > 1 ? "them" : "it" ) + " now?";
 
         responseDialog( PROGRAM_NAME + " - Missing Key",
                 prompt,"Yes", "No","showDataKeysDialog",
@@ -611,7 +611,7 @@ public class WeatherLionApplication extends Application
 
             // log the action taken
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-        "Service log created!",TAG + "::createServiceCallLog" );
+        "Service log created!", m_TAG + "::createServiceCallLog" );
         }// end of if block
     }// end of method createServiceCallLog
 
@@ -641,7 +641,7 @@ public class WeatherLionApplication extends Application
         catch( Exception e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::decrypt [line: " +
+                    m_TAG + "::decrypt [line: " +
                             UtilityMethod.getExceptionLineNumber( e )  + "]" );
         }// end of catch block
 
@@ -650,9 +650,9 @@ public class WeatherLionApplication extends Application
 
     private void deletionAttempted()
     {
-        if( methodResponse == -1 || methodResponse > 0 )
+        if( m_MethodResponse == -1 || m_MethodResponse > 0 )
         {
-            if( methodResponse > 0 )
+            if( m_MethodResponse > 0 )
             {
                 UtilityMethod.butteredToast( getAppContext(),"The " + selectedProvider +
                                 " " + dataAccessKeyName + " has been removed from the database.", 1,
@@ -695,7 +695,7 @@ public class WeatherLionApplication extends Application
         SQLiteDatabase weatherAccessDB = dbHelper.getWritableDatabase();
 
         // return the number of rows affected if a whereClause is passed in, 0 otherwise.
-        methodResponse = weatherAccessDB.delete( WeatherAccess.ACCESS_KEYS,
+        m_MethodResponse = weatherAccessDB.delete( WeatherAccess.ACCESS_KEYS,
                 "KeyProvider = ? AND keyName = ?", new String[]{ keyProvider, keyName } );
 
         deletionAttempted();
@@ -737,7 +737,7 @@ public class WeatherLionApplication extends Application
         catch( Exception e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::encrypt [line: " + UtilityMethod.getExceptionLineNumber( e )  + "]" );
+                    m_TAG + "::encrypt [line: " + UtilityMethod.getExceptionLineNumber( e )  + "]" );
         }// end of catch block
 
         return strData;
@@ -797,7 +797,7 @@ public class WeatherLionApplication extends Application
         catch( Exception e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::getSiteKeyFromDatabase [line: " +
+                    m_TAG + "::getSiteKeyFromDatabase [line: " +
                             UtilityMethod.getExceptionLineNumber( e )  + "]" );
 
             return null;
@@ -827,9 +827,9 @@ public class WeatherLionApplication extends Application
         else
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO, "Necessary requirements met...",
-                    TAG + "::init" );
+                    m_TAG + "::init" );
             UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,"Launching Weather Widget...",
-                    TAG + "::init" );
+                    m_TAG + "::init" );
         }// end of else block
     }// end of method init
 
@@ -1005,10 +1005,10 @@ public class WeatherLionApplication extends Application
                             }// end of if block
                         }// end of for each loop
 
-                        keysMissing = new LinkedList<>( Arrays.asList( yahooRequiredKeys ) );
-                        keysMissing.removeAll( keysFound ); // remove all the keys found
+                        m_KeysMissing = new LinkedList<>( Arrays.asList( yahooRequiredKeys ) );
+                        m_KeysMissing.removeAll( keysFound ); // remove all the keys found
 
-                        if( keysMissing.size() == 0 )
+                        if( m_KeysMissing.size() == 0 )
                         {
                             webAccessGranted.add( YAHOO_WEATHER );
                         }// end of if block
@@ -1123,7 +1123,7 @@ public class WeatherLionApplication extends Application
 
         // log message
         UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Missing: " + message,
-                TAG + "::missingAssetPrompt" );
+                m_TAG + "::missingAssetPrompt" );
     }// end of method missingAssetPrompt
 
     /**
@@ -1149,7 +1149,7 @@ public class WeatherLionApplication extends Application
     public void onCreate()
     {
         super.onCreate();
-        context = getApplicationContext();
+        m_Context = getApplicationContext();
         thisClass = this;
         connectedToInternet = UtilityMethod.hasInternetConnection( getAppContext() );
 
@@ -1244,7 +1244,7 @@ public class WeatherLionApplication extends Application
                 // if a backup file is present but, the original is not present, restore from the backup
                 UtilityMethod.copyFile( new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ),
                         new File( this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() ),
-                        TAG + "::onCreate" );
+                        m_TAG + "::onCreate" );
             }// end of else if block
 
             // if the user has already selected a location
@@ -1261,7 +1261,7 @@ public class WeatherLionApplication extends Application
                     UtilityMethod.refreshRequestedByUser = false;
 
                     // perform a weather update
-                    refreshWeather( TAG + "::onCreate" );
+                    refreshWeather( m_TAG + "::onCreate" );
 
                 }// end of if block
                 else
@@ -1271,7 +1271,7 @@ public class WeatherLionApplication extends Application
                     if( storedPreferences.getLocation() != null )
                     {
                         restoringWeatherData = true;
-                        invoker = TAG + "::onCreate()";
+                        invoker = m_TAG + "::onCreate()";
 
                         UtilityMethod.refreshRequestedBySystem = true;
                         UtilityMethod.refreshRequestedByUser = false;
@@ -1374,7 +1374,7 @@ public class WeatherLionApplication extends Application
         IntentFilter systemFilter = new IntentFilter();
         systemFilter.addAction( ConnectivityManager.CONNECTIVITY_ACTION );
         systemFilter.addAction( AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED );
-        this.registerReceiver( systemBroadcastReceiver, systemFilter );
+        this.registerReceiver(m_SystemBroadcastReceiver, systemFilter );
     }// end of method registerSystemBroadcastReceivers
 
     /**
@@ -1387,7 +1387,7 @@ public class WeatherLionApplication extends Application
         appFilter.addAction( WeatherLionMain.KEY_UPDATE_MESSAGE );
         appFilter.addAction( WidgetUpdateService.WEATHER_XML_SERVICE_MESSAGE );
         appFilter.addAction( WeatherDataXMLService.WEATHER_XML_STORAGE_MESSAGE );
-        LocalBroadcastManager.getInstance( this ).registerReceiver( appBroadcastReceiver,
+        LocalBroadcastManager.getInstance( this ).registerReceiver(m_AppBroadcastReceiver,
                 appFilter );
     }// end of method registerAppBroadcastReceivers
 
@@ -1399,10 +1399,10 @@ public class WeatherLionApplication extends Application
         if( UtilityMethod.hasInternetConnection( getAppContext() ) )
         {
             // do not execute back-to-back requests
-            if( UtilityMethod.updateRequired( context ) )
+            if( UtilityMethod.updateRequired(m_Context) )
             {
                 UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-            "Update requested by " + invoker, TAG + "::refreshWeather" );
+            "Update requested by " + invoker, m_TAG + "::refreshWeather" );
                 actionWeatherService( UNIT_NOT_CHANGED, null );
             }// end of if block
         }// end of if block
@@ -1594,7 +1594,7 @@ public class WeatherLionApplication extends Application
                 DEGREES, storedData.getCurrent().getCondition() );
 
         // Apply the layouts to the notification
-        NotificationCompat.Builder customNotificationBuilder = new NotificationCompat.Builder( context,
+        NotificationCompat.Builder customNotificationBuilder = new NotificationCompat.Builder(m_Context,
                 channelId )
                 .setWhen( System.currentTimeMillis() )
                 .setSmallIcon( R.drawable.wl_notification_icon )
@@ -1648,7 +1648,7 @@ public class WeatherLionApplication extends Application
                 catch ( ParseException e )
                 {
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                            TAG + "::sendWeatherNotification [line: " +
+                            m_TAG + "::sendWeatherNotification [line: " +
                                     e.getStackTrace()[ 1 ].getLineNumber() + "]" );
                 }// end of catch block
 
@@ -1787,7 +1787,7 @@ public class WeatherLionApplication extends Application
      */
     public static Context getAppContext()
     {
-        return context;
+        return m_Context;
     }// end of method  getAppContext
 
     /**
@@ -1847,7 +1847,7 @@ public class WeatherLionApplication extends Application
         catch ( JSONException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, e.getMessage(),
-                    TAG + "::setCityName [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
+                    m_TAG + "::setCityName [line: " + UtilityMethod.getExceptionLineNumber( e ) + "]" );
         }// end of catch block
 
         // combine the city and the region as the current location
@@ -1959,7 +1959,7 @@ public class WeatherLionApplication extends Application
         catch ( IOException e )
         {
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,"Weather icon " +
-                    imageFile + " could not be loaded!", TAG + "::loadWeatherIcon [line: " +
+                    imageFile + " could not be loaded!", m_TAG + "::loadWeatherIcon [line: " +
                     e.getStackTrace()[1].getLineNumber() + "]" );
         }// end of catch block
     }// end of method loadWeatherIcon
@@ -1986,7 +1986,7 @@ public class WeatherLionApplication extends Application
                     String methodToCall = intent.getStringExtra( WeatherLionMain.KEY_UPDATE_PAYLOAD );
 
                     UtilityMethod.logMessage( UtilityMethod.LogLevel.INFO,
-                            "Reloading access keys...", TAG + "::keyUpdateReceiver" );
+                            "Reloading access keys...", m_TAG + "::keyUpdateReceiver" );
 
                     callMethodByName( this, methodToCall,
             null, null, "AppBroadcastReceiver::onReceive" );
@@ -2031,7 +2031,13 @@ public class WeatherLionApplication extends Application
                         catch ( ParseException e )
                         {
                             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
-                                    TAG + "::onCreate [line: " +
+                                    m_TAG + "::onCreate [line: " +
+                                            e.getStackTrace()[1].getLineNumber()+ "]" );
+                        }// end of catch block
+                        catch ( Exception e )
+                        {
+                            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Error occurred.",
+                                    m_TAG + "::onCreate [line: " +
                                             e.getStackTrace()[1].getLineNumber()+ "]" );
                         }// end of catch block
 

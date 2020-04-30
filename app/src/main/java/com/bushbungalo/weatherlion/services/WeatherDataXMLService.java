@@ -42,7 +42,7 @@ public class WeatherDataXMLService extends JobIntentService
 	private static final int JOB_ID = 80;
 	private static final String TAG = "WeatherDataXMLService";
 	private WeatherDataXML xmlData = new WeatherDataXML();
-	private int writeAttempt = 0;
+	private int m_WriteAttempt = 0;
 
 	public static final String WEATHER_XML_STORAGE_MESSAGE = "WeatherXmlStorageMessage";
 
@@ -169,7 +169,13 @@ public class WeatherDataXMLService extends JobIntentService
 
 		try
 		{
-			writeAttempt++; // increment the number of attempts at creating the file
+			if( WeatherLionApplication.currentLocationTimeZone.getTimezoneId() == null )
+			{
+				// load the timezone data into ram
+				UtilityMethod.getTimeZoneData();
+			}// end of if block
+
+			m_WriteAttempt++; // increment the number of attempts at creating the file
 
 			Element weatherData;
 			Document doc;
@@ -298,15 +304,41 @@ public class WeatherDataXMLService extends JobIntentService
 		catch ( IOException e )
 		{
 			String errorMsg = String.format( Locale.ENGLISH, "Unable to remove backup weather data, attempt %d.\n%s",
-					writeAttempt, e.getMessage() );
+					m_WriteAttempt, e.getMessage() );
 			UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, errorMsg,TAG + "::saveCurrentWeatherXML [line: " +
 					UtilityMethod.getExceptionLineNumber( e )  + "]" );
 
 			// perform three attempts at creating the file
-			if( writeAttempt < 3 )
+			if( m_WriteAttempt < 3 )
 			{
 				saveCurrentWeatherXML();
 			}// end of if block
+		}// end of catch block
+		catch ( Exception e )
+		{
+			if( new File( this.getFileStreamPath(
+					WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists() )
+			{
+				if( !UtilityMethod.isFileEmpty( this,
+						WeatherLionApplication.WEATHER_DATA_BACKUP ) )
+				{
+					// check for the backup file
+					// restore the original weather data from the backup file
+					File currentWeatherDataFile = new File(
+							this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() );
+
+					File backupWeatherDataFile = new File(
+							this.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
+
+					UtilityMethod.copyFile( backupWeatherDataFile, currentWeatherDataFile,
+							TAG + "::saveCurrentWeatherXML" );
+					UtilityMethod.loadWeatherData( this );
+				}// end of if block
+				else
+				{
+					UtilityMethod.loadWeatherData( this );
+				}// end of else bloc
+			}// end of else if block
 		}// end of catch block
 	}// end of method saveCurrentWeatherXML
 

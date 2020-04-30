@@ -1582,6 +1582,13 @@ public class WidgetUpdateService extends JobIntentService
 
             loadWeatherIcon( widget, resID, defaultIcon );
         }// end of catch block
+        catch ( Exception e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+        "Error occurred while loading weather icon!",
+                TAG + "::loadWeatherIcon [line: " +
+                    e.getStackTrace()[1].getLineNumber()+ "]" );
+        }// end of catch block
     }// end of method loadWeatherIcon
 
     /**
@@ -1600,6 +1607,12 @@ public class WidgetUpdateService extends JobIntentService
             UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
                     e.getMessage(), TAG +
                             "::retrieveWeatherData" );
+        }// end of catch block
+        catch ( Exception e )
+        {
+            UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE,
+            "Error occurred while getting weather data.\n" + e.getMessage(),
+            TAG + "::retrieveWeatherData" );
         }// end of catch block
     }// end of method retrieveWeatherData
 
@@ -3841,164 +3854,11 @@ public class WidgetUpdateService extends JobIntentService
      */
     private void getTimeZoneData()
     {
-        // if this location has already been used there is no need to query the
-        // web service as the location data has been stored locally
-        CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage(
-                WeatherLionApplication.currentWxLocation );
-
-        float lat;
-        float lng;
-
-        if( CityData.currentCityData == null )
+        // Call name sake method in the utility class
+        if( UtilityMethod.getTimeZoneData() )
         {
-            String cityJSON =
-                    UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
-                            WeatherLionApplication.currentWxLocation );
-            CityData.currentCityData = UtilityMethod.createGeoNamesCityData( cityJSON );
-
-            lat = CityData.currentCityData.getLatitude();
-            lng = CityData.currentCityData.getLongitude();
-
-            if( WeatherLionApplication.currentLocationTimeZone == null )
-            {
-                WeatherLionApplication.currentLocationTimeZone =
-                        UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
-            }// end of if block
-
-            // This data may have been corrupted due to a previous crash
-            if( !WeatherLionApplication.storedData.getLocation().getTimezone()
-                    .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
-            {
-                WeatherLionApplication.storedData.getLocation().setTimezone(
-                        CityData.currentCityData.getTimeZone() );
-
-                WeatherLionApplication.storedData.getLocation().setCountry(
-                        CityData.currentCityData.getCountryName() );
-            }// end of if block
-
-            CityData.currentCityData.setTimeZone(
-                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
-        }// end of if block
-        else
-        {
-            lat = CityData.currentCityData.getLatitude();
-            lng = CityData.currentCityData.getLongitude();
-
-            if( WeatherLionApplication.storedData != null )
-            {
-                // If timezones are inconsistent or data corrupted
-                if( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
-                {
-                    if( !WeatherLionApplication.storedData.getLocation().getTimezone()
-                            .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
-                    {
-                        WeatherLionApplication.storedData.getLocation().setTimezone(
-                                CityData.currentCityData.getTimeZone() );
-
-                        WeatherLionApplication.currentSunriseTime.setLength( 0 );
-                        WeatherLionApplication.currentSunsetTime.setLength( 0 );
-                    }// end of if block
-                }// end of if block
-            }// end of if block
-            else
-            {
-                WeatherLionApplication.currentSunriseTime.setLength( 0 );
-                WeatherLionApplication.currentSunsetTime.setLength( 0 );
-            }// end of else block
-
-            if( WeatherLionApplication.currentSunriseTime.length() == 0 )
-            {
-                if( WeatherLionApplication.currentLocationTimeZone == null )
-                {
-                    WeatherLionApplication.currentLocationTimeZone =
-                            UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
-
-                    WeatherLionApplication.currentSunriseTime = new StringBuilder();
-                    WeatherLionApplication.currentSunsetTime = new StringBuilder();
-
-                    WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
-                            Locale.ENGLISH ).format(
-                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
-
-                    WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
-                            Locale.ENGLISH ).format(
-                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
-
-                    sunriseTime.setLength( 0 );
-                    sunriseTime.append( new SimpleDateFormat( "h:mm a",
-                            Locale.ENGLISH ).format(
-                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
-
-                    sunsetTime.setLength( 0 );
-                    sunsetTime.append( new SimpleDateFormat( "h:mm a",
-                            Locale.ENGLISH ).format(
-                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
-                }// end of if block
-                else
-                {
-                    WeatherLionApplication.currentSunriseTime = new StringBuilder();
-                    WeatherLionApplication.currentSunsetTime = new StringBuilder();
-
-                    WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
-                            Locale.ENGLISH ).format(
-                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
-
-                    WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
-                            Locale.ENGLISH ).format(
-                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
-
-                    sunriseTime.setLength( 0 );
-                    sunriseTime.append( new SimpleDateFormat( "h:mm a",
-                            Locale.ENGLISH ).format(
-                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
-
-                    sunsetTime.setLength( 0 );
-                    sunsetTime.append( new SimpleDateFormat( "h:mm a",
-                            Locale.ENGLISH ).format(
-                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
-                }// end of else block
-            }// end of if block
-
-            String today = new SimpleDateFormat( "MM/dd/yyyy",
-                    Locale.ENGLISH ).format( new Date() );
-
-            String sst = String.format( "%s %s", today,  WeatherLionApplication.currentSunsetTime.toString() );
-            String srt = String.format( "%s %s", today,  WeatherLionApplication.currentSunriseTime.toString() );
-
-            Date schedSunriseTime = null;
-            Date schedSunsetTime = null;
-
-            SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
-                    Locale.ENGLISH );
-
-            try
-            {
-                schedSunsetTime = sdf.parse( sst );
-                schedSunriseTime = sdf.parse( srt );
-            } // end of try block
-            catch ( ParseException e )
-            {
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
-                        TAG + "::loadCityData [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
-            }// end of catch block
-
-            WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
-                    ZoneId.of( CityData.currentCityData.getTimeZone()
-                    ) ).toLocalDateTime();
-
-            // Load the time zone info for the current city
-            WeatherLionApplication.currentLocationTimeZone = new TimeZoneInfo(
-                    CityData.currentCityData.getCountryCode(),
-                    CityData.currentCityData.getCountryName(),
-                    CityData.currentCityData.getLatitude(),
-                    CityData.currentCityData.getLongitude(),
-                    CityData.currentCityData.getTimeZone(),
-                    UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ),
-                    schedSunriseTime,
-                    schedSunsetTime );
-
             broadcastTimezoneRecovery();
-        }// end of else block
+        }// end of if block
     }// end of method getTimeZoneData
 
     /***

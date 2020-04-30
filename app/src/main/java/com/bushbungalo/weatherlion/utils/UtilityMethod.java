@@ -1279,6 +1279,12 @@ public abstract class UtilityMethod
      */
     public static String getAstronomyTimeOfDay()
     {
+        if( checkForStoredWeatherData( getAppContext() ) )
+        {
+            WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
+                    ZoneId.of( WeatherLionApplication.storedData.getLocation().getTimezone() ) ).toLocalDateTime();
+        }// end of if block
+
         Calendar rightNow = Calendar.getInstance();
 
         if ( WeatherLionApplication.storedData != null ||
@@ -2206,6 +2212,12 @@ public abstract class UtilityMethod
             logMessage( LogLevel.WARNING, e.getMessage(),
                     TAG + "::createGeoNamesCityData [line: " + getExceptionLineNumber( e ) + "]" );
         }// end of catch block
+        catch ( Exception e )
+        {
+            logMessage( LogLevel.WARNING,
+            "Error occurred while creating GeoNames city data" + e.getMessage(),
+                TAG + "::createGeoNamesCityData [line: " + getExceptionLineNumber( e ) + "]" );
+        }// end of catch block
 
         return currentCityData;
 
@@ -2314,6 +2326,12 @@ public abstract class UtilityMethod
         {
             logMessage( LogLevel.SEVERE, e.getMessage(),
                     TAG + "::createHereCityData [line: " + getExceptionLineNumber( e ) + "]" );
+        }// end of catch block
+        catch ( Exception e )
+        {
+            logMessage( LogLevel.WARNING,
+                    "Error occurred while creating here maps city data" + e.getMessage(),
+                    TAG + "::createGeoNamesCityData [line: " + getExceptionLineNumber( e ) + "]" );
         }// end of catch block
 
         return currentCityData;
@@ -2510,7 +2528,13 @@ public abstract class UtilityMethod
         {
             logMessage( LogLevel.SEVERE,
                     "Unable create a copy of file!\n" + e.getMessage(),
-                    TAG + "::copyFileStream" );
+                    TAG + "::compareFilesByByte" );
+        }// end of catch block
+        catch ( Exception e )
+        {
+            logMessage( LogLevel.WARNING,
+        "Error during byte by byte file comparison." + e.getMessage(),
+            TAG + "::compareFilesByByte [line: " + getExceptionLineNumber( e ) + "]" );
         }// end of catch block
 
         return false;
@@ -2638,7 +2662,7 @@ public abstract class UtilityMethod
         {
             startDate = new SimpleDateFormat( "MM/dd/yyyy" , Locale.ENGLISH ).parse( date );
         }// end of try block
-        catch (ParseException e)
+        catch ( ParseException e )
         {
             butteredToast( getAppContext(), e.getMessage(), 2,Toast.LENGTH_SHORT );
         }// end of catch block
@@ -3026,6 +3050,12 @@ public abstract class UtilityMethod
         {
             logMessage( LogLevel.SEVERE, e.getMessage(), TAG + "::copyFile" );
         }// end of catch block
+        catch ( Exception e )
+        {
+            logMessage( LogLevel.WARNING,
+                    "Error during file copy.\n" + e.getMessage(),
+                    TAG + "::copyFile [line: " + getExceptionLineNumber( e ) + "]" );
+        }// end of catch block
     }// end of method copyFile
 
     /**
@@ -3073,6 +3103,12 @@ public abstract class UtilityMethod
         {
            logMessage( LogLevel.SEVERE, "Unable create a copy of file!\n" + e.getMessage(), TAG + "::copyFileStream" );
         }// end of catch block
+        catch ( Exception e )
+        {
+            logMessage( LogLevel.WARNING,
+                    "Error during file copy.\n" + e.getMessage(),
+                    TAG + "::copyFileStream [line: " + getExceptionLineNumber( e ) + "]" );
+        }// end of catch block
     }// end of method copyFileStream
 
     /**
@@ -3080,7 +3116,7 @@ public abstract class UtilityMethod
      * @param uri The Uri {@code String} to be formatted
      * @return  A valid formatted Uri {@code String}
      */
-    public static String escapeUriString(String uri)
+    public static String escapeUriString( String uri )
     {
         String encodedString = null;
 
@@ -3149,6 +3185,12 @@ public abstract class UtilityMethod
 
             // if the file is corrupt or not found, then it is to be considered empty
             return true;
+        }// end of catch block
+        catch ( Exception e )
+        {
+            logMessage( LogLevel.WARNING,
+        "Error during empty file check.\n" + e.getMessage(),
+            TAG + "::isFileEmpty [line: " + getExceptionLineNumber( e ) + "]" );
         }// end of catch block
 
         return false;
@@ -3566,9 +3608,19 @@ public abstract class UtilityMethod
             {
                 strJSON = HttpHelper.downloadUrl( geoUrl, false );
             }// end of try block
-            catch (IOException e)
+            catch ( IOException e )
             {
-                e.printStackTrace();
+                logMessage( LogLevel.WARNING,
+            "IOException occurred.\n" + e.getMessage(),
+                TAG + "::retrieveGoogleGeoLocationUsingAddress [line: " +
+                        getExceptionLineNumber( e ) + "]" );
+            }// end of catch block
+            catch ( Exception e )
+            {
+                logMessage( LogLevel.WARNING,
+            "Error during byte by byte file comparison." + e.getMessage(),
+                TAG + "::retrieveGoogleGeoLocationUsingAddress [line: " +
+                            getExceptionLineNumber( e ) + "]" );
             }// end of catch block
 
         }// end of if block
@@ -3873,7 +3925,7 @@ public abstract class UtilityMethod
             // if the log could not be imported, go ahead and use the
             // service and recreate the log file
 
-            UtilityMethod.logMessage( LogLevel.INFO,
+            logMessage( LogLevel.INFO,
         "Recreating log file that could not be imported.", "::okToUseService" );
 
             WeatherLionApplication.callMethodByName( null, "createServiceCallLog",
@@ -4002,7 +4054,7 @@ public abstract class UtilityMethod
             logMessage( LogLevel.WARNING,
                 String.format( Locale.ENGLISH, "Unable to remove file %s!\n%s",
                     targetFile.toString(), e.getMessage() ), TAG + "::removeFile [line: " +
-                        UtilityMethod.getExceptionLineNumber( e )  + "]" );
+                        getExceptionLineNumber( e )  + "]" );
         }// end of catch block
     }// end of method removeFile
 
@@ -4097,7 +4149,7 @@ public abstract class UtilityMethod
         // adjust the layout after the window is displayed
         Window dialogWindow = messageDialog.getWindow();
         dialogWindow.getAttributes().windowAnimations = R.style.ZoomAnimation;
-        UtilityMethod.zoomInView( messageDialogView );
+        zoomInView( messageDialogView );
 
         dialogWindow.setLayout( CustomPreferenceGrid.DEFAULT_DIALOG_WIDTH,
                 ViewGroup.LayoutParams.WRAP_CONTENT );
@@ -4169,12 +4221,30 @@ public abstract class UtilityMethod
                 copyFile( currentWeatherDataFile, backupWeatherDataFile, TAG + "::checkForStoredWeatherData" );
                 return loadWeatherData( context );
             }// end of if block
-            else
+            else if( new File( context.getFileStreamPath(
+                    WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists() )
             {
-                return loadWeatherData( context );
-            }// end of else block
+                if( !isFileEmpty( context, WeatherLionApplication.WEATHER_DATA_BACKUP ) )
+                {
+                    // check for the backup file
+                    // restore the original weather data from the backup file
+                    File currentWeatherDataFile = new File(
+                            context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() );
+
+                    File backupWeatherDataFile = new File(
+                            context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() );
+
+                    copyFile( backupWeatherDataFile, currentWeatherDataFile,
+                            TAG + "::checkForStoredWeatherData" );
+                    return loadWeatherData( context );
+                }// end of if block
+                else
+                {
+                    return loadWeatherData( context );
+                }// end of else bloc
+            }// end of else if block
         }// end of if block
-        if( new File( context.getFileStreamPath(
+       else if( new File( context.getFileStreamPath(
                 WeatherLionApplication.WEATHER_DATA_BACKUP ).toString() ).exists() )
         {
             if( !isFileEmpty( context, WeatherLionApplication.WEATHER_DATA_BACKUP ) )
@@ -4195,7 +4265,7 @@ public abstract class UtilityMethod
             {
                 return loadWeatherData( context );
             }// end of else block
-        }// end of if block
+        }// end of else if block
 
         return false;
     }// end of method checkForStoredWeatherData
@@ -4218,7 +4288,7 @@ public abstract class UtilityMethod
 
             // if this location has already been used there is no need to query the
             // web service as the location data has been stored locally
-            CityData.currentCityData = UtilityMethod.cityFoundInJSONStorage(
+            CityData.currentCityData = cityFoundInJSONStorage(
                     WeatherLionApplication.currentWxLocation );
             String json;
             float lat;
@@ -4228,9 +4298,9 @@ public abstract class UtilityMethod
             {
                 // contact GeoNames for data about this city
                 json =
-                        UtilityMethod.retrieveGeoNamesGeoLocationUsingAddress(
+                        retrieveGeoNamesGeoLocationUsingAddress(
                                 WeatherLionApplication.currentWxLocation );
-                CityData.currentCityData = UtilityMethod.createGeoNamesCityData( json );
+                CityData.currentCityData = createGeoNamesCityData( json );
 
                 lat = CityData.currentCityData.getLatitude();
                 lng = CityData.currentCityData.getLongitude();
@@ -4238,7 +4308,7 @@ public abstract class UtilityMethod
                 if( WeatherLionApplication.currentLocationTimeZone == null)
                 {
                     WeatherLionApplication.currentLocationTimeZone =
-                            UtilityMethod.retrieveGeoNamesTimeZoneInfo( lat, lng );
+                            retrieveGeoNamesTimeZoneInfo( lat, lng );
                 }// end of if block
 
                 CityData.currentCityData.setTimeZone(
@@ -4267,7 +4337,7 @@ public abstract class UtilityMethod
                 } // end of try block
                 catch ( ParseException e )
                 {
-                    UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE , e.getMessage(),
+                    logMessage( LogLevel.SEVERE , e.getMessage(),
                             TAG + "::onCreate [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
                 }// end of catch block
 
@@ -4282,7 +4352,7 @@ public abstract class UtilityMethod
                         CityData.currentCityData.getLatitude(),
                         CityData.currentCityData.getLongitude(),
                         CityData.currentCityData.getTimeZone(),
-                        UtilityMethod.getDateTime( WeatherLionApplication.localDateTime ),
+                        getDateTime( WeatherLionApplication.localDateTime ),
                         schedSunriseTime,
                         schedSunsetTime );
             }// end of else block
@@ -4309,7 +4379,7 @@ public abstract class UtilityMethod
         // If the weather data xml file exists, that means the program has previously received
         // data from a web service. The data must then be loaded into memory.
         WeatherLionApplication.lastDataReceived = LastWeatherDataXmlParser.parseXmlData(
-                UtilityMethod.readAll(
+                readAll(
                     context.getFileStreamPath( WeatherLionApplication.WEATHER_DATA_XML ).toString() )
                         .replaceAll( "\t", "" ).trim() );
 
@@ -4322,11 +4392,11 @@ public abstract class UtilityMethod
                     Locale.ENGLISH );
             try
             {
-                UtilityMethod.lastUpdated = df.parse( WeatherLionApplication.storedData.getProvider().getDate() );
+                lastUpdated = df.parse( WeatherLionApplication.storedData.getProvider().getDate() );
             }// end of try block
             catch ( ParseException e )
             {
-                UtilityMethod.logMessage( UtilityMethod.LogLevel.SEVERE, "Unable to parse last weather data date.",
+                logMessage( LogLevel.SEVERE, "Unable to parse last weather data date.",
                         TAG + "::onCreate [line: " +
                                 e.getStackTrace()[1].getLineNumber()+ "]" );
             }// end of catch block
@@ -5027,6 +5097,177 @@ public abstract class UtilityMethod
 
         return timeElapsed;
     }// end of method getTimeSince
+
+    /**
+     * Retrieve data for the current timezone
+     *
+     * @return Returns true/false depending on the outcome
+     */
+    public static boolean getTimeZoneData()
+    {
+        // if this location has already been used there is no need to query the
+        // web service as the location data has been stored locally
+        CityData.currentCityData = cityFoundInJSONStorage(
+                WeatherLionApplication.currentWxLocation );
+
+        float lat;
+        float lng;
+
+        if( CityData.currentCityData == null )
+        {
+            String cityJSON =
+                    retrieveGeoNamesGeoLocationUsingAddress(
+                            WeatherLionApplication.currentWxLocation );
+            CityData.currentCityData = createGeoNamesCityData( cityJSON );
+
+            lat = CityData.currentCityData.getLatitude();
+            lng = CityData.currentCityData.getLongitude();
+
+            if( WeatherLionApplication.currentLocationTimeZone == null )
+            {
+                WeatherLionApplication.currentLocationTimeZone =
+                        retrieveGeoNamesTimeZoneInfo( lat, lng );
+            }// end of if block
+
+            // This data may have been corrupted due to a previous crash
+            if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                    .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+            {
+                WeatherLionApplication.storedData.getLocation().setTimezone(
+                        CityData.currentCityData.getTimeZone() );
+
+                WeatherLionApplication.storedData.getLocation().setCountry(
+                        CityData.currentCityData.getCountryName() );
+            }// end of if block
+
+            CityData.currentCityData.setTimeZone(
+                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+
+            return true;
+        }// end of if block
+        else
+        {
+            lat = CityData.currentCityData.getLatitude();
+            lng = CityData.currentCityData.getLongitude();
+
+            if( WeatherLionApplication.storedData != null )
+            {
+                // If timezones are inconsistent or data corrupted
+                if( WeatherLionApplication.storedData.getLocation().getTimezone() != null )
+                {
+                    if( !WeatherLionApplication.storedData.getLocation().getTimezone()
+                            .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
+                    {
+                        WeatherLionApplication.storedData.getLocation().setTimezone(
+                                CityData.currentCityData.getTimeZone() );
+
+                        WeatherLionApplication.currentSunriseTime.setLength( 0 );
+                        WeatherLionApplication.currentSunsetTime.setLength( 0 );
+                    }// end of if block
+                }// end of if block
+            }// end of if block
+            else
+            {
+                WeatherLionApplication.currentSunriseTime.setLength( 0 );
+                WeatherLionApplication.currentSunsetTime.setLength( 0 );
+            }// end of else block
+
+            if( WeatherLionApplication.currentSunriseTime.length() == 0 )
+            {
+                if( WeatherLionApplication.currentLocationTimeZone == null )
+                {
+                    WeatherLionApplication.currentLocationTimeZone =
+                            retrieveGeoNamesTimeZoneInfo( lat, lng );
+
+                    WeatherLionApplication.currentSunriseTime = new StringBuilder();
+                    WeatherLionApplication.currentSunsetTime = new StringBuilder();
+
+                    WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
+                            Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                    WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
+                            Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+
+                    WidgetUpdateService.sunriseTime.setLength( 0 );
+                    WidgetUpdateService.sunriseTime.append( new SimpleDateFormat( "h:mm a",
+                            Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                    WidgetUpdateService.sunsetTime.setLength( 0 );
+                    WidgetUpdateService.sunsetTime.append( new SimpleDateFormat( "h:mm a",
+                            Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+                }// end of if block
+                else
+                {
+                    WeatherLionApplication.currentSunriseTime = new StringBuilder();
+                    WeatherLionApplication.currentSunsetTime = new StringBuilder();
+
+                    WeatherLionApplication.currentSunriseTime.append( new SimpleDateFormat( "h:mm a",
+                            Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                    WeatherLionApplication.currentSunsetTime.append( new SimpleDateFormat( "h:mm a",
+                            Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+
+                    WidgetUpdateService.sunriseTime.setLength( 0 );
+                    WidgetUpdateService.sunriseTime.append( new SimpleDateFormat( "h:mm a",
+                            Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunrise() ) );
+
+                    WidgetUpdateService.sunsetTime.setLength( 0 );
+                    WidgetUpdateService.sunsetTime.append( new SimpleDateFormat( "h:mm a",
+                            Locale.ENGLISH ).format(
+                            WeatherLionApplication.currentLocationTimeZone.getSunset() ) );
+                }// end of else block
+            }// end of if block
+
+            String today = new SimpleDateFormat( "MM/dd/yyyy",
+                    Locale.ENGLISH ).format( new Date() );
+
+            String sst = String.format( "%s %s", today,  WeatherLionApplication.currentSunsetTime.toString() );
+            String srt = String.format( "%s %s", today,  WeatherLionApplication.currentSunriseTime.toString() );
+
+            Date schedSunriseTime;
+            Date schedSunsetTime;
+
+            SimpleDateFormat sdf = new SimpleDateFormat( "MM/dd/yyyy h:mm a",
+                    Locale.ENGLISH );
+
+            try
+            {
+                schedSunsetTime = sdf.parse( sst );
+                schedSunriseTime = sdf.parse( srt );
+            } // end of try block
+            catch ( ParseException e )
+            {
+                logMessage( LogLevel.SEVERE , e.getMessage(),
+                        TAG + "::loadCityData [line: " + e.getStackTrace()[ 1 ].getLineNumber() + "]" );
+
+                return false;
+            }// end of catch block
+
+            WeatherLionApplication.localDateTime = new Date().toInstant().atZone(
+                    ZoneId.of( CityData.currentCityData.getTimeZone()
+                    ) ).toLocalDateTime();
+
+            // Load the time zone info for the current city
+            WeatherLionApplication.currentLocationTimeZone = new TimeZoneInfo(
+                    CityData.currentCityData.getCountryCode(),
+                    CityData.currentCityData.getCountryName(),
+                    CityData.currentCityData.getLatitude(),
+                    CityData.currentCityData.getLongitude(),
+                    CityData.currentCityData.getTimeZone(),
+                    getDateTime( WeatherLionApplication.localDateTime ),
+                    schedSunriseTime,
+                    schedSunsetTime );
+
+            return true;
+        }// end of else block
+    }// end of method getTimeZoneData
 
     /**
      * Loads a custom font to all applicable child {@code Object}s of a {@code ViewGroup}
