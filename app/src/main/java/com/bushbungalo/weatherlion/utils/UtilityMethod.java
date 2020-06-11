@@ -2279,13 +2279,6 @@ public abstract class UtilityMethod
                         Latitude = (float) navigationPosition.getDouble( "Latitude" );
                         Longitude = (float) navigationPosition.getDouble( "Longitude" );
 
-                        currentCityData.setCityName( localCityName );
-                        currentCityData.setCountryName( countryName );
-                        currentCityData.setCountryCode( countryCode );
-                        currentCityData.setRegionName( regionName );
-                        currentCityData.setLatitude( Latitude );
-                        currentCityData.setLongitude( Longitude );
-
                     }// end of if block
                     else
                     {
@@ -2311,14 +2304,13 @@ public abstract class UtilityMethod
                         Latitude = place.getLocation().getNavigationPosition().getLatitude();
                         Longitude = place.getLocation().getNavigationPosition().getLongitude();
 
-                        currentCityData.setCityName( localCityName );
-                        currentCityData.setCountryName( countryName );
-                        currentCityData.setCountryCode( countryCode );
-                        currentCityData.setRegionName( regionName );
-                        currentCityData.setLatitude( Latitude );
-                        currentCityData.setLongitude( Longitude );
-
                     }// end of else block
+                    currentCityData.setCityName( localCityName );
+                    currentCityData.setCountryName( countryName );
+                    currentCityData.setCountryCode( countryCode );
+                    currentCityData.setRegionName( regionName );
+                    currentCityData.setLatitude( Latitude );
+                    currentCityData.setLongitude( Longitude );
                 }// end of if block
             }// end of if block
         }// end of try block
@@ -2736,24 +2728,63 @@ public abstract class UtilityMethod
         return value * value;
     }// end of method square
 
+    /**
+     * Finds the closest word match to word.
+     *
+     * @param phraseList	A array containing a list of strings for check against.
+     * @param searchPhrase	A string to search the list for.
+     * @return	The closest match to the query string.
+     */
     public static String findClosestWordMatch( String[] phraseList, String searchPhrase )
     {
         StringBuilder closestMatch = new StringBuilder();
+        StringBuilder mostLikelyMatch = new StringBuilder();
         int closest = searchPhrase.length();
+        int highestProbability = 0; // this is the highest percentage of a possible match
 
         for( String phrase : phraseList )
         {
-            int cost = getLevenshteinDistance( searchPhrase , phrase );
+            int changesNeeded = getLevenshteinDistance( searchPhrase , phrase );
+            int wordProbability = percentageMatch( phrase, searchPhrase );
 
-            if( cost < closest )
+            // if 50% or greater match then its is a possible substitution
+            if (wordProbability > highestProbability)
             {
-                closest = cost;
+                highestProbability = wordProbability;
+                mostLikelyMatch.setLength( 0 );
+                mostLikelyMatch.append( phrase );
+            }// end of if block
+
+            if( changesNeeded < closest )
+            {
+                closest = changesNeeded;
                 closestMatch.setLength( 0 );
                 closestMatch.append( phrase );
             }// end of if block
         }// end of for loop
 
-        return closestMatch.toString();
+        // if both algorithms came up with the same string
+        // then just return any one
+        if ( closestMatch.toString().equals( mostLikelyMatch.toString() ) )
+        {
+            return closestMatch.toString();
+        }// end of if block
+        else
+        {
+            // if both algorithms came up with different strings,
+            // use the one with the highest percentage match
+            int a = percentageMatch( closestMatch.toString(), searchPhrase );
+            int b = percentageMatch( mostLikelyMatch.toString(), searchPhrase );
+
+            if (a > b)
+            {
+                return closestMatch.toString();
+            }// end of if block
+            else
+            {
+                return mostLikelyMatch.toString();
+            }// end of else block
+        }// end of else block
     }// end of method findClosestWordMatch
 
     /**
@@ -3936,6 +3967,41 @@ public abstract class UtilityMethod
 
         return ok;
     }// end of method okToUseService
+
+    /**
+     * Determines what percentage match occurs when both strings are compared.
+     *
+     * @param mainString	The {@code String} that should contain a similar {@code String}
+     * @param searchString	The {@code String} that needs to be matched
+     * @return	The numeric percentage of the comparison
+     */
+    public static int percentageMatch( String mainString, String searchString )
+    {
+        String[] ms_words = mainString.split( " " );
+        String[] ss_words = searchString.split( " " );
+        int num_words_found = 0;
+        float match_percentage;
+
+        for ( String w : ss_words )
+        {
+            if ( mainString.contains( w ) )
+            {
+                // the string contains this word
+                num_words_found++; // increment the number of words found
+            }// end of if block
+        }// end of for each loop
+
+        // what percentage of the main string is the search string
+        match_percentage = ((float) num_words_found / (float) ms_words.length) * 100.0f;
+
+        // the main string cannot be shorter than the search string for a 100% match
+        if (ms_words.length < ss_words.length)
+        {
+            match_percentage = ((float) num_words_found / (float) ss_words.length) * 100.0f;
+        }// end of if block
+
+        return (int) match_percentage;
+    }// end of function percentageMatch
 
     /**
      * Updates a call made to a provider
@@ -5143,7 +5209,6 @@ public abstract class UtilityMethod
             CityData.currentCityData.setTimeZone(
                     WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
 
-            return true;
         }// end of if block
         else
         {
@@ -5265,8 +5330,8 @@ public abstract class UtilityMethod
                     schedSunriseTime,
                     schedSunsetTime );
 
-            return true;
         }// end of else block
+        return true;
     }// end of method getTimeZoneData
 
     /**
