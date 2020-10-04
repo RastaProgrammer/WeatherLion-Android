@@ -407,18 +407,19 @@ public class WidgetUpdateService extends JobIntentService
                                 }// end of if block
 
                                 // This data may have been corrupted due to a previous crash
-                                if( !WeatherLionApplication.storedData.getLocation().getTimezone()
-                                        .equalsIgnoreCase( CityData.currentCityData.getTimeZone() ) )
-                                {
-                                    WeatherLionApplication.storedData.getLocation().setTimezone(
-                                            CityData.currentCityData.getTimeZone() );
+                                if(WeatherLionApplication.storedData.getLocation() != null) {
+                                    if (!WeatherLionApplication.storedData.getLocation().getTimezone()
+                                            .equalsIgnoreCase(CityData.currentCityData.getTimeZone())) {
+                                        WeatherLionApplication.storedData.getLocation().setTimezone(
+                                                CityData.currentCityData.getTimeZone());
 
-                                    WeatherLionApplication.storedData.getLocation().setCountry(
-                                            CityData.currentCityData.getCountryName() );
-                                }// end of if block
+                                        WeatherLionApplication.storedData.getLocation().setCountry(
+                                                CityData.currentCityData.getCountryName());
+                                    }// end of if block
 
-                                CityData.currentCityData.setTimeZone(
-                                        WeatherLionApplication.currentLocationTimeZone.getTimezoneId() );
+                                    CityData.currentCityData.setTimeZone(
+                                            WeatherLionApplication.currentLocationTimeZone.getTimezoneId());
+                                }
                             }// end of if block
                             else
                             {
