@@ -1192,11 +1192,8 @@ public class WeatherLionApplication extends Application
 
         iconSet = spf.getString( ICON_SET_PREFERENCE, Preference.DEFAULT_ICON_SET );
 
-        // run the weather service and  call the method that loads the previous weather data
-        actionWeatherService( UNIT_NOT_CHANGED, WidgetUpdateService.LOAD_TIMEZONE_DATA );
-
         // initialize the time of day variable
-        if( timeOfDayToUse == null )
+        if(currentSunsetTime.length() > 0 && timeOfDayToUse == null)
         {
             timeOfDayToUse = UtilityMethod.getAstronomyTimeOfDay();
         }// end of if block

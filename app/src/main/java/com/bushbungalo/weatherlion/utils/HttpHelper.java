@@ -104,11 +104,14 @@ public class HttpHelper
                     @Override
                     public void run()
                     {
-                        UtilityMethod.butteredToast( WeatherLionApplication.getAppContext(),
-                        "The credentials supplied for " +
-                                WeatherLionApplication.storedData.getProvider() +
-                                " are invalid!",
-                                2, Toast.LENGTH_LONG );
+                        if( WeatherLionApplication.storedData.getProvider().getName().length() > 0 )
+                        {
+                            UtilityMethod.butteredToast( WeatherLionApplication.getAppContext(),
+                                    "The credentials supplied for " +
+                                            WeatherLionApplication.storedData.getProvider().getName() +
+                                            " are invalid!",
+                                    2, Toast.LENGTH_LONG );
+                        }// end of if block
                     }
                 });
             }// end of else if block

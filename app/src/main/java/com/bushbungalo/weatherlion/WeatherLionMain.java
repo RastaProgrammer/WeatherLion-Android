@@ -1650,8 +1650,9 @@ public class WeatherLionMain extends AppCompatActivity
                         "Data restoration completed successfully!", TAG + "::onCreate" );
                     }// end of if block
                 }// end of if block
-            }// end of if block
-            else if( WeatherLionApplication.storedPreferences != null )
+            }// end of if block77
+            else if( WeatherLionApplication.storedPreferences != null &&
+                    WeatherLionApplication.geoNamesAccountLoaded)
             {
                 if( attemptDataRestoration() )
                 {
@@ -1662,35 +1663,39 @@ public class WeatherLionMain extends AppCompatActivity
             }// end of else if block
             else
             {
-                if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity() != null )
+                // Widget might not be configured yet
+                if( WeatherLionApplication.lastDataReceived != null )
                 {
-                    // if data was stored then the original value the location is known
-                    WeatherLionApplication.currentWxLocation =
-                            WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
+                    if( WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity() != null )
+                    {
+                        // if data was stored then the original value the location is known
+                        WeatherLionApplication.currentWxLocation =
+                                WeatherLionApplication.lastDataReceived.getWeatherData().getLocation().getCity();
 
-                    // if there is no location stored in the local preferences, go to the settings activity
-                    if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
-                            Preference.DEFAULT_WEATHER_LOCATION ) )
-                    {
-                        showPreferenceActivity( false );
-                        return;
-                    }// end of if block
-                    else
-                    {
+                        // if there is no location stored in the local preferences, go to the settings activity
+                        if( WeatherLionApplication.currentWxLocation.equalsIgnoreCase(
+                                Preference.DEFAULT_WEATHER_LOCATION ) )
+                        {
+                            showPreferenceActivity( false );
+                            return;
+                        }// end of if block
+                        else
+                        {
+                            initializeMainWindow();
+                        }// end of if block
+
+                        if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
+                        {
+                            noGpsAlert();
+                        }// end of if block
+
                         initializeMainWindow();
+                        UtilityMethod.checkData();
+                        loadMainActivityWeather();
                     }// end of if block
 
-                    if( WeatherLionApplication.useGps && !WeatherLionApplication.gpsRadioEnabled )
-                    {
-                        noGpsAlert();
-                    }// end of if block
-
-                    initializeMainWindow();
-                    UtilityMethod.checkData();
-                    loadMainActivityWeather();
+                    initializeWelcomeWindow();
                 }// end of if block
-
-                initializeWelcomeWindow();
             }//end of else block
         }// end of else block
     }// end of method checkForStoredWeatherData

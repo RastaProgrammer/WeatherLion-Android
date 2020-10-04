@@ -1304,16 +1304,37 @@ public abstract class UtilityMethod
                     }// end of if block
                 }// end of if block
 
+                if(WeatherLionApplication.localDateTime == null)
+                {
+                    WeatherLionApplication.localDateTime = LocalDateTime.now();
+                }// end of if block
+
                 rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
             }// end of if block
         }// end of if block
         else
         {
-            if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
-                    WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+            if(WeatherLionApplication.currentLocationTimeZone != null)
             {
-                rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
+                if ( !ZoneId.systemDefault().getId().toLowerCase().equals(
+                        WeatherLionApplication.currentLocationTimeZone.getTimezoneId() ) )
+                {
+                    rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
+                }// end of if block
             }// end of if block
+            else
+            {
+                WeatherLionApplication.currentLocationTimeZone = new TimeZoneInfo(null, null,
+                        ZoneId.systemDefault().getId().toLowerCase());
+
+                if(WeatherLionApplication.localDateTime == null)
+                {
+                    WeatherLionApplication.localDateTime = LocalDateTime.now();
+                }// end of if block
+
+                rightNow.setTime( getDateTime( WeatherLionApplication.localDateTime ) );
+            }// end of else block
+
         }// end of else block
 
         Calendar nightFall = Calendar.getInstance();
